@@ -9,9 +9,9 @@
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
         <p></p>
-        {% for table in versionTables %}
+        {% if versionTableRows.length %}
           <h2 class="govuk-heading-m govuk-!-static-margin-top-2">
-            <a href="/grant?grant={{table.title}}">{{table.title}}</a>
+            All versions
           </h2>
 
           <div>
@@ -21,13 +21,13 @@
             },
             firstCellIsHeader: false,
             head: headers,
-            rows: table.rows,
+            rows: versionTableRows,
             classes: 'fixed-layout-table'
             }) }}
           </div>
         {% else %}
           <li>No versions available</li>
-        {% endfor %}
+        {% endif %}
       </div>
     </div>
   </div>
