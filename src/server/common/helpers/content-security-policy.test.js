@@ -1,4 +1,7 @@
 import { createServer } from '../../server.js'
+import { requestFromApi } from '../../helpers/request-from-api.js'
+
+vi.mock('../../helpers/request-from-api.js')
 
 describe('#contentSecurityPolicy', () => {
   let server
@@ -6,6 +9,7 @@ describe('#contentSecurityPolicy', () => {
   beforeAll(async () => {
     server = await createServer()
     await server.initialize()
+    requestFromApi.mockResolvedValue([])
   })
 
   afterAll(async () => {
