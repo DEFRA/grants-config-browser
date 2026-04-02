@@ -1,12 +1,16 @@
 import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
+import { requestFromApi } from '../helpers/request-from-api.js'
 
-describe('#homeController', () => {
+vi.mock('../helpers/request-from-api.js')
+
+describe('#grantController', () => {
   let server
 
   beforeAll(async () => {
     server = await createServer()
     await server.initialize()
+    requestFromApi.mockResolvedValue([])
   })
 
   afterAll(async () => {
@@ -16,7 +20,7 @@ describe('#homeController', () => {
   test('Should provide expected response', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/'
+      url: '/grant?grant=1234567890'
     })
 
     expect(result).toEqual(expect.stringContaining('Home |'))
