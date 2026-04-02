@@ -1,4 +1,5 @@
 import { requestFromApi } from '../helpers/request-from-api.js'
+import Joi from 'joi'
 
 const buildTableHeaders = () => {
   return [
@@ -26,12 +27,12 @@ const buildTableHeaders = () => {
   ]
 }
 
-const createRowsForTable = (versions) => {
+const createRowsForTable = (versions, grant) => {
   return versions.map((version) => {
     const centringClass = 'vertical-middle'
     return [
       {
-        text: version.version,
+        html: `<a href="/version?grant=${grant}&version=${version.version}">${version.version}</a>`,
         classes: centringClass
       },
       {
@@ -44,41 +45,38 @@ const createRowsForTable = (versions) => {
           'data-sort-value': new Date(version.lastUpdated).getTime()
         }
       }
-      // {
-      //   html: `<div>
-      //           <p class="govuk-!-margin-0">${claimTypeText}</p>
-      //           <p class="govuk-caption-m govuk-!-margin-0">${claim.reference}</p>
-      //         </div>`
-      // },
-      // {
-      //   html: env.render('tag.njk', { status: claim.status }),
-      //   classes: centringClass
-      // }
     ]
   })
 }
 
-const createTableData = (allVersions) => {
-  return allVersions.map((grant) => {
-    return {
-      title: grant.grant,
-      rows: createRowsForTable(grant.versions)
-    }
-  })
-}
+const getAllVersionsSchema = Joi.object({
+  grant: Joi.string().required(),
+  draft: Joi.string().lowercase().valid('include', 'only').optional(),
+  constrainMajor: Joi.alternatives().conditional('constrainMinor', {
+    is: Joi.exist(),
+    then: Joi.number().min(0).required(),
+    otherwise: Joi.number().min(0).optional()
+  }),
+  constrainMinor: Joi.number().min(0).optional()
+})
 
-/**
- * A GDS styled example home page controller.
- */
-export const homeController = {
+export const grantController = {
   async handler(request, h) {
+    const { grant } = request.query
+    if (getAllVersionsSchema.validate(request.query).error) {
+      return h.redirect('/')
+    }
     //go fetch metadata from the config broker
-    const allVersions = await requestFromApi('allGrants', request)
-    const allTables = createTableData(allVersions)
-    return h.view('home/index', {
+    const allVersions = await requestFromApi(
+      `allVersions?grant=${grant}`,
+      request
+    )
+
+    const allTables = createRowsForTable(allVersions, grant)
+    return h.view('grant/index', {
       pageTitle: 'Home',
-      heading: 'All grant config versions',
-      versionTables: allTables ?? [],
+      heading: `${grant} config versions`,
+      versionTableRows: allTables ?? [],
       headers: buildTableHeaders()
     })
   }

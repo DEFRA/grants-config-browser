@@ -96,7 +96,7 @@ export const config = convict({
       format: Array,
       default: isProduction
         ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
-        : []
+        : ['req']
     }
   },
   httpProxy: {
@@ -111,6 +111,30 @@ export const config = convict({
     format: Boolean,
     default: isProduction,
     env: 'ENABLE_SECURE_CONTEXT'
+  },
+  auth: {
+    token: {
+      doc: 'Bearer token for service-to-service authentication',
+      format: String,
+      default: '',
+      env: 'GRANTS_CONFIG_BROKER_AUTH_TOKEN',
+      sensitive: true
+    },
+    encryptionKey: {
+      doc: 'Encryption key for decrypting bearer token',
+      format: String,
+      default: '',
+      env: 'GRANTS_CONFIG_BROKER_ENCRYPTION_KEY',
+      sensitive: true
+    }
+  },
+  backend: {
+    apiEndpoint: {
+      doc: 'Endpoint for the backend API',
+      format: String,
+      default: 'http://localhost:3001',
+      env: 'GRANTS_CONFIG_BROKER_API_ENDPOINT'
+    }
   },
   session: {
     cache: {
