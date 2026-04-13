@@ -34,13 +34,37 @@ describe('s3-interactions', () => {
           input: {
             Bucket: bucket,
             Key: key,
-            ResponseContentDisposition: `attachment; filename="${key}"`
+            ResponseContentDisposition: `inline`,
+            ResponseContentType: 'text/plain'
           }
         }),
         { expiresIn: 60 }
       )
 
       expect(result).toEqual('mock-signed-url')
+    })
+
+    it('should supply custom content type', async () => {
+      getSignedUrl.mockResolvedValueOnce('http://localstack/mock-signed-url')
+      const key = 'key/something/blah/test.json'
+      const bucket = 'some-bucket'
+
+      const result = await getS3SignedUrl(bucket, key)
+
+      expect(getSignedUrl).toHaveBeenCalledWith(
+        mockS3Client,
+        expect.objectContaining({
+          input: {
+            Bucket: bucket,
+            Key: key,
+            ResponseContentDisposition: `inline`,
+            ResponseContentType: 'application/json'
+          }
+        }),
+        { expiresIn: 60 }
+      )
+
+      expect(result).toEqual('http://localhost/mock-signed-url')
     })
   })
 })

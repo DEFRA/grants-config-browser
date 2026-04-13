@@ -16,15 +16,27 @@ const initialiseClient = () => {
   return s3client
 }
 
+const getCustomType = (filename) => {
+  if (filename.endsWith('.json')) {
+    return 'application/json'
+  } else if (filename.endsWith('.yaml') || filename.endsWith('.yml')) {
+    return 'text/yaml'
+  } else {
+    return 'text/plain'
+  }
+}
+
 export const getS3SignedUrl = async (bucket, filename) => {
   const client = initialiseClient()
   const command = new GetObjectCommand({
     Bucket: bucket,
     Key: filename,
-    ResponseContentDisposition: `attachment; filename="${filename}"`
+    ResponseContentDisposition: `inline`,
+    ResponseContentType: getCustomType(filename)
   })
 
-  return getSignedUrl(client, command, {
+  const signedUrl = await getSignedUrl(client, command, {
     expiresIn: 60
   })
+  return signedUrl?.replace('localstack', 'localhost')
 }

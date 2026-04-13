@@ -10,7 +10,7 @@ describe('#serveStaticFiles', () => {
     })
 
     afterEach(async () => {
-      await server.stop({ timeout: 0 })
+      await server?.stop({ timeout: 0 })
     })
 
     test('Should serve favicon as expected', async () => {
