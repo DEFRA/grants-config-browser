@@ -34,7 +34,7 @@ services:
 
 ################################################################################
 
-  your-frontend:
+  config-browser:
     build: ./
     ports:
       - '3000:3000'
@@ -52,7 +52,7 @@ services:
       PORT: 3000
       NODE_ENV: development
       REDIS_HOST: redis
-      LOCALSTACK_ENDPOINT: http://localstack:4566
+      AWS_ENDPOINT_URL: http://localstack:4566
       USE_SINGLE_INSTANCE_CACHE: true
     networks:
       - cdp-tenant
