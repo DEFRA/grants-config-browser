@@ -6,6 +6,7 @@ import { health } from './health/index.js'
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 import { grant } from './grant/index.js'
 import { version } from './version/index.js'
+import { viewfile } from './viewfile/index.js'
 
 export const router = {
   plugin: {
@@ -17,7 +18,7 @@ export const router = {
       await server.register([health])
 
       // Application specific routes, add your own routes here
-      await server.register([home, about, grant, version])
+      await server.register([home, about, grant, version, viewfile])
 
       // Static assets
       await server.register([serveStaticFiles])

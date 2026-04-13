@@ -13,12 +13,14 @@ const buildTableHeaders = () => {
   ]
 }
 
-const createRowsForTable = (manifestEntries) => {
+const createRowsForTable = (bucket, manifestEntries) => {
   return manifestEntries.map((manifestEntry) => {
     const centringClass = 'vertical-middle'
     return [
       {
-        text: manifestEntry,
+        html: `<div>
+                <a class="govuk-!-margin-0" href="/viewfile?filename=${manifestEntry}&bucket=${bucket}">${manifestEntry}</a>
+              </div>`,
         classes: centringClass
       }
     ]
@@ -41,7 +43,7 @@ export const versionController = {
       `version?grant=${grant}&version=${version}`,
       request
     )
-    const allFiles = createRowsForTable(thisVersion.manifest)
+    const allFiles = createRowsForTable(thisVersion.path, thisVersion.manifest)
     return h.view('version/index', {
       pageTitle: `${grant} - ${version}`,
       heading: `${grant} - ${version}`,
