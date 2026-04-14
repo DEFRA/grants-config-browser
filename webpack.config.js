@@ -11,6 +11,10 @@ const { NODE_ENV = 'development' } = process.env
 const require = createRequire(import.meta.url)
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
+const mojFrontendPath = path.dirname(
+  require.resolve('@ministryofjustice/frontend/package.json')
+)
+
 const govukFrontendPath = path.dirname(
   require.resolve('govuk-frontend/package.json')
 )
@@ -94,7 +98,8 @@ export default {
                 loadPaths: [
                   path.join(dirname, 'src/client/stylesheets'),
                   path.join(dirname, 'src/server/common/components'),
-                  path.join(dirname, 'src/server/common/templates/partials')
+                  path.join(dirname, 'src/server/common/templates/partials'),
+                  dirname
                 ],
                 quietDeps: true,
                 sourceMapIncludeSources: true,
@@ -173,6 +178,10 @@ export default {
         },
         {
           from: path.join(govukFrontendPath, 'dist/govuk/assets/rebrand'),
+          to: 'assets'
+        },
+        {
+          from: path.join(mojFrontendPath, 'moj/assets'),
           to: 'assets'
         }
       ]
