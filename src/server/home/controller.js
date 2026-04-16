@@ -69,7 +69,7 @@ const createTableData = (allVersions) => {
 export const homeController = {
   async handler(request, h) {
     //go fetch metadata from the config broker
-    const allVersions = await requestFromApi('allGrants', request)
+    const allVersions = await requestFromApi('allGrants?draft=include', request)
     const allTables = createTableData(allVersions)
     return h.view('home/index', {
       pageTitle: 'Home',

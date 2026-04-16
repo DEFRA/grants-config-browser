@@ -1,5 +1,4 @@
 {% from "govuk/components/tag/macro.njk" import govukTag %}
-
 {% set active = {
   text: 'Active',
   classes: 'govuk-tag--green'
@@ -13,6 +12,13 @@
   'active': active,
   'draft': draft
 } %}
+
+{% macro statusTag(status) %}
+
+{{-
+  govukTag(tags[status])
+-}}
+{% endmacro %}
 
 {{-
   govukTag(tags[status])
