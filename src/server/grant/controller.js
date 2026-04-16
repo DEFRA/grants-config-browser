@@ -74,7 +74,7 @@ export const grantController = {
     }
     //go fetch metadata from the config broker
     const allVersions = await requestFromApi(
-      `allVersions?grant=${grant}`,
+      `allVersions?grant=${grant}&draft=include`,
       request
     )
 

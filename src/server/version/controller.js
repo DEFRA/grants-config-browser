@@ -46,7 +46,9 @@ export const versionController = {
     const allFiles = createRowsForTable(thisVersion.path, thisVersion.manifest)
     return h.view('version/index', {
       pageTitle: `${grant} - ${version}`,
-      heading: `${grant} - ${version}`,
+      heading: grant,
+      status: thisVersion.status,
+      version,
       versionTableRows: allFiles ?? [],
       headers: buildTableHeaders()
     })
