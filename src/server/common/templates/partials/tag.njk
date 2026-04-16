@@ -1,0 +1,19 @@
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% set active = {
+  text: 'Active',
+  classes: 'govuk-tag--green'
+} %}
+{% set draft = {
+  text: 'Draft',
+  classes: 'govuk-tag--orange'
+} %}
+
+{% set tags = {
+  'active': active,
+  'draft': draft
+} %}
+
+{{-
+  govukTag(tags[status])
+-}}

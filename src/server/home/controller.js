@@ -1,4 +1,6 @@
 import { requestFromApi } from '../helpers/request-from-api.js'
+import { formatDateTime } from '../helpers/date-display.js'
+import nunjucks from 'nunjucks'
 
 const buildTableHeaders = () => {
   return [
@@ -27,6 +29,10 @@ const buildTableHeaders = () => {
 }
 
 const createRowsForTable = (versions) => {
+  const env = nunjucks.configure([
+    'src/server/common/templates/partials',
+    'node_modules/govuk-frontend/dist'
+  ])
   return versions.map((version) => {
     const centringClass = 'vertical-middle'
     return [
@@ -35,25 +41,15 @@ const createRowsForTable = (versions) => {
         classes: centringClass
       },
       {
-        text: version.status,
+        html: env.render('tag.njk', { status: version.status }),
         classes: centringClass
       },
       {
-        text: version.lastUpdated,
+        text: formatDateTime(version.lastUpdated),
         attributes: {
           'data-sort-value': new Date(version.lastUpdated).getTime()
         }
       }
-      // {
-      //   html: `<div>
-      //           <p class="govuk-!-margin-0">${claimTypeText}</p>
-      //           <p class="govuk-caption-m govuk-!-margin-0">${claim.reference}</p>
-      //         </div>`
-      // },
-      // {
-      //   html: env.render('tag.njk', { status: claim.status }),
-      //   classes: centringClass
-      // }
     ]
   })
 }
