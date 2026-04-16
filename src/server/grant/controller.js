@@ -1,5 +1,7 @@
 import { requestFromApi } from '../helpers/request-from-api.js'
 import Joi from 'joi'
+import { formatDateTime } from '../helpers/date-display.js'
+import nunjucks from 'nunjucks'
 
 const buildTableHeaders = () => {
   return [
@@ -28,6 +30,10 @@ const buildTableHeaders = () => {
 }
 
 const createRowsForTable = (versions, grant) => {
+  const env = nunjucks.configure([
+    'src/server/common/templates/partials',
+    'node_modules/govuk-frontend/dist'
+  ])
   return versions.map((version) => {
     const centringClass = 'vertical-middle'
     return [
@@ -36,11 +42,11 @@ const createRowsForTable = (versions, grant) => {
         classes: centringClass
       },
       {
-        text: version.status,
+        html: env.render('tag.njk', { status: version.status }),
         classes: centringClass
       },
       {
-        text: version.lastUpdated,
+        text: formatDateTime(version.lastUpdated),
         attributes: {
           'data-sort-value': new Date(version.lastUpdated).getTime()
         }

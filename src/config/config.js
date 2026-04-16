@@ -132,7 +132,7 @@ export const config = convict({
     apiEndpoint: {
       doc: 'Endpoint for the backend API',
       format: String,
-      default: 'http://localhost:3001',
+      default: 'http://localhost:3012',
       env: 'GRANTS_CONFIG_BROKER_API_ENDPOINT'
     }
   },
