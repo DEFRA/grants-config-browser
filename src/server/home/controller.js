@@ -1,9 +1,6 @@
 import { requestFromApi } from '../helpers/request-from-api.js'
 import { formatDateTime } from '../helpers/date-display.js'
 import nunjucks from 'nunjucks'
-import { config } from '../../config/config.js'
-
-const GRANTS_CONFIG_BROKER_ENDPOINT = config.get('backend.apiEndpoint')
 
 const buildTableHeaders = () => {
   return [
