@@ -2,6 +2,8 @@ import { requestFromApi } from '../helpers/request-from-api.js'
 import { formatDateTime } from '../helpers/date-display.js'
 import nunjucks from 'nunjucks'
 
+const MAX_ROWS = 3
+
 const buildTableHeaders = () => {
   return [
     {
@@ -33,7 +35,7 @@ const createRowsForTable = (versions) => {
     'src/server/common/templates/partials',
     'node_modules/govuk-frontend/dist'
   ])
-  return versions.map((version) => {
+  const rows = versions.map((version) => {
     const centringClass = 'vertical-middle'
     return [
       {
@@ -52,20 +54,22 @@ const createRowsForTable = (versions) => {
       }
     ]
   })
+  return { rows: rows.slice(0, MAX_ROWS), isTruncated: rows.length > MAX_ROWS }
 }
 
 const createTableData = (allVersions) => {
-  return allVersions.map((grant) => {
-    return {
-      title: grant.grant,
-      rows: createRowsForTable(grant.versions)
-    }
-  })
+  return allVersions
+    .sort((a, b) => a.grant.localeCompare(b.grant))
+    .map((grant) => {
+      const { rows, isTruncated } = createRowsForTable(grant.versions)
+      return {
+        title: grant.grant,
+        rows,
+        isTruncated
+      }
+    })
 }
 
-/**
- * A GDS styled example home page controller.
- */
 export const homeController = {
   async handler(request, h) {
     //go fetch metadata from the config broker
