@@ -13,6 +13,9 @@
           <h2 class="govuk-heading-m govuk-!-static-margin-top-2">
             <a href="/grant?grant={{table.title}}">{{table.title}}</a>
           </h2>
+          {% if table.isTruncated %}
+            (Latest 3 versions shown, click for more)
+          {% endif %}
 
           <div>
             {{ govukTable({

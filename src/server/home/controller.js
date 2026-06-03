@@ -33,7 +33,7 @@ const createRowsForTable = (versions) => {
     'src/server/common/templates/partials',
     'node_modules/govuk-frontend/dist'
   ])
-  return versions.map((version) => {
+  const rows = versions.map((version) => {
     const centringClass = 'vertical-middle'
     return [
       {
@@ -52,20 +52,22 @@ const createRowsForTable = (versions) => {
       }
     ]
   })
+  return { rows: rows.slice(0, 3), isTruncated: rows.length > 3 }
 }
 
 const createTableData = (allVersions) => {
-  return allVersions.map((grant) => {
-    return {
-      title: grant.grant,
-      rows: createRowsForTable(grant.versions)
-    }
-  })
+  return allVersions
+    .sort((a, b) => a.grant.localeCompare(b.grant))
+    .map((grant) => {
+      const { rows, isTruncated } = createRowsForTable(grant.versions)
+      return {
+        title: grant.grant,
+        rows,
+        isTruncated
+      }
+    })
 }
 
-/**
- * A GDS styled example home page controller.
- */
 export const homeController = {
   async handler(request, h) {
     //go fetch metadata from the config broker
