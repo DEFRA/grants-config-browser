@@ -2,6 +2,8 @@ import { requestFromApi } from '../helpers/request-from-api.js'
 import { formatDateTime } from '../helpers/date-display.js'
 import nunjucks from 'nunjucks'
 
+const MAX_ROWS = 3
+
 const buildTableHeaders = () => {
   return [
     {
@@ -52,7 +54,7 @@ const createRowsForTable = (versions) => {
       }
     ]
   })
-  return { rows: rows.slice(0, 3), isTruncated: rows.length > 3 }
+  return { rows: rows.slice(0, MAX_ROWS), isTruncated: rows.length > MAX_ROWS }
 }
 
 const createTableData = (allVersions) => {
