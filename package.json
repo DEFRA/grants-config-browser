@@ -36,10 +36,10 @@
   "author": "Defra DDTS",
   "license": "OGL-UK-3.0",
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1053.0",
-    "@aws-sdk/client-sqs": "3.1053.0",
-    "@aws-sdk/s3-request-presigner": "3.1053.0",
-    "@defra/cdp-auditing": "0.6.0",
+    "@aws-sdk/client-s3": "3.1055.0",
+    "@aws-sdk/client-sqs": "3.1055.0",
+    "@aws-sdk/s3-request-presigner": "3.1055.0",
+    "@defra/cdp-auditing": "0.6.1",
     "@defra/cdp-metrics": "0.6.0",
     "@defra/hapi-secure-context": "0.4.0",
     "@defra/hapi-tracing": "1.30.0",
@@ -62,7 +62,7 @@
     "govuk-frontend": "5.13.0",
     "hapi-pino": "13.0.0",
     "hapi-pulse": "3.0.1",
-    "ioredis": "5.10.1",
+    "ioredis": "5.11.0",
     "joi": "18.2.1",
     "lodash": "4.18.1",
     "node-fetch": "3.3.2",
@@ -93,12 +93,12 @@
     "source-map-loader": "5.0.0",
     "stylelint": "16.26.1",
     "stylelint-config-gds": "2.0.0",
-    "terser-webpack-plugin": "5.6.0",
+    "terser-webpack-plugin": "5.6.1",
     "vitest": "4.1.7",
     "vitest-fetch-mock": "0.4.5",
     "webpack": "5.107.2",
     "webpack-assets-manifest": "6.5.2",
-    "webpack-cli": "7.0.2"
+    "webpack-cli": "7.0.3"
   },
   "overrides": {
     "tmp": "0.2.5"
