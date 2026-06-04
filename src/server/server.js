@@ -15,6 +15,10 @@ import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './common/helpers/content-security-policy.js'
 import { metrics } from '@defra/cdp-metrics'
+import {
+  configureAndStartMessaging,
+  stopMessageSubscriber
+} from './messaging/inbound/new-config-message-queue-subscriber.js'
 
 export async function createServer() {
   setupProxy()
@@ -64,10 +68,18 @@ export async function createServer() {
     nunjucksConfig,
     Scooter,
     contentSecurityPolicy,
-    router // Register all the controllers/routes defined in src/server/router.js
+    router
   ])
 
   server.ext('onPreResponse', catchAll)
+
+  server.events.on('start', async () => {
+    await configureAndStartMessaging()
+  })
+
+  server.events.on('stop', async () => {
+    await stopMessageSubscriber()
+  })
 
   return server
 }

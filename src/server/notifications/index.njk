@@ -1,0 +1,53 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/details/macro.njk" import govukDetails %}
+
+{% block content %}
+  {{ appHeading({
+    text: heading,
+    caption: "grants-config-browser"
+  }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        {% if messages.length %}
+          {% for message in messages %}
+            <div class="govuk-!-margin-bottom-8">
+              <h2 class="govuk-heading-m">New Config Available Notification:</h2>
+              <h3 class="govuk-caption-m">Attributes</h3>
+              {% set summaryRows = [] %}
+              {% for key, value in message.attributes %}
+                {% set summaryRows = (summaryRows.push({
+                  key: { text: key },
+                  value: { text: value }
+                }), summaryRows) %}
+              {% endfor %}
+
+              {{ govukSummaryList({
+                rows: summaryRows
+              }) }}
+
+              {% set fileList %}
+                <ul class="govuk-list govuk-list--bullet">
+                  {% for file in message.body %}
+                    <li>{{ file }}</li>
+                  {% endfor %}
+                </ul>
+              {% endset %}
+
+              {{ govukDetails({
+                summaryText: "View message body (file manifest of " + message.body.length + " files)",
+                html: fileList
+              }) }}
+              <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+            </div>
+          {% endfor %}
+        {% else %}
+          <p>No recent notifications received.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
