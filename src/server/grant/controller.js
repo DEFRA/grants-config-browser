@@ -83,7 +83,16 @@ export const grantController = {
       pageTitle: 'Home',
       heading: `${grant} config versions`,
       versionTableRows: allTables ?? [],
-      headers: buildTableHeaders()
+      headers: buildTableHeaders(),
+      breadcrumbs: [
+        {
+          text: 'Home',
+          href: '/'
+        },
+        {
+          text: grant
+        }
+      ]
     })
   }
 }

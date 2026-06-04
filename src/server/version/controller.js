@@ -50,7 +50,20 @@ export const versionController = {
       status: thisVersion.status,
       version,
       versionTableRows: allFiles ?? [],
-      headers: buildTableHeaders()
+      headers: buildTableHeaders(),
+      breadcrumbs: [
+        {
+          text: 'Home',
+          href: '/'
+        },
+        {
+          text: grant,
+          href: `/grant?grant=${grant}`
+        },
+        {
+          text: version
+        }
+      ]
     })
   }
 }

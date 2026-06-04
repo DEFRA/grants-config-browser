@@ -96,7 +96,7 @@ export const config = convict({
       format: Array,
       default: isProduction
         ? ['req.headers.authorization', 'req.headers.cookie', 'res.headers']
-        : ['req']
+        : ['req', 'res.headers']
     }
   },
   httpProxy: {
@@ -199,6 +199,14 @@ export const config = convict({
         format: Boolean,
         default: true,
         env: 'FORCE_PATH_STYLE'
+      }
+    },
+    sqs: {
+      newConfigQueueUrl: {
+        doc: 'URL of the SQS queue to receive new config notification requests from',
+        format: String,
+        default: '#',
+        env: 'CONFIG_VERSION_QUEUE_URL'
       }
     }
   },

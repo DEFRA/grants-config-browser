@@ -58,6 +58,11 @@ describe('context and cache', () => {
               current: false,
               text: 'About',
               href: '/about'
+            },
+            {
+              current: false,
+              text: 'Notifications',
+              href: '/notifications'
             }
           ],
           serviceName: 'grants-config-browser',
@@ -147,6 +152,11 @@ describe('context and cache', () => {
               current: false,
               text: 'About',
               href: '/about'
+            },
+            {
+              current: false,
+              text: 'Notifications',
+              href: '/notifications'
             }
           ],
           serviceName: 'grants-config-browser',
