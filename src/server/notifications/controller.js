@@ -6,7 +6,7 @@ let redisClient
 
 const getRedisClient = async () => {
   if (!redisClient) {
-    redisClient = await buildRedisClient(config.get('redis'))
+    redisClient = buildRedisClient(config.get('redis'))
   }
   return redisClient
 }
