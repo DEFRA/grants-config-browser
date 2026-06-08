@@ -1,9 +1,4 @@
-import {
-  DeleteMessageCommand,
-  ReceiveMessageCommand,
-  SendMessageCommand,
-  SQSClient
-} from '@aws-sdk/client-sqs'
+import { DeleteMessageCommand, ReceiveMessageCommand, SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { setTimeout } from 'node:timers/promises'
 import { withTraceParent } from './trace-parent.js'
 const DEFAULT_POLL_TIMEOUT_MS = 30000
@@ -14,8 +9,7 @@ export class SqsSubscriber {
     this.onMessage = options.onMessage
     this.logger = options.logger
     this.isRunning = false
-    this.timeoutOnPollErrorMs =
-      options.timeoutOnErrorMs || DEFAULT_POLL_TIMEOUT_MS
+    this.timeoutOnPollErrorMs = options.timeoutOnErrorMs || DEFAULT_POLL_TIMEOUT_MS
 
     this.sqsClient = new SQSClient({
       region: options.region,
@@ -40,9 +34,7 @@ export class SqsSubscriber {
         const messages = await this.getMessages()
         await Promise.all(messages.map((m) => this.processMessage(m)))
       } catch (err) {
-        this.logger.error(
-          `Error polling SQS queue ${this.queueUrl}: ${err.message}`
-        )
+        this.logger.error(`Error polling SQS queue ${this.queueUrl}: ${err.message}`)
         await setTimeout(this.timeoutOnPollErrorMs)
       }
     }
@@ -56,14 +48,11 @@ export class SqsSubscriber {
     try {
       const body = JSON.parse(message.Body)
       await withTraceParent(body.traceparent, () =>
-        this.onMessage(body, this.extractMessageAttributes(message))
+        this.onMessage(body, this.extractMessageAttributes(message), message.Attributes.SentTimestamp)
       )
       await this.deleteMessage(message)
     } catch (error) {
-      this.logger.error(
-        { error },
-        `Error processing SQS message ${message.MessageId}`
-      )
+      this.logger.error({ error }, `Error processing SQS message ${message.MessageId}`)
     }
   }
 

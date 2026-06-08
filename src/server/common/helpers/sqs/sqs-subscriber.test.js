@@ -1,9 +1,4 @@
-import {
-  DeleteMessageCommand,
-  ReceiveMessageCommand,
-  SendMessageCommand,
-  SQSClient
-} from '@aws-sdk/client-sqs'
+import { DeleteMessageCommand, ReceiveMessageCommand, SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { SqsSubscriber } from './sqs-subscriber.js'
 
 const mockLogger = {
@@ -33,9 +28,7 @@ beforeEach(async () => {
 
 describe('constructor', () => {
   it('instantiates with options', () => {
-    expect(consumer.queueUrl).toBe(
-      'https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue'
-    )
+    expect(consumer.queueUrl).toBe('https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue')
     expect(consumer.onMessage).toBe(onMessage)
     expect(consumer.isRunning).toBe(false)
     expect(SQSClient).toHaveBeenCalledWith({
@@ -82,9 +75,7 @@ describe('error on polling', () => {
 
     await consumer.start()
 
-    expect(timeCaptures[1] - timeCaptures[0]).toBeGreaterThanOrEqual(
-      timeoutSleepMs
-    )
+    expect(timeCaptures[1] - timeCaptures[0]).toBeGreaterThanOrEqual(timeoutSleepMs)
     expect(mockLogger.error).toHaveBeenCalledWith(
       'Error polling SQS queue https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue: Test polling error'
     )
@@ -111,6 +102,9 @@ describe('message processing', () => {
             BinaryValue: new TextEncoder().encode('Value3'),
             DataType: 'Binary'
           }
+        },
+        Attributes: {
+          SentTimestamp: '1780599163000'
         }
       }
     ]
@@ -148,7 +142,8 @@ describe('message processing', () => {
         Attribute1: 'Value1',
         Attribute2: '1',
         Attribute3: new TextEncoder().encode('Value3')
-      }
+      },
+      '1780599163000'
     )
 
     expect(DeleteMessageCommand).toHaveBeenCalledWith({
@@ -162,7 +157,10 @@ describe('message processing', () => {
       {
         MessageId: 'msg-1',
         Body: '{ "message" : "Test message 1" }',
-        ReceiptHandle: 'receipt-1'
+        ReceiptHandle: 'receipt-1',
+        Attributes: {
+          SentTimestamp: '1780599163000'
+        }
       }
     ]
 
@@ -185,10 +183,7 @@ describe('message processing', () => {
 
     await consumer.start()
 
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      { error: err },
-      'Error processing SQS message msg-1'
-    )
+    expect(mockLogger.error).toHaveBeenCalledWith({ error: err }, 'Error processing SQS message msg-1')
   })
 })
 
@@ -205,9 +200,7 @@ describe('sendMessage', () => {
       QueueUrl: consumer.queueUrl,
       MessageBody: '{"grant":"grant-1","version":"1.2.3"}'
     })
-    expect(consumer.sqsClient.send).toHaveBeenCalledWith(
-      expect.any(SendMessageCommand)
-    )
+    expect(consumer.sqsClient.send).toHaveBeenCalledWith(expect.any(SendMessageCommand))
   })
 })
 

@@ -1,11 +1,6 @@
 import { S3Client } from '@aws-sdk/client-s3'
 
-export function createS3Client({
-  region,
-  endpoint,
-  forcePathStyle,
-  credentials = undefined
-}) {
+export function createS3Client({ region, endpoint, forcePathStyle, credentials = undefined }) {
   const config = {
     region,
     endpoint,

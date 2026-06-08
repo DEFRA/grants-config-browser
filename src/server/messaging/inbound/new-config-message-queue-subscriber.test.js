@@ -1,7 +1,4 @@
-import {
-  configureAndStartMessaging,
-  stopMessageSubscriber
-} from './new-config-message-queue-subscriber.js'
+import { configureAndStartMessaging, stopMessageSubscriber } from './new-config-message-queue-subscriber.js'
 import { createLogger } from '../../common/helpers/logging/logger.js'
 import { SqsSubscriber } from '../../common/helpers/sqs/sqs-subscriber.js'
 import { processInputMessage } from './process-message.js'
@@ -14,10 +11,7 @@ vi.mock('./process-message.js')
 describe('MessageRequestQueueSubscriber', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    config.set(
-      'aws.sqs.newConfigQueueUrl',
-      'http://localhost:4576/queue/config-input-queue'
-    )
+    config.set('aws.sqs.newConfigQueueUrl', 'http://localhost:4576/queue/config-input-queue')
     config.set('aws.region', 'eu-west-2')
     config.set('aws.endpointUrl', 'http://localhost:4576')
   })
@@ -47,7 +41,7 @@ describe('MessageRequestQueueSubscriber', () => {
 
       const onMessage = await configureAndStartMessaging()
 
-      await onMessage({ claimRef: 'ABC123', sbi: '123456789' }, {})
+      await onMessage({ claimRef: 'ABC123', sbi: '123456789' }, {}, '1780599163000')
 
       expect(mockLogger.info).toHaveBeenCalledTimes(1)
       expect(processInputMessage).toHaveBeenCalledTimes(1)

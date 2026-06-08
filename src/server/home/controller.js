@@ -31,10 +31,7 @@ const buildTableHeaders = () => {
 }
 
 const createRowsForTable = (versions) => {
-  const env = nunjucks.configure([
-    'src/server/common/templates/partials',
-    'node_modules/govuk-frontend/dist'
-  ])
+  const env = nunjucks.configure(['src/server/common/templates/partials', 'node_modules/govuk-frontend/dist'])
   const rows = versions.map((version) => {
     const centringClass = 'vertical-middle'
     return [

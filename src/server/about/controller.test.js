@@ -20,6 +20,7 @@ describe('#aboutController', () => {
     })
 
     expect(result).toEqual(expect.stringContaining('About |'))
+    expect(result).toEqual(expect.stringContaining('view the async-api documentation'))
     expect(statusCode).toBe(statusCodes.ok)
   })
 })

@@ -5,7 +5,7 @@
 {% block content %}
   {{ appHeading({
     text: heading,
-    caption: "grants-config-browser"
+    caption: "Recently received notifications"
   }) }}
 
   <div class="govuk-grid-row">
@@ -14,7 +14,7 @@
         {% if messages.length %}
           {% for message in messages %}
             <div class="govuk-!-margin-bottom-8">
-              <h2 class="govuk-heading-m">New Config Available Notification:</h2>
+              <h2 class="govuk-heading-m">New Config Available Notification ({{ message.sentTimestamp }}):</h2>
               <h3 class="govuk-caption-m">Attributes</h3>
               {% set summaryRows = [] %}
               {% for key, value in message.attributes %}

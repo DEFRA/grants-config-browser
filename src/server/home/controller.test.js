@@ -63,11 +63,7 @@ describe('#homeController', () => {
 
     const $ = load(result)
 
-    const orderedGrants = $('h2.govuk-heading-m a')
-      .text()
-      .trim()
-      .split('|')
-      .filter(Boolean)
+    const orderedGrants = $('h2.govuk-heading-m a').text().trim().split('|').filter(Boolean)
     expect(orderedGrants).toHaveLength(3)
     expect(orderedGrants).toEqual(['agrant', 'grant1', 'zgrant'])
 

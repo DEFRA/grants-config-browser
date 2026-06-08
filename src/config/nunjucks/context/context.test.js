@@ -72,17 +72,13 @@ describe('context and cache', () => {
 
       describe('With valid asset path', () => {
         test('Should provide expected asset path', () => {
-          expect(contextResult.getAssetPath('application.js')).toBe(
-            '/public/javascripts/application.js'
-          )
+          expect(contextResult.getAssetPath('application.js')).toBe('/public/javascripts/application.js')
         })
       })
 
       describe('With invalid asset path', () => {
         test('Should provide expected asset', () => {
-          expect(contextResult.getAssetPath('an-image.png')).toBe(
-            '/public/an-image.png'
-          )
+          expect(contextResult.getAssetPath('an-image.png')).toBe('/public/an-image.png')
         })
       })
     })
@@ -101,9 +97,7 @@ describe('context and cache', () => {
       })
 
       test('Should log that the Webpack Manifest file is not available', () => {
-        expect(mockLoggerError).toHaveBeenCalledWith(
-          'Webpack assets-manifest.json not found'
-        )
+        expect(mockLoggerError).toHaveBeenCalledWith('Webpack assets-manifest.json not found')
       })
     })
   })

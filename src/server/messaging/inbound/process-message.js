@@ -11,20 +11,16 @@ const getRedisClient = async () => {
   return redisClient
 }
 
-export const processInputMessage = async (message, logger, attributes) => {
+export const processInputMessage = async (message, logger, attributes, sentTimestamp) => {
   try {
     const { grant, version, status } = attributes
 
-    logger.info(
-      `Received New Config notification for grant: ${grant}, version: ${version}, status: ${status}`
-    )
+    logger.info(`Received New Config notification for grant: ${grant}, version: ${version}, status: ${status}`)
 
     const client = await getRedisClient()
     const existingMessagesJson = await client.get(REDIS_MESSAGES_KEY)
-    const messages = existingMessagesJson
-      ? JSON.parse(existingMessagesJson)
-      : []
-    messages.push({ attributes, body: message })
+    const messages = existingMessagesJson ? JSON.parse(existingMessagesJson) : []
+    messages.push({ attributes, body: message, sentTimestamp })
     await client.set(REDIS_MESSAGES_KEY, JSON.stringify(messages))
   } catch (err) {
     logger.error(err, 'Unable to process Input request:')
