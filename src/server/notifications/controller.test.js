@@ -44,7 +44,18 @@ describe('#notificationsController', () => {
           status: 'published',
           user: 'test-user'
         },
-        body: ['file1.txt', 'file2.txt']
+        body: ['file1.txt', 'file2.txt'],
+        sentTimestamp: '1780577563000'
+      },
+      {
+        attributes: {
+          grant: 'test-grant',
+          version: '1.1.0',
+          status: 'published',
+          user: 'test-user'
+        },
+        body: ['file1.txt', 'file2.txt'],
+        sentTimestamp: '1780599163000'
       }
     ]
     mockRedisClient.get.mockResolvedValueOnce(JSON.stringify(messages))
@@ -57,7 +68,7 @@ describe('#notificationsController', () => {
     expect(result).toEqual(expect.stringContaining('grant'))
     expect(result).toEqual(expect.stringContaining('test-grant'))
     expect(result).toEqual(expect.stringContaining('version'))
-    expect(result).toEqual(expect.stringContaining('1.0.0'))
+    expect(result).toEqual(expect.stringMatching(/1\.1\.0[\s\S]*1\.0\.0/))
     expect(result).toEqual(expect.stringContaining('status'))
     expect(result).toEqual(expect.stringContaining('published'))
     expect(result).toEqual(expect.stringContaining('user'))

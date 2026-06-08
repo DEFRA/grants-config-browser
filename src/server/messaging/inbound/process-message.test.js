@@ -33,12 +33,14 @@ describe('Process Message test', () => {
     const message = ['file1.txt']
     mockRedisClient.get.mockResolvedValueOnce(null)
 
-    await processInputMessage(message, mockLogger, attributes)
+    await processInputMessage(message, mockLogger, attributes, '1780599163000')
 
     expect(mockRedisClient.get).toHaveBeenCalledWith('sqs-messages')
     expect(mockRedisClient.set).toHaveBeenCalledWith(
       'sqs-messages',
-      JSON.stringify([{ attributes, body: message }])
+      JSON.stringify([
+        { attributes, body: message, sentTimestamp: '1780599163000' }
+      ])
     )
   })
 
@@ -52,12 +54,15 @@ describe('Process Message test', () => {
       JSON.stringify([{ existing: 'msg' }])
     )
 
-    await processInputMessage(message, mockLogger, attributes)
+    await processInputMessage(message, mockLogger, attributes, '1780599163000')
 
     expect(mockRedisClient.get).toHaveBeenCalledWith('sqs-messages')
     expect(mockRedisClient.set).toHaveBeenCalledWith(
       'sqs-messages',
-      JSON.stringify([{ existing: 'msg' }, { attributes, body: message }])
+      JSON.stringify([
+        { existing: 'msg' },
+        { attributes, body: message, sentTimestamp: '1780599163000' }
+      ])
     )
   })
 

@@ -47,7 +47,11 @@ describe('MessageRequestQueueSubscriber', () => {
 
       const onMessage = await configureAndStartMessaging()
 
-      await onMessage({ claimRef: 'ABC123', sbi: '123456789' }, {})
+      await onMessage(
+        { claimRef: 'ABC123', sbi: '123456789' },
+        {},
+        '1780599163000'
+      )
 
       expect(mockLogger.info).toHaveBeenCalledTimes(1)
       expect(processInputMessage).toHaveBeenCalledTimes(1)

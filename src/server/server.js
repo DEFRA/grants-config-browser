@@ -71,6 +71,27 @@ export async function createServer() {
     router
   ])
 
+  server.route({
+    method: 'GET',
+    path: '/async-documentation/{param*}',
+    handler: {
+      directory: {
+        path: path.resolve(config.get('root'), 'src/server/asyncapidocs'),
+        index: ['index.html']
+      }
+    },
+    options: {
+      plugins: {
+        blankie: {
+          ...contentSecurityPolicy.options,
+          scriptSrc: contentSecurityPolicy.options.scriptSrc.concat([
+            "'unsafe-eval'" // Needed for docs page only
+          ])
+        }
+      }
+    }
+  })
+
   server.ext('onPreResponse', catchAll)
 
   server.events.on('start', async () => {

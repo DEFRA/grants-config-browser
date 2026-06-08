@@ -56,7 +56,11 @@ export class SqsSubscriber {
     try {
       const body = JSON.parse(message.Body)
       await withTraceParent(body.traceparent, () =>
-        this.onMessage(body, this.extractMessageAttributes(message))
+        this.onMessage(
+          body,
+          this.extractMessageAttributes(message),
+          message.Attributes.SentTimestamp
+        )
       )
       await this.deleteMessage(message)
     } catch (error) {

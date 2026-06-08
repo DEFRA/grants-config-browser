@@ -111,6 +111,9 @@ describe('message processing', () => {
             BinaryValue: new TextEncoder().encode('Value3'),
             DataType: 'Binary'
           }
+        },
+        Attributes: {
+          SentTimestamp: '1780599163000'
         }
       }
     ]
@@ -148,7 +151,8 @@ describe('message processing', () => {
         Attribute1: 'Value1',
         Attribute2: '1',
         Attribute3: new TextEncoder().encode('Value3')
-      }
+      },
+      '1780599163000'
     )
 
     expect(DeleteMessageCommand).toHaveBeenCalledWith({
@@ -162,7 +166,10 @@ describe('message processing', () => {
       {
         MessageId: 'msg-1',
         Body: '{ "message" : "Test message 1" }',
-        ReceiptHandle: 'receipt-1'
+        ReceiptHandle: 'receipt-1',
+        Attributes: {
+          SentTimestamp: '1780599163000'
+        }
       }
     ]
 

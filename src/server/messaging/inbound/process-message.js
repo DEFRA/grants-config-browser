@@ -11,7 +11,12 @@ const getRedisClient = async () => {
   return redisClient
 }
 
-export const processInputMessage = async (message, logger, attributes) => {
+export const processInputMessage = async (
+  message,
+  logger,
+  attributes,
+  sentTimestamp
+) => {
   try {
     const { grant, version, status } = attributes
 
@@ -24,7 +29,7 @@ export const processInputMessage = async (message, logger, attributes) => {
     const messages = existingMessagesJson
       ? JSON.parse(existingMessagesJson)
       : []
-    messages.push({ attributes, body: message })
+    messages.push({ attributes, body: message, sentTimestamp })
     await client.set(REDIS_MESSAGES_KEY, JSON.stringify(messages))
   } catch (err) {
     logger.error(err, 'Unable to process Input request:')
