@@ -22,9 +22,7 @@ describe('#errors', () => {
       url: '/non-existent-path'
     })
 
-    expect(result).toEqual(
-      expect.stringContaining('Page not found | grants-config-browser')
-    )
+    expect(result).toEqual(expect.stringContaining('Page not found | grants-config-browser'))
     expect(statusCode).toBe(statusCodes.notFound)
   })
 })
@@ -119,8 +117,6 @@ describe('#catchAll', () => {
       heading: statusCodes.internalServerError,
       message: 'Something went wrong'
     })
-    expect(mockToolkitCode).toHaveBeenCalledWith(
-      statusCodes.internalServerError
-    )
+    expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.internalServerError)
   })
 })

@@ -65,11 +65,8 @@ describe('Broker Auth Helper', () => {
       it('should return base headers when no token is configured', async () => {
         setupMockConfig('', TEST_ENCRYPTION_KEY)
 
-        const { createApiHeadersForConfigBroker } =
-          await importConfigBrokerHelper()
-        const headers = createApiHeadersForConfigBroker(
-          HEADER_OBJECTS.CONTENT_TYPE_JSON
-        )
+        const { createApiHeadersForConfigBroker } = await importConfigBrokerHelper()
+        const headers = createApiHeadersForConfigBroker(HEADER_OBJECTS.CONTENT_TYPE_JSON)
 
         expect(mockConfigGet).toHaveBeenCalledWith(CONFIG_AUTH_TOKEN)
         expect(headers).toEqual(HEADER_OBJECTS.CONTENT_TYPE_JSON)
@@ -81,11 +78,8 @@ describe('Broker Auth Helper', () => {
       it('should add Authorization header when token is configured', async () => {
         setupMockConfig(MOCK_TOKENS.DEFAULT)
 
-        const { createApiHeadersForConfigBroker } =
-          await importConfigBrokerHelper()
-        const headers = createApiHeadersForConfigBroker(
-          HEADER_OBJECTS.CONTENT_TYPE_JSON
-        )
+        const { createApiHeadersForConfigBroker } = await importConfigBrokerHelper()
+        const headers = createApiHeadersForConfigBroker(HEADER_OBJECTS.CONTENT_TYPE_JSON)
 
         expect(mockConfigGet).toHaveBeenCalledWith(CONFIG_AUTH_TOKEN)
         expect(headers).toHaveProperty('Content-Type', 'application/json')
@@ -94,16 +88,13 @@ describe('Broker Auth Helper', () => {
 
         const base64Part = headers.Authorization.replace('Bearer ', '')
         const decoded = Buffer.from(base64Part, 'base64').toString('utf-8')
-        expect(decoded).toMatch(
-          /^([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*)$/
-        )
+        expect(decoded).toMatch(/^([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*)$/)
       })
 
       it('should work with empty base headers', async () => {
         setupMockConfig(MOCK_TOKENS.ALTERNATIVE)
 
-        const { createApiHeadersForConfigBroker } =
-          await importConfigBrokerHelper()
+        const { createApiHeadersForConfigBroker } = await importConfigBrokerHelper()
         const headers = createApiHeadersForConfigBroker(undefined)
 
         expect(mockConfigGet).toHaveBeenCalledWith(CONFIG_AUTH_TOKEN)
@@ -112,9 +103,7 @@ describe('Broker Auth Helper', () => {
 
         const base64Part = headers.Authorization.replace('Bearer ', '')
         const decoded = Buffer.from(base64Part, 'base64').toString('utf-8')
-        expect(decoded).toMatch(
-          /^([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*)$/
-        )
+        expect(decoded).toMatch(/^([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*)$/)
       })
 
       it('should preserve all base headers when adding auth', async () => {
@@ -125,27 +114,18 @@ describe('Broker Auth Helper', () => {
         }
 
         const { createAuthenticatedHeaders } = await importConfigBrokerHelper()
-        const headers = createAuthenticatedHeaders(
-          MOCK_TOKENS.THIRD,
-          TEST_ENCRYPTION_KEY,
-          baseHeaders
-        )
+        const headers = createAuthenticatedHeaders(MOCK_TOKENS.THIRD, TEST_ENCRYPTION_KEY, baseHeaders)
 
         expect(mockConfigGet).toHaveBeenCalledWith(CONFIG_AUTH_TOKEN)
         expect(headers).toHaveProperty('Content-Type', CONTENT_TYPE_JSON)
         expect(headers).toHaveProperty('User-Agent', TEST_HEADERS.USER_AGENT)
-        expect(headers).toHaveProperty(
-          'X-Custom-Header',
-          TEST_HEADERS.CUSTOM_VALUE
-        )
+        expect(headers).toHaveProperty('X-Custom-Header', TEST_HEADERS.CUSTOM_VALUE)
         expect(headers).toHaveProperty('Authorization')
         expect(headers.Authorization).toMatch(/^Bearer [A-Za-z0-9+/]+=*$/)
 
         const base64Part = headers.Authorization.replace('Bearer ', '')
         const decoded = Buffer.from(base64Part, 'base64').toString('utf-8')
-        expect(decoded).toMatch(
-          /^([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*)$/
-        )
+        expect(decoded).toMatch(/^([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*)$/)
       })
     })
 
@@ -154,8 +134,7 @@ describe('Broker Auth Helper', () => {
 
       setupMockConfig(MOCK_TOKENS.MUTATION_TEST)
 
-      const { createApiHeadersForConfigBroker } =
-        await importConfigBrokerHelper()
+      const { createApiHeadersForConfigBroker } = await importConfigBrokerHelper()
       const headers = createApiHeadersForConfigBroker(baseHeaders)
 
       expect(baseHeaders).toEqual(HEADER_OBJECTS.CONTENT_TYPE_JSON)
@@ -166,8 +145,7 @@ describe('Broker Auth Helper', () => {
     it('should handle null token correctly', async () => {
       setupMockConfig(null, TEST_ENCRYPTION_KEY)
 
-      const { createApiHeadersForConfigBroker } =
-        await importConfigBrokerHelper()
+      const { createApiHeadersForConfigBroker } = await importConfigBrokerHelper()
       const headers = createApiHeadersForConfigBroker({
         'Content-Type': CONTENT_TYPE_JSON
       })
@@ -181,8 +159,7 @@ describe('Broker Auth Helper', () => {
     it('should return headers with Content-Type and no auth when no token configured', async () => {
       setupMockConfig('', TEST_ENCRYPTION_KEY)
 
-      const { createApiHeadersForConfigBroker } =
-        await importConfigBrokerHelper()
+      const { createApiHeadersForConfigBroker } = await importConfigBrokerHelper()
       const headers = createApiHeadersForConfigBroker()
 
       expect(headers).toEqual(HEADER_OBJECTS.CONTENT_TYPE_JSON)
@@ -191,8 +168,7 @@ describe('Broker Auth Helper', () => {
     it('should return headers with Content-Type and Authorization when token configured', async () => {
       setupMockConfig(MOCK_TOKENS.API)
 
-      const { createApiHeadersForConfigBroker } =
-        await importConfigBrokerHelper()
+      const { createApiHeadersForConfigBroker } = await importConfigBrokerHelper()
       const headers = createApiHeadersForConfigBroker()
 
       expect(headers).toHaveProperty('Content-Type', 'application/json')
@@ -201,9 +177,7 @@ describe('Broker Auth Helper', () => {
 
       const base64Part = headers.Authorization.replace('Bearer ', '')
       const decoded = Buffer.from(base64Part, 'base64').toString('utf-8')
-      expect(decoded).toMatch(
-        /^([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*)$/
-      )
+      expect(decoded).toMatch(/^([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*)$/)
     })
   })
 
@@ -211,17 +185,14 @@ describe('Broker Auth Helper', () => {
     it('should encode encrypted token with blank username correctly', async () => {
       setupMockConfig(MOCK_TOKENS.SECRET)
 
-      const { createApiHeadersForConfigBroker } =
-        await importConfigBrokerHelper()
+      const { createApiHeadersForConfigBroker } = await importConfigBrokerHelper()
       const headers = createApiHeadersForConfigBroker()
       const authHeader = headers.Authorization
 
       const base64Part = authHeader.replace('Bearer ', '')
       const decoded = Buffer.from(base64Part, 'base64').toString('utf-8')
 
-      expect(decoded).toMatch(
-        /^([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*)$/
-      )
+      expect(decoded).toMatch(/^([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*):([A-Za-z0-9+/]+=*)$/)
     })
   })
 
@@ -239,11 +210,8 @@ describe('Broker Auth Helper', () => {
 
       mockConfigGet.mockImplementation((key) => configValues[key] || null)
 
-      const { createApiHeadersForConfigBroker } =
-        await importConfigBrokerHelper()
-      const headers = createApiHeadersForConfigBroker(
-        HEADER_OBJECTS.CONTENT_TYPE_JSON
-      )
+      const { createApiHeadersForConfigBroker } = await importConfigBrokerHelper()
+      const headers = createApiHeadersForConfigBroker(HEADER_OBJECTS.CONTENT_TYPE_JSON)
 
       expect(mockConfigGet).toHaveBeenCalledWith(CONFIG_AUTH_TOKEN)
       expect(mockConfigGet).toHaveBeenCalledWith(CONFIG_ENCRYPTION_KEY)
@@ -254,9 +222,7 @@ describe('Broker Auth Helper', () => {
       const decoded = Buffer.from(base64Part, 'base64').toString('utf-8')
       const tokenPart = decoded.substring(1)
 
-      expect(tokenPart).toMatch(
-        /^[A-Za-z0-9+/]+=*:[A-Za-z0-9+/]+=*:[A-Za-z0-9+/]+=*$/
-      )
+      expect(tokenPart).toMatch(/^[A-Za-z0-9+/]+=*:[A-Za-z0-9+/]+=*:[A-Za-z0-9+/]+=*$/)
     })
   })
 })

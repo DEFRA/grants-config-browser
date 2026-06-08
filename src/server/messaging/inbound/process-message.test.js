@@ -38,9 +38,7 @@ describe('Process Message test', () => {
     expect(mockRedisClient.get).toHaveBeenCalledWith('sqs-messages')
     expect(mockRedisClient.set).toHaveBeenCalledWith(
       'sqs-messages',
-      JSON.stringify([
-        { attributes, body: message, sentTimestamp: '1780599163000' }
-      ])
+      JSON.stringify([{ attributes, body: message, sentTimestamp: '1780599163000' }])
     )
   })
 
@@ -50,19 +48,14 @@ describe('Process Message test', () => {
       version: '1.0.0'
     }
     const message = ['file1.txt']
-    mockRedisClient.get.mockResolvedValueOnce(
-      JSON.stringify([{ existing: 'msg' }])
-    )
+    mockRedisClient.get.mockResolvedValueOnce(JSON.stringify([{ existing: 'msg' }]))
 
     await processInputMessage(message, mockLogger, attributes, '1780599163000')
 
     expect(mockRedisClient.get).toHaveBeenCalledWith('sqs-messages')
     expect(mockRedisClient.set).toHaveBeenCalledWith(
       'sqs-messages',
-      JSON.stringify([
-        { existing: 'msg' },
-        { attributes, body: message, sentTimestamp: '1780599163000' }
-      ])
+      JSON.stringify([{ existing: 'msg' }, { attributes, body: message, sentTimestamp: '1780599163000' }])
     )
   })
 
@@ -77,9 +70,6 @@ describe('Process Message test', () => {
       ['file1.txt']
     )
 
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      new Error('cache not ready'),
-      'Unable to process Input request:'
-    )
+    expect(mockLogger.error).toHaveBeenCalledWith(new Error('cache not ready'), 'Unable to process Input request:')
   })
 })

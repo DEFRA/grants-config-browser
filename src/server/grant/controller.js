@@ -30,10 +30,7 @@ const buildTableHeaders = () => {
 }
 
 const createRowsForTable = (versions, grant) => {
-  const env = nunjucks.configure([
-    'src/server/common/templates/partials',
-    'node_modules/govuk-frontend/dist'
-  ])
+  const env = nunjucks.configure(['src/server/common/templates/partials', 'node_modules/govuk-frontend/dist'])
   return versions.map((version) => {
     const centringClass = 'vertical-middle'
     return [
@@ -73,10 +70,7 @@ export const grantController = {
       return h.redirect('/')
     }
     //go fetch metadata from the config broker
-    const allVersions = await requestFromApi(
-      `allVersions?grant=${grant}&draft=include`,
-      request
-    )
+    const allVersions = await requestFromApi(`allVersions?grant=${grant}&draft=include`, request)
 
     const allTables = createRowsForTable(allVersions, grant)
     return h.view('grant/index', {

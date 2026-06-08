@@ -71,6 +71,22 @@ export async function createServer() {
     router
   ])
 
+  registerAsyncDocsRoute(server)
+
+  server.ext('onPreResponse', catchAll)
+
+  server.events.on('start', async () => {
+    await configureAndStartMessaging()
+  })
+
+  server.events.on('stop', async () => {
+    await stopMessageSubscriber()
+  })
+
+  return server
+}
+
+const registerAsyncDocsRoute = (server) => {
   server.route({
     method: 'GET',
     path: '/async-documentation/{param*}',
@@ -91,16 +107,4 @@ export async function createServer() {
       }
     }
   })
-
-  server.ext('onPreResponse', catchAll)
-
-  server.events.on('start', async () => {
-    await configureAndStartMessaging()
-  })
-
-  server.events.on('stop', async () => {
-    await stopMessageSubscriber()
-  })
-
-  return server
 }

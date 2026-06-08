@@ -16,20 +16,22 @@ export const notificationsController = {
   async handler(_request, h) {
     const client = await getRedisClient()
     const existingMessagesJson = await client.get(REDIS_MESSAGES_KEY)
-    const messages = (
-      existingMessagesJson ? JSON.parse(existingMessagesJson) : []
-    )
+    const messages = (existingMessagesJson ? JSON.parse(existingMessagesJson) : [])
       .sort((a, b) => {
-        if (!a.sentTimestamp && !b.sentTimestamp) return 0
-        if (!a.sentTimestamp) return 1
-        if (!b.sentTimestamp) return -1
+        if (!a.sentTimestamp && !b.sentTimestamp) {
+          return 0
+        }
+        if (!a.sentTimestamp) {
+          return 1
+        }
+        if (!b.sentTimestamp) {
+          return -1
+        }
         return b.sentTimestamp - a.sentTimestamp
       })
       .map((message) => ({
         ...message,
-        sentTimestamp: message.sentTimestamp
-          ? formatDateTime(Number(message.sentTimestamp))
-          : '_'
+        sentTimestamp: message.sentTimestamp ? formatDateTime(Number(message.sentTimestamp)) : '_'
       }))
 
     return h.view('notifications/index', {

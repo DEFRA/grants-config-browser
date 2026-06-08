@@ -41,18 +41,12 @@ export function encryptToken(token, encryptionKey) {
  * @param {object} baseHeaders - Base headers to extend
  * @returns {object} Headers with authentication if token is available
  */
-export function createAuthenticatedHeaders(
-  token,
-  encryptionKey,
-  baseHeaders = {}
-) {
+export function createAuthenticatedHeaders(token, encryptionKey, baseHeaders = {}) {
   const headers = { ...baseHeaders }
 
   if (token) {
     const encryptedToken = encryptToken(token, encryptionKey)
-    const authCredentials = Buffer.from(encryptedToken).toString(
-      ENCODING.BASE64
-    )
+    const authCredentials = Buffer.from(encryptedToken).toString(ENCODING.BASE64)
     headers.Authorization = `${AUTH_SCHEME} ${authCredentials}`
   }
 
@@ -64,11 +58,7 @@ export function createAuthenticatedHeaders(
  * @returns {object} Headers with Content-Type and authentication
  */
 export function createApiHeadersForConfigBroker() {
-  return createAuthenticatedHeaders(
-    GRANTS_CONFIG_BROKER_AUTH_TOKEN,
-    ENCRYPTION_KEY,
-    {
-      'Content-Type': CONTENT_TYPE_JSON
-    }
-  )
+  return createAuthenticatedHeaders(GRANTS_CONFIG_BROKER_AUTH_TOKEN, ENCRYPTION_KEY, {
+    'Content-Type': CONTENT_TYPE_JSON
+  })
 }

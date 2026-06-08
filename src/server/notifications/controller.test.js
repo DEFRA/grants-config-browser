@@ -29,9 +29,7 @@ describe('#notificationsController', () => {
     })
 
     expect(result).toEqual(expect.stringContaining('Notifications'))
-    expect(result).toEqual(
-      expect.stringContaining('No recent notifications received.')
-    )
+    expect(result).toEqual(expect.stringContaining('No recent notifications received.'))
     expect(statusCode).toBe(statusCodes.ok)
   })
 
@@ -56,6 +54,24 @@ describe('#notificationsController', () => {
         },
         body: ['file1.txt', 'file2.txt'],
         sentTimestamp: '1780599163000'
+      },
+      {
+        attributes: {
+          grant: 'test-grant',
+          version: '0.9.0',
+          status: 'published',
+          user: 'test-user'
+        },
+        body: ['file1.txt', 'file2.txt']
+      },
+      {
+        attributes: {
+          grant: 'test-grant',
+          version: '0.8.0',
+          status: 'published',
+          user: 'test-user'
+        },
+        body: ['file1.txt', 'file2.txt']
       }
     ]
     mockRedisClient.get.mockResolvedValueOnce(JSON.stringify(messages))
@@ -68,7 +84,7 @@ describe('#notificationsController', () => {
     expect(result).toEqual(expect.stringContaining('grant'))
     expect(result).toEqual(expect.stringContaining('test-grant'))
     expect(result).toEqual(expect.stringContaining('version'))
-    expect(result).toEqual(expect.stringMatching(/1\.1\.0[\s\S]*1\.0\.0/))
+    expect(result).toEqual(expect.stringMatching(/1\.1\.0[\s\S]*1\.0\.0[\s\S]*0\.9\.0[\s\S]*0\.8\.0/))
     expect(result).toEqual(expect.stringContaining('status'))
     expect(result).toEqual(expect.stringContaining('published'))
     expect(result).toEqual(expect.stringContaining('user'))

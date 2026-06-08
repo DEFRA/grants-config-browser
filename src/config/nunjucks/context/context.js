@@ -7,10 +7,7 @@ import { createLogger } from '../../../server/common/helpers/logging/logger.js'
 
 const logger = createLogger()
 const assetPath = config.get('assetPath')
-const manifestPath = path.join(
-  config.get('root'),
-  '.public/assets-manifest.json'
-)
+const manifestPath = path.join(config.get('root'), '.public/assets-manifest.json')
 
 let webpackManifest
 

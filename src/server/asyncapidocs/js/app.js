@@ -22,18 +22,15 @@ const schema = {
   channels: {
     configUpdateTopic: {
       address: 'arn:aws:sns:{region}:{account-id}:{topic-name}',
-      description:
-        'The SNS topic where configuration update messages are published.',
+      description: 'The SNS topic where configuration update messages are published.',
       messages: {
         configUpdateMessage: {
           name: 'ConfigUpdateMessage',
           title: 'Configuration Update Notification',
-          summary:
-            'Message sent when a grant configuration version is created or updated.',
+          summary: 'Message sent when a grant configuration version is created or updated.',
           payload: {
             type: 'array',
-            description:
-              'A list of S3 file paths that make up the configuration version.',
+            description: 'A list of S3 file paths that make up the configuration version.',
             items: {
               type: 'string',
               example: 'example-grant/1.0.0/config.json',
@@ -73,8 +70,7 @@ const schema = {
               isLatest: {
                 type: 'string',
                 enum: ['true', 'false'],
-                description:
-                  'Whether this version is the latest for the given grant and status.',
+                description: 'Whether this version is the latest for the given grant and status.',
                 example: 'true',
                 'x-parser-schema-id': '<anonymous-schema-5>'
               }
@@ -93,22 +89,17 @@ const schema = {
       action: 'receive',
       channel: '$ref:$.channels.configUpdateTopic',
       summary: 'Receive notification about a grant configuration update.',
-      messages: [
-        '$ref:$.channels.configUpdateTopic.messages.configUpdateMessage'
-      ],
+      messages: ['$ref:$.channels.configUpdateTopic.messages.configUpdateMessage'],
       'x-parser-unique-object-id': 'receiveConfigUpdate'
     }
   },
   components: {
     messages: {
-      ConfigUpdateMessage:
-        '$ref:$.channels.configUpdateTopic.messages.configUpdateMessage'
+      ConfigUpdateMessage: '$ref:$.channels.configUpdateTopic.messages.configUpdateMessage'
     },
     schemas: {
-      Manifest:
-        '$ref:$.channels.configUpdateTopic.messages.configUpdateMessage.payload',
-      MessageAttributes:
-        '$ref:$.channels.configUpdateTopic.messages.configUpdateMessage.headers'
+      Manifest: '$ref:$.channels.configUpdateTopic.messages.configUpdateMessage.payload',
+      MessageAttributes: '$ref:$.channels.configUpdateTopic.messages.configUpdateMessage.headers'
     }
   },
   'x-parser-spec-parsed': true,
