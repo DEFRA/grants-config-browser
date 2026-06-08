@@ -8,6 +8,10 @@ import { grant } from './grant/index.js'
 import { version } from './version/index.js'
 import { viewfile } from './viewfile/index.js'
 import { notifications } from './notifications/index.js'
+import Scalar from 'hapi-scalar'
+import yaml from 'js-yaml'
+import fs from 'node:fs'
+import path from 'node:path'
 
 export const router = {
   plugin: {
@@ -23,6 +27,25 @@ export const router = {
 
       // Static assets
       await server.register([serveStaticFiles])
+
+      const swaggerPath = path.resolve(process.cwd(), 'src/docs/swagger.yaml')
+      const swaggerFile = fs.readFileSync(swaggerPath, 'utf8')
+      const swaggerDocument = yaml.load(swaggerFile)
+
+      await server.register([
+        {
+          plugin: Scalar,
+          options: {
+            scalarConfig: {
+              content: swaggerDocument
+            },
+            routePrefix: '/documentation',
+            routeConfig: {
+              auth: false
+            }
+          }
+        }
+      ])
     }
   }
 }
