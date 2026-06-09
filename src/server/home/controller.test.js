@@ -18,7 +18,7 @@ describe('#homeController', () => {
   })
 
   test('Should provide expected response', async () => {
-    requestFromApi.mockResolvedValueOnce([])
+    requestFromApi.mockResolvedValueOnce({ response: [] })
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url: '/'
@@ -29,33 +29,36 @@ describe('#homeController', () => {
   })
 
   test('Should show tables of grants in alphabetical ordering, with max 3 entries', async () => {
-    requestFromApi.mockResolvedValueOnce([
-      {
-        grant: 'grant1|',
-        versions: [
-          { version: '3.0.0', status: 'active', lastUpdated: '2023-01-03' },
-          { version: '2.0.0', status: 'active', lastUpdated: '2023-01-02' },
-          { version: '1.0.0', status: 'active', lastUpdated: '2023-01-01' }
-        ]
-      },
-      {
-        grant: 'agrant|',
-        versions: [
-          { version: '4.0.0', status: 'active', lastUpdated: '2023-01-04' },
-          { version: '3.0.0', status: 'active', lastUpdated: '2023-01-03' },
-          { version: '2.0.0', status: 'active', lastUpdated: '2023-01-02' },
-          { version: '1.0.0', status: 'active', lastUpdated: '2023-01-01' }
-        ]
-      },
-      {
-        grant: 'zgrant|',
-        versions: [
-          { version: '3.0.0', status: 'active', lastUpdated: '2023-01-03' },
-          { version: '2.0.0', status: 'active', lastUpdated: '2023-01-02' },
-          { version: '1.0.0', status: 'active', lastUpdated: '2023-01-01' }
-        ]
-      }
-    ])
+    requestFromApi.mockResolvedValueOnce({
+      response: [
+        {
+          grant: 'grant1|',
+          versions: [
+            { version: '3.0.0', status: 'active', lastUpdated: '2023-01-03' },
+            { version: '2.0.0', status: 'active', lastUpdated: '2023-01-02' },
+            { version: '1.0.0', status: 'active', lastUpdated: '2023-01-01' }
+          ]
+        },
+        {
+          grant: 'agrant|',
+          versions: [
+            { version: '4.0.0', status: 'active', lastUpdated: '2023-01-04' },
+            { version: '3.0.0', status: 'active', lastUpdated: '2023-01-03' },
+            { version: '2.0.0', status: 'active', lastUpdated: '2023-01-02' },
+            { version: '1.0.0', status: 'active', lastUpdated: '2023-01-01' }
+          ]
+        },
+        {
+          grant: 'zgrant|',
+          versions: [
+            { version: '3.0.0', status: 'active', lastUpdated: '2023-01-03' },
+            { version: '2.0.0', status: 'active', lastUpdated: '2023-01-02' },
+            { version: '1.0.0', status: 'active', lastUpdated: '2023-01-01' }
+          ]
+        }
+      ],
+      status: 200
+    })
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url: '/'

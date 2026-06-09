@@ -70,7 +70,7 @@ export const grantController = {
       return h.redirect('/')
     }
     //go fetch metadata from the config broker
-    const allVersions = await requestFromApi(`allVersions?grant=${grant}&draft=include`, request)
+    const { response: allVersions } = await requestFromApi(`allVersions?grant=${grant}&draft=include`, request)
 
     const allTables = createRowsForTable(allVersions, grant)
     return h.view('grant/index', {
