@@ -4,7 +4,7 @@ import { createApiHeadersForConfigBroker } from './broker-auth-helper.js'
 export async function requestFromApi(endpoint, request, otherHeaders = {}, method = 'GET', payload = null) {
   const GRANTS_CONFIG_BROKER_ENDPOINT = config.get('backend.apiEndpoint')
   if (!GRANTS_CONFIG_BROKER_ENDPOINT?.length) {
-    return
+    return null
   }
 
   const url = new URL(`/api/${endpoint}`, GRANTS_CONFIG_BROKER_ENDPOINT)
@@ -26,5 +26,6 @@ export async function requestFromApi(endpoint, request, otherHeaders = {}, metho
     return { response: await response.json(), status: response.status }
   } catch (err) {
     request.logger.error({})
+    return null
   }
 }

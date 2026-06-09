@@ -37,7 +37,7 @@ describe('requestFromApi', () => {
   it('should return undefined if GRANTS_CONFIG_BROKER_ENDPOINT is not configured', async () => {
     config.get.mockReturnValue(null)
     const result = await requestFromApi(mockEndpoint, mockRequest)
-    expect(result).toBeUndefined()
+    expect(result).toBeNull()
   })
 
   it('should perform a successful GET request', async () => {
@@ -119,7 +119,7 @@ describe('requestFromApi', () => {
     const result = await requestFromApi(mockEndpoint, mockRequest)
 
     expect(mockRequest.logger.error).toHaveBeenCalledWith({})
-    expect(result).toBeUndefined()
+    expect(result).toBeNull()
   })
 
   it('should handle other methods like PUT', async () => {
