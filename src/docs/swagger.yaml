@@ -1,18 +1,18 @@
 openapi: 3.0.0
 info:
   title: Grants Config Broker API
-  description: API for managing and retrieving grant configurations and versions.</br><a href="/about">Go Back To Config browser</a>
+  description: API for managing and retrieving grant configurations and versions.</br></br>This interactive document is hosted in the config-browser and can be used to query the API endpoints on the config-browser. The bearer token is shown as a required authorisation in this document to reflect the API requirements, but there is no need to add it manually here, as the request will be proxied via the config-browser and this will apply the same authentication automatically. POST endpoints will not work via this documentation and are shown for reference only.</br><a href="/about">Go Back To Config browser</a>
   version: 1.0.0
 servers:
-  - url: 'http://localhost:3001'
+  - url: 'http://localhost:3000'
     description: Local server URL
-  - url: https://ephemeral-protected.api.dev.cdp-int.defra.cloud/grants-config-broker
+  - url: https://grants-config-browser.dev.cdp-int.defra.cloud
     description: Dev environment - must supply developer API key in x-api-key header
-  - url: https://ephemeral-protected.api.test.cdp-int.defra.cloud/grants-config-broker
+  - url: https://grants-config-browser.test.cdp-int.defra.cloud
     description: Test environment - must supply developer API key in x-api-key header
-  - url: https://ephemeral-protected.api.ext-test.cdp-int.defra.cloud/grants-config-broker
+  - url: https://grants-config-browser.ext-test.cdp-int.defra.cloud
     description: Ext-test environment - must supply developer API key in x-api-key header
-  - url: https://ephemeral-protected.api.perf-test.cdp-int.defra.cloud/grants-config-broker
+  - url: https://grants-config-browser.perf-test.cdp-int.defra.cloud
     description: Perf-test environment - must supply developer API key in x-api-key header
 paths:
   /api/latestVersion:
@@ -289,7 +289,7 @@ paths:
   /api/release-config:
     post:
       summary: Post release config for a given grant
-      description: Submits a release configuration for a specific grant and version, including a list of files.
+      description: Submits a release configuration for a specific grant and version, including a list of files.</br>NOTE this endpoint will not work via the config-browser.
       security:
         - bearerAuth: []
           apiKey: []
@@ -377,11 +377,6 @@ components:
         The API uses a Bearer token for authentication.
         The token is an encrypted string in the format `iv:authTag:encryptedData`, which is then base64 encoded.
         Example: `Bearer aXY6YXV0aFRhZzplbmNyeXB0ZWREYXRh` (base64 encoded value of `iv:authTag:encryptedData`).
-    apiKey:
-      type: apiKey
-      in: header
-      name: x-api-key
-      description: Dev API key for use on deployed environments
   parameters:
     cdpRequestId:
       name: x-cdp-request-id
@@ -392,7 +387,6 @@ components:
       description: A unique identifier for the request, used for tracing.
 security:
   - bearerAuth: []
-    apiKey: []
   - {} # Allows request without security to show headers in Scalar, though auth is usually required.
     # Note: Scalar might need these headers to be explicitly added to each operation or defined globally.
     # Since we want them "modifiable", we'll add them as parameters.

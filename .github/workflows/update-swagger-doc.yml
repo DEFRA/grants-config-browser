@@ -1,0 +1,44 @@
+name: Update swagger doc
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e #v6.4.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Set user
+        run: git config user.name github-actions[bot] && git config user.email github-actions[bot]@users.noreply.github.com
+
+      - name: Fetch swagger from broker and update
+        run: |
+          curl -o src/docs/swagger.yaml https://raw.githubusercontent.com/DEFRA/grants-config-broker/refs/heads/main/src/docs/swagger.yaml
+          yq -i '.info.description += "</br></br>This interactive document is hosted in the config-browser and can be used to query the API endpoints on the config-browser. The bearer token is shown as a required authorisation in this document to reflect the API requirements, but there is no need to add it manually here, as the request will be proxied via the config-browser and this will apply the same authentication automatically. POST endpoints will not work via this documentation and are shown for reference only.</br><a href=\"/about\">Go Back To Config browser</a>"' "src/docs/swagger.yaml"
+          yq -i '.servers[0].url = "http://localhost:3000"' "src/docs/swagger.yaml"
+          yq -i '.servers[1].url = "https://grants-config-browser.dev.cdp-int.defra.cloud"' "src/docs/swagger.yaml"
+          yq -i '.servers[2].url = "https://grants-config-browser.test.cdp-int.defra.cloud"' "src/docs/swagger.yaml"
+          yq -i '.servers[3].url = "https://grants-config-browser.ext-test.cdp-int.defra.cloud"' "src/docs/swagger.yaml"
+          yq -i '.servers[4].url = "https://grants-config-browser.perf-test.cdp-int.defra.cloud"' "src/docs/swagger.yaml"
+          yq -i 'del(.components.securitySchemes.apiKey)' "src/docs/swagger.yaml"
+          yq -i 'del(.security[0].apiKey)' "src/docs/swagger.yaml"
+
+      - name: Commit updated swagger doc
+        run: git add src/docs/swagger.yaml && git commit -m "Update swagger doc"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 #v8.1.1
