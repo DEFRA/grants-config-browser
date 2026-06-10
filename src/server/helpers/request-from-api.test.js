@@ -118,7 +118,7 @@ describe('requestFromApi', () => {
 
     const result = await requestFromApi(mockEndpoint, mockRequest)
 
-    expect(mockRequest.logger.error).toHaveBeenCalledWith({})
+    expect(mockRequest.logger.error).toHaveBeenCalledWith(error, 'Error fetching data from API:')
     expect(result).toBeNull()
   })
 

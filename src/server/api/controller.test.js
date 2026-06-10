@@ -58,4 +58,11 @@ describe('apiController', () => {
     expect(mockH.response).toHaveBeenCalledWith({ error: 'Config broker endpoint not configured' })
     expect(mockH.code).toHaveBeenCalledWith(404)
   })
+
+  it('should return 500 response if call fails', async () => {
+    requestFromApi.mockThrowOnce(new Error('Network error'))
+    await apiController.handler(mockRequest, mockH)
+    expect(mockH.response).toHaveBeenCalledWith({ error: 'Internal Server Error' })
+    expect(mockH.code).toHaveBeenCalledWith(500)
+  })
 })

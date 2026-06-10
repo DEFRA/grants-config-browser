@@ -25,7 +25,7 @@ export async function requestFromApi(endpoint, request, otherHeaders = {}, metho
     }
     return { response: await response.json(), status: response.status }
   } catch (err) {
-    request.logger.error({})
+    request.logger.error(err, 'Error fetching data from API:')
     return null
   }
 }
