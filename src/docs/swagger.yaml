@@ -72,7 +72,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
   /api/version:
     get:
       summary: Get specific version of config for a given grant
@@ -136,7 +135,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
   /api/allVersions:
     get:
       summary: Get info on all versions of config for a given grant
@@ -285,11 +283,10 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Not Found - Grant or version not found.
-
   /api/release-config:
     post:
       summary: Post release config for a given grant
-      description: Submits a release configuration for a specific grant and version, including a list of files.</br>NOTE this endpoint will not work via the config-browser.
+      description: Submits a release configuration for a specific grant and version, including a list of files.
       security:
         - bearerAuth: []
           apiKey: []
@@ -314,7 +311,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
 components:
   schemas:
     PostReleaseConfigRequest:
@@ -388,5 +384,5 @@ components:
 security:
   - bearerAuth: []
   - {} # Allows request without security to show headers in Scalar, though auth is usually required.
-    # Note: Scalar might need these headers to be explicitly added to each operation or defined globally.
-    # Since we want them "modifiable", we'll add them as parameters.
+  # Note: Scalar might need these headers to be explicitly added to each operation or defined globally.
+  # Since we want them "modifiable", we'll add them as parameters.
