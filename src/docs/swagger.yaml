@@ -7,13 +7,13 @@ servers:
   - url: 'http://localhost:3000'
     description: Local server URL
   - url: https://grants-config-browser.dev.cdp-int.defra.cloud
-    description: Dev environment - must supply developer API key in x-api-key header
+    description: Dev environment
   - url: https://grants-config-browser.test.cdp-int.defra.cloud
-    description: Test environment - must supply developer API key in x-api-key header
+    description: Test environment
   - url: https://grants-config-browser.ext-test.cdp-int.defra.cloud
-    description: Ext-test environment - must supply developer API key in x-api-key header
+    description: Ext-test environment
   - url: https://grants-config-browser.perf-test.cdp-int.defra.cloud
-    description: Perf-test environment - must supply developer API key in x-api-key header
+    description: Perf-test environment
 paths:
   /api/latestVersion:
     get:
@@ -72,7 +72,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
   /api/version:
     get:
       summary: Get specific version of config for a given grant
@@ -136,7 +135,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
   /api/allVersions:
     get:
       summary: Get info on all versions of config for a given grant
@@ -285,7 +283,6 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: Not Found - Grant or version not found.
-
   /api/release-config:
     post:
       summary: Post release config for a given grant
@@ -314,7 +311,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
 components:
   schemas:
     PostReleaseConfigRequest:
@@ -388,5 +384,5 @@ components:
 security:
   - bearerAuth: []
   - {} # Allows request without security to show headers in Scalar, though auth is usually required.
-    # Note: Scalar might need these headers to be explicitly added to each operation or defined globally.
-    # Since we want them "modifiable", we'll add them as parameters.
+  # Note: Scalar might need these headers to be explicitly added to each operation or defined globally.
+  # Since we want them "modifiable", we'll add them as parameters.
