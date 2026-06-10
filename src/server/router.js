@@ -8,6 +8,7 @@ import { grant } from './grant/index.js'
 import { version } from './version/index.js'
 import { viewfile } from './viewfile/index.js'
 import { notifications } from './notifications/index.js'
+import { api } from './api/index.js'
 import Scalar from 'hapi-scalar'
 import yaml from 'js-yaml'
 import fs from 'node:fs'
@@ -23,7 +24,7 @@ export const router = {
       await server.register([health])
 
       // Application specific routes, add your own routes here
-      await server.register([home, about, grant, version, viewfile, notifications])
+      await server.register([home, about, grant, version, viewfile, notifications, api])
 
       // Static assets
       await server.register([serveStaticFiles])

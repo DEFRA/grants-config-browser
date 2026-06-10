@@ -9,7 +9,7 @@ describe('#contentSecurityPolicy', () => {
   beforeAll(async () => {
     server = await createServer()
     await server.initialize()
-    requestFromApi.mockResolvedValue([])
+    requestFromApi.mockResolvedValue({ response: [] })
   })
 
   afterAll(async () => {

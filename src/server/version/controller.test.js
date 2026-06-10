@@ -11,9 +11,11 @@ describe('#versionController', () => {
     server = await createServer()
     await server.initialize()
     requestFromApi.mockResolvedValue({
-      grant: 'some-grant',
-      version: '1.2.3',
-      manifest: []
+      response: {
+        grant: 'some-grant',
+        version: '1.2.3',
+        manifest: []
+      }
     })
   })
 

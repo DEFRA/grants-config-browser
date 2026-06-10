@@ -39,7 +39,7 @@ export const versionController = {
       return h.redirect('/')
     }
     //go fetch metadata from the config broker
-    const thisVersion = await requestFromApi(`version?grant=${grant}&version=${version}`, request)
+    const { response: thisVersion } = await requestFromApi(`version?grant=${grant}&version=${version}`, request)
     const allFiles = createRowsForTable(thisVersion.path, thisVersion.manifest)
     return h.view('version/index', {
       pageTitle: `${grant} - ${version}`,
