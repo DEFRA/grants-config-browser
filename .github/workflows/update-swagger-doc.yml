@@ -8,7 +8,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  release:
+  update-swagger:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,6 +29,7 @@ jobs:
         run: |
           curl -o src/docs/swagger.yaml https://raw.githubusercontent.com/DEFRA/grants-config-broker/refs/heads/main/src/docs/swagger.yaml
           yq -i '.info.description += "</br></br>This interactive document is hosted in the config-browser and can be used to query the API endpoints on the config-browser. The bearer token is shown as a required authorisation in this document to reflect the API requirements, but there is no need to add it manually here, as the request will be proxied via the config-browser and this will apply the same authentication automatically. POST endpoints will not work via this documentation and are shown for reference only.</br><a href=\"/about\">Go Back To Config browser</a>"' "src/docs/swagger.yaml"
+          yq -i '.paths./api/release-config.post.description += "</br>NOTE this endpoint will not work via the config-browser."' "src/docs/swagger.yaml"
           yq -i '.servers[0].url = "http://localhost:3000"' "src/docs/swagger.yaml"
           yq -i '.servers[1].url = "https://grants-config-browser.dev.cdp-int.defra.cloud"' "src/docs/swagger.yaml"
           yq -i '.servers[2].url = "https://grants-config-browser.test.cdp-int.defra.cloud"' "src/docs/swagger.yaml"
@@ -42,3 +43,8 @@ jobs:
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 #v8.1.1
+        with:
+          title: Update swagger doc
+          body: Update swagger doc
+          branch: update-swagger-doc
+          delete-branch: true
