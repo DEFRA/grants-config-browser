@@ -17,6 +17,19 @@ describe('#viewFileController', () => {
     await server.stop({ timeout: 0 })
   })
 
+  test('Should redirect to home page if invalid query parameters supplied', async () => {
+    const {
+      headers: { location },
+      statusCode
+    } = await server.inject({
+      method: 'GET',
+      url: '/viewfile?filename=some-grant.yml'
+    })
+
+    expect(statusCode).toBe(statusCodes.moved)
+    expect(location).toBe('/')
+  })
+
   test('Should provide expected response', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',

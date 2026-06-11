@@ -74,9 +74,9 @@ export const grantController = {
 
     const allTables = createRowsForTable(allVersions, grant)
     return h.view('grant/index', {
-      pageTitle: 'Home',
+      pageTitle: `All versions of ${grant}`,
       heading: `${grant} config versions`,
-      versionTableRows: allTables ?? [],
+      versionTableRows: allTables,
       headers: buildTableHeaders(),
       breadcrumbs: [
         {

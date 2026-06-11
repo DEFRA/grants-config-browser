@@ -46,7 +46,7 @@ export const versionController = {
       heading: grant,
       status: thisVersion.status,
       version,
-      versionTableRows: allFiles ?? [],
+      versionTableRows: allFiles,
       headers: buildTableHeaders(),
       breadcrumbs: [
         {

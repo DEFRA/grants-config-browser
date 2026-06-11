@@ -1,4 +1,4 @@
-ARG PARENT_VERSION=2.10.1-node24.11.1
+ARG PARENT_VERSION=3.0.10-node24.16.0
 ARG PORT=3000
 ARG PORT_DEBUG=9229
 
@@ -14,7 +14,7 @@ ENV PORT=${PORT}
 EXPOSE ${PORT} ${PORT_DEBUG}
 
 COPY --chown=node:node --chmod=755 package*.json ./
-RUN npm install
+RUN npm ci --ignore-scripts
 COPY --chown=node:node --chmod=755 . .
 RUN npm run build:frontend
 
@@ -42,7 +42,7 @@ COPY --from=production_build /home/node/package*.json ./
 COPY --from=production_build /home/node/src ./src/
 COPY --from=production_build /home/node/.public/ ./.public/
 
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 ARG PORT
 ENV PORT=${PORT}
