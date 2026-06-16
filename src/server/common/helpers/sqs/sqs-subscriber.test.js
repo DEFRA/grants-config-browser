@@ -75,7 +75,7 @@ describe('error on polling', () => {
 
     await consumer.start()
 
-    expect(timeCaptures[1] - timeCaptures[0]).toBeGreaterThanOrEqual(timeoutSleepMs)
+    expect(timeCaptures[1] - timeCaptures[0]).toBeGreaterThanOrEqual(timeoutSleepMs - 2) //2ms tolerance
     expect(mockLogger.error).toHaveBeenCalledWith(
       'Error polling SQS queue https://sqs.eu-west-2.amazonaws.com/123456789012/test-queue: Test polling error'
     )

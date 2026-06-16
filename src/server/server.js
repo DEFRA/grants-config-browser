@@ -15,6 +15,7 @@ import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './common/helpers/content-security-policy.js'
 import { metrics } from '@defra/cdp-metrics'
+import { pageViewTracker } from './common/helpers/page-view-tracker.js'
 import {
   configureAndStartMessaging,
   stopMessageSubscriber
@@ -62,6 +63,7 @@ export async function createServer() {
     requestLogger,
     requestTracing,
     metrics,
+    pageViewTracker,
     secureContext,
     pulse,
     sessionCache,
