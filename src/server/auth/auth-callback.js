@@ -1,0 +1,44 @@
+import { saveUserSession } from './save-user-session.js'
+import Boom from '@hapi/boom'
+
+const handler = async (request, h) => {
+  const credentials = await request.callback(h)
+
+  if (!credentials) {
+    throw Boom.unauthorized()
+  }
+  const { sessionCookie } = request
+  const sessionId = crypto.randomUUID()
+
+  await saveUserSession(request, sessionId, credentials)
+
+  sessionCookie.set({ sessionId })
+
+  return h.response(`<html><head><meta http-equiv="refresh" content="0;URL='/'"></head><body></body></html>`).takeover()
+}
+
+const authPostCallbackController = {
+  method: 'POST',
+  path: '/auth',
+  options: {
+    auth: false,
+    plugins: {
+      crumb: false
+    },
+    payload: {
+      parse: true,
+      allow: 'application/x-www-form-urlencoded'
+    }
+  },
+  handler
+}
+const authGetCallbackController = {
+  method: 'GET',
+  path: '/auth',
+  options: {
+    auth: false
+  },
+  handler
+}
+
+export const authCallbacks = [authPostCallbackController, authGetCallbackController]

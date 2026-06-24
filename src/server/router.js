@@ -13,6 +13,8 @@ import Scalar from 'hapi-scalar'
 import yaml from 'js-yaml'
 import fs from 'node:fs'
 import path from 'node:path'
+import { signInController } from './auth/login.js'
+import { authCallbacks } from './auth/auth-callback.js'
 
 export const router = {
   plugin: {
@@ -47,6 +49,9 @@ export const router = {
           }
         }
       ])
+
+      server.route(signInController)
+      server.route(authCallbacks)
     }
   }
 }

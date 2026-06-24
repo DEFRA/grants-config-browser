@@ -20,6 +20,8 @@ services:
       USE_SINGLE_INSTANCE_CACHE: true
       GRANTS_CONFIG_BROKER_API_ENDPOINT: http://grants-config-broker:3001
       CONFIG_VERSION_QUEUE_URL: http://localstack:4566/000000000000/gfr__sqs__config_browser_updates
+      FEDERATED_CREDENTIALS_ENABLE_MOCKING: "${FEDERATED_CREDENTIALS_ENABLE_MOCKING:-true}"
+      APP_BASE_URL: http://localhost:3000
     networks:
       - grants-framework
     volumes:

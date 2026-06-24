@@ -20,6 +20,7 @@ import {
   configureAndStartMessaging,
   stopMessageSubscriber
 } from './messaging/inbound/new-config-message-queue-subscriber.js'
+import { authOidcPlugin } from './auth/auth-plugin.js'
 
 export async function createServer() {
   setupProxy()
@@ -60,6 +61,7 @@ export async function createServer() {
     }
   })
   await server.register([
+    authOidcPlugin,
     requestLogger,
     requestTracing,
     metrics,

@@ -66,7 +66,11 @@ describe('context and cache', () => {
             }
           ],
           serviceName: 'grants-config-browser',
-          serviceUrl: '/'
+          serviceUrl: '/',
+          slots: {
+            navigationEnd:
+              '<li class="govuk-service-navigation__item app-service-navigation__item--right"><a class="govuk-service-navigation__link" href="/login">Sign in</a></li>'
+          }
         })
       })
 
@@ -154,7 +158,11 @@ describe('context and cache', () => {
             }
           ],
           serviceName: 'grants-config-browser',
-          serviceUrl: '/'
+          serviceUrl: '/',
+          slots: {
+            navigationEnd:
+              '<li class="govuk-service-navigation__item app-service-navigation__item--right"><a class="govuk-service-navigation__link" href="/login">Sign in</a></li>'
+          }
         })
       })
     })

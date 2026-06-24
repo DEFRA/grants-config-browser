@@ -126,6 +126,80 @@ export const config = convict({
       default: '',
       env: 'GRANTS_CONFIG_BROKER_ENCRYPTION_KEY',
       sensitive: true
+    },
+    federatedCredentials: {
+      enableMocking: {
+        doc: 'Enable mocking of federated credentials',
+        format: Boolean,
+        default: false,
+        env: 'FEDERATED_CREDENTIALS_ENABLE_MOCKING'
+      },
+      audience: {
+        doc: 'Audience for federated credentials',
+        format: String,
+        default: 'grants_config_browser',
+        env: 'FEDERATED_CREDENTIALS_AUDIENCE'
+      }
+    },
+    oidc: {
+      clientId: {
+        doc: 'Client ID for OpenID Connect',
+        format: String,
+        default: 'awaiting_app_reg',
+        env: 'GRANTS_CONFIG_BROWSER_OIDC_CLIENT_ID'
+      },
+      discoveryUri: {
+        doc: 'Discovery URI for OpenID Connect',
+        format: String,
+        default:
+          'https://login.microsoftonline.com/770a2450-0227-4c62-90c7-4e38537f1102/v2.0/.well-known/openid-configuration', //TODO this is grants UI one, we need ours
+        env: 'GRANTS_CONFIG_BROWSER_OIDC_DISCOVERY_URI'
+      },
+      useHttp: {
+        doc: 'Use HTTP for OpenID Connect',
+        format: Boolean,
+        default: !isProduction,
+        env: 'GRANTS_CONFIG_BROWSER_OIDC_USE_HTTP'
+      },
+      loginCallbackUri: {
+        doc: 'Login callback URI for OpenID Connect',
+        format: String,
+        default: '/auth',
+        env: 'GRANTS_CONFIG_BROWSER_OIDC_LOGIN_CALLBACK_URI'
+      },
+      externalBaseUrl: {
+        doc: 'External base URL for OpenID Connect',
+        format: String,
+        default: 'https://grants-config-browser.dev.cdp-int.defra.cloud',
+        env: 'APP_BASE_URL'
+      },
+      responseMode: {
+        doc: 'Response mode for OpenID Connect',
+        format: String,
+        default: isProduction ? 'form_post' : 'query',
+        env: 'GRANTS_CONFIG_BROWSER_OIDC_RESPONSE_MODE'
+      }
+    },
+    cookieOptions: {
+      password: {
+        doc: 'Password for cookie',
+        format: String,
+        default: 'cookiescookiesilovecookiesyumyumcookies',
+        env: 'COOKIE_PASSWORD',
+        sensitive: true
+      },
+      isSecure: {
+        doc: 'isSecure setting for cookie',
+        format: Boolean,
+        default: isProduction,
+        env: 'COOKIE_IS_SECURE'
+      },
+      isSameSite: {
+        doc: 'isSameSite setting for cookie',
+        format: String,
+        default: isProduction ? 'None' : 'Lax',
+        env: 'COOKIE_IS_SAME_SITE'
+      }
     }
   },
   backend: {
