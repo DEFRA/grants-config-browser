@@ -164,7 +164,7 @@ export const mockEndSessionHandler = {
     }
   },
   handler: (request, h) => {
-    request.logger.info(`[MockEndSession] Request Query: ${request.query}`)
+    request.logger.info(`[MockEndSession] Request Query: ${JSON.stringify(request.query)}`)
     return h.redirect('/')
   }
 }

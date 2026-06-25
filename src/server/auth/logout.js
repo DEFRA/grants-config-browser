@@ -4,6 +4,11 @@ import { removeAuthenticatedUser } from './remove-authenticated-user.js'
 export const signOutController = {
   method: 'GET',
   path: '/logout',
+  options: {
+    auth: {
+      mode: 'try'
+    }
+  },
   handler: async (request, h) => {
     const userSession = request.auth.credentials
 
