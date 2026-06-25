@@ -21,6 +21,8 @@ import {
   stopMessageSubscriber
 } from './messaging/inbound/new-config-message-queue-subscriber.js'
 import { authOidcPlugin } from './auth/auth-plugin.js'
+import { setupCaches } from './common/helpers/session-cache/setup-caches.js'
+import { sessionCookie } from './auth/session-cookie.js'
 
 export async function createServer() {
   setupProxy()
@@ -60,15 +62,19 @@ export async function createServer() {
       strictHeader: false
     }
   })
+
+  setupCaches(server)
+
   await server.register([
+    sessionCache,
     authOidcPlugin,
+    sessionCookie,
     requestLogger,
     requestTracing,
     metrics,
     pageViewTracker,
     secureContext,
     pulse,
-    sessionCache,
     nunjucksConfig,
     Scooter,
     contentSecurityPolicy,

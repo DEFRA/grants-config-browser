@@ -48,6 +48,7 @@ describe('context and cache', () => {
           assetPath: '/public/assets',
           breadcrumbs: [],
           getAssetPath: expect.any(Function),
+          isAuthenticated: false,
           navigation: [
             {
               current: true,
@@ -107,7 +108,7 @@ describe('context and cache', () => {
   })
 
   describe('#context cache', () => {
-    const mockRequest = { path: '/' }
+    const mockRequest = { path: '/', auth: { credentials: { isAuthenticated: true, displayName: 'User A' } } }
     let contextResult
 
     describe('Webpack manifest file cache', () => {
@@ -140,6 +141,7 @@ describe('context and cache', () => {
           assetPath: '/public/assets',
           breadcrumbs: [],
           getAssetPath: expect.any(Function),
+          isAuthenticated: true,
           navigation: [
             {
               current: true,
@@ -161,7 +163,7 @@ describe('context and cache', () => {
           serviceUrl: '/',
           slots: {
             navigationEnd:
-              '<li class="govuk-service-navigation__item app-service-navigation__item--right"><a class="govuk-service-navigation__link" href="/login">Sign in</a></li>'
+              '<li class="govuk-service-navigation__item app-service-navigation__item--right">User A</li><li class="govuk-service-navigation__item"><a class="govuk-service-navigation__link" href="/logout">Sign out</a></li>'
           }
         })
       })

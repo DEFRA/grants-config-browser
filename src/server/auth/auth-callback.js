@@ -14,6 +14,8 @@ const handler = async (request, h) => {
 
   sessionCookie.set({ sessionId })
 
+  request.auth.credentials = credentials
+
   return h.response(`<html><head><meta http-equiv="refresh" content="0;URL='/'"></head><body></body></html>`).takeover()
 }
 

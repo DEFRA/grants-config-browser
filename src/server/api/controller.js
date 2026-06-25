@@ -2,6 +2,9 @@ import { requestFromApi } from '../helpers/request-from-api.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 
 export const apiController = {
+  options: {
+    auth: false
+  },
   async handler(request, h) {
     const { method, url, payload } = request
     const path = url.pathname.replaceAll('/api/', '').concat(url.search)

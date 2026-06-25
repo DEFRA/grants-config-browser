@@ -17,6 +17,6 @@ export async function saveUserSession(request, sessionId, { accessToken, refresh
     expiresAt
   }
 
-  await request.server.sessionCache.set(sessionId, session)
+  request.server.session.set(sessionId, session)
   return session
 }

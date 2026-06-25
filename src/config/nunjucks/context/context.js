@@ -20,13 +20,17 @@ export function context(request) {
     }
   }
 
-  const { navigation, slots } = buildNavigation(request)
+  const userSession = request?.auth?.credentials
+  const isAuthenticated = userSession?.isAuthenticated ?? false
+
+  const { navigation, slots } = buildNavigation(request, isAuthenticated, userSession?.displayName)
 
   return {
     assetPath: `${assetPath}/assets`,
     serviceName: config.get('serviceName'),
     serviceUrl: '/',
     breadcrumbs: [],
+    isAuthenticated,
     navigation,
     slots,
     getAssetPath(asset) {

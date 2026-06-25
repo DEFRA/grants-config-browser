@@ -12,6 +12,11 @@ export const grant = {
         {
           method: 'GET',
           path: '/grant',
+          options: {
+            auth: {
+              mode: 'try'
+            }
+          },
           ...grantController
         }
       ])

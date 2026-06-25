@@ -145,39 +145,40 @@ export const config = convict({
       clientId: {
         doc: 'Client ID for OpenID Connect',
         format: String,
-        default: 'awaiting_app_reg',
-        env: 'GRANTS_CONFIG_BROWSER_OIDC_CLIENT_ID'
+        default: '2eb3a9da-aea0-4013-ac30-83df00bda6dd',
+        env: 'OIDC_CLIENT_ID'
       },
       discoveryUri: {
         doc: 'Discovery URI for OpenID Connect',
         format: String,
-        default:
-          'https://login.microsoftonline.com/770a2450-0227-4c62-90c7-4e38537f1102/v2.0/.well-known/openid-configuration', //TODO this is grants UI one, we need ours
-        env: 'GRANTS_CONFIG_BROWSER_OIDC_DISCOVERY_URI'
+        default: isProduction
+          ? 'https://login.microsoftonline.com/6f504113-6b64-43f2-ade9-242e05780007/v2.0/.well-known/openid-configuration'
+          : 'http://localhost:3000/.well-known/openid-configuration',
+        env: 'OIDC_DISCOVERY_URI'
       },
       useHttp: {
         doc: 'Use HTTP for OpenID Connect',
         format: Boolean,
         default: !isProduction,
-        env: 'GRANTS_CONFIG_BROWSER_OIDC_USE_HTTP'
+        env: 'OIDC_USE_HTTP'
       },
       loginCallbackUri: {
         doc: 'Login callback URI for OpenID Connect',
         format: String,
         default: '/auth',
-        env: 'GRANTS_CONFIG_BROWSER_OIDC_LOGIN_CALLBACK_URI'
+        env: 'OIDC_LOGIN_CALLBACK_URI'
       },
       externalBaseUrl: {
         doc: 'External base URL for OpenID Connect',
         format: String,
-        default: 'https://grants-config-browser.dev.cdp-int.defra.cloud',
+        default: 'http://localhost:3000',
         env: 'APP_BASE_URL'
       },
       responseMode: {
         doc: 'Response mode for OpenID Connect',
         format: String,
         default: isProduction ? 'form_post' : 'query',
-        env: 'GRANTS_CONFIG_BROWSER_OIDC_RESPONSE_MODE'
+        env: 'OIDC_RESPONSE_MODE'
       }
     },
     cookieOptions: {
@@ -229,6 +230,12 @@ export const config = convict({
         format: Number,
         default: fourHoursMs,
         env: 'SESSION_CACHE_TTL'
+      },
+      segment: {
+        doc: 'Isolate cached items within the cache partition',
+        format: String,
+        default: 'session',
+        env: 'SERVER_CACHE_SEGMENT'
       }
     },
     cookie: {

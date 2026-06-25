@@ -12,6 +12,11 @@ export const version = {
         {
           method: 'GET',
           path: '/version',
+          options: {
+            auth: {
+              mode: 'try'
+            }
+          },
           ...versionController
         }
       ])
