@@ -3,7 +3,7 @@ import { WebIdentityTokenProvider, hapiAuthOidcPlugin, MockProvider } from '@def
 
 const { oidc, cookieOptions } = config.get('auth')
 
-const scope = ['user.read'].join(' ') // add additional scopes required
+const scope = ['openid', 'profile', 'email', 'offline_access'].join(' ')
 
 const federatedCredentials = config.get('auth.federatedCredentials')
 
