@@ -107,6 +107,7 @@ const registerAsyncDocsRoute = (server) => {
       }
     },
     options: {
+      auth: false,
       plugins: {
         blankie: {
           ...contentSecurityPolicy.options,

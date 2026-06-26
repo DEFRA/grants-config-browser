@@ -60,6 +60,14 @@ export const router = {
         }
       ])
 
+      server.table().forEach((route) => {
+        if (route.path.includes('documentation')) {
+          // Force authentication to false directly on hapi's internal settings
+          console.log('route.settings.auth', route.path)
+          route.settings.auth = false
+        }
+      })
+
       server.route(signInController)
       server.route(signOutController)
       server.route(authCallbacks)
