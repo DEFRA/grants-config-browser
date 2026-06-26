@@ -20,12 +20,19 @@ export function context(request) {
     }
   }
 
+  const userSession = request?.auth?.credentials
+  const isAuthenticated = userSession?.isAuthenticated ?? false
+
+  const { navigation, slots } = buildNavigation(request, isAuthenticated, userSession?.displayName)
+
   return {
     assetPath: `${assetPath}/assets`,
     serviceName: config.get('serviceName'),
     serviceUrl: '/',
     breadcrumbs: [],
-    navigation: buildNavigation(request),
+    isAuthenticated,
+    navigation,
+    slots,
     getAssetPath(asset) {
       const webpackAssetPath = webpackManifest?.[asset]
       return `${assetPath}/${webpackAssetPath ?? asset}`

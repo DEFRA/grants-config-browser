@@ -1,5 +1,6 @@
 import inert from '@hapi/inert'
 
+import { config } from '../config/config.js'
 import { home } from './home/index.js'
 import { about } from './about/index.js'
 import { health } from './health/index.js'
@@ -13,6 +14,17 @@ import Scalar from 'hapi-scalar'
 import yaml from 'js-yaml'
 import fs from 'node:fs'
 import path from 'node:path'
+import { signInController } from './auth/login.js'
+import { authCallbacks } from './auth/auth-callback.js'
+import {
+  mockDiscoveryHandler,
+  mockAuthorizeHandler,
+  mockTokenHandler,
+  mockUserInfoHandler,
+  mockJwksHandler,
+  mockEndSessionHandler
+} from './auth/mock-discovery.js'
+import { signOutController } from './auth/logout.js'
 
 export const router = {
   plugin: {
@@ -47,6 +59,28 @@ export const router = {
           }
         }
       ])
+
+      server.table().forEach((route) => {
+        if (route.path.includes('documentation')) {
+          // Force authentication to false directly on hapi's internal settings
+          route.settings.auth = false
+        }
+      })
+
+      server.route(signInController)
+      server.route(signOutController)
+      server.route(authCallbacks)
+
+      if (config.get('auth.federatedCredentials.enableMocking')) {
+        server.route([
+          mockDiscoveryHandler,
+          mockAuthorizeHandler,
+          mockTokenHandler,
+          mockUserInfoHandler,
+          mockJwksHandler,
+          mockEndSessionHandler
+        ])
+      }
     }
   }
 }

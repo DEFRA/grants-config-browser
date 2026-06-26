@@ -126,6 +126,81 @@ export const config = convict({
       default: '',
       env: 'GRANTS_CONFIG_BROKER_ENCRYPTION_KEY',
       sensitive: true
+    },
+    federatedCredentials: {
+      enableMocking: {
+        doc: 'Enable mocking of federated credentials',
+        format: Boolean,
+        default: false,
+        env: 'FEDERATED_CREDENTIALS_ENABLE_MOCKING'
+      },
+      audience: {
+        doc: 'Audience for federated credentials',
+        format: String,
+        default: 'grants_config_browser',
+        env: 'FEDERATED_CREDENTIALS_AUDIENCE'
+      }
+    },
+    oidc: {
+      clientId: {
+        doc: 'Client ID for OpenID Connect',
+        format: String,
+        default: '2eb3a9da-aea0-4013-ac30-83df00bda6dd',
+        env: 'OIDC_CLIENT_ID'
+      },
+      discoveryUri: {
+        doc: 'Discovery URI for OpenID Connect',
+        format: String,
+        default: isProduction
+          ? 'https://login.microsoftonline.com/6f504113-6b64-43f2-ade9-242e05780007/v2.0/.well-known/openid-configuration'
+          : 'http://localhost:3000/.well-known/openid-configuration',
+        env: 'OIDC_DISCOVERY_URI'
+      },
+      useHttp: {
+        doc: 'Use HTTP for OpenID Connect',
+        format: Boolean,
+        default: !isProduction,
+        env: 'OIDC_USE_HTTP'
+      },
+      loginCallbackUri: {
+        doc: 'Login callback URI for OpenID Connect',
+        format: String,
+        default: '/auth',
+        env: 'OIDC_LOGIN_CALLBACK_URI'
+      },
+      externalBaseUrl: {
+        doc: 'External base URL for OpenID Connect',
+        format: String,
+        default: 'http://localhost:3000',
+        env: 'APP_BASE_URL'
+      },
+      responseMode: {
+        doc: 'Response mode for OpenID Connect',
+        format: String,
+        default: isProduction ? 'form_post' : 'query',
+        env: 'OIDC_RESPONSE_MODE'
+      }
+    },
+    cookieOptions: {
+      password: {
+        doc: 'Password for cookie',
+        format: String,
+        default: 'cookiescookiesilovecookiesyumyumcookies',
+        env: 'COOKIE_PASSWORD',
+        sensitive: true
+      },
+      isSecure: {
+        doc: 'isSecure setting for cookie',
+        format: Boolean,
+        default: isProduction,
+        env: 'COOKIE_IS_SECURE'
+      },
+      isSameSite: {
+        doc: 'isSameSite setting for cookie',
+        format: String,
+        default: isProduction ? 'None' : 'Lax',
+        env: 'COOKIE_IS_SAME_SITE'
+      }
     }
   },
   backend: {
@@ -155,6 +230,12 @@ export const config = convict({
         format: Number,
         default: fourHoursMs,
         env: 'SESSION_CACHE_TTL'
+      },
+      segment: {
+        doc: 'Isolate cached items within the cache partition',
+        format: String,
+        default: 'session',
+        env: 'SERVER_CACHE_SEGMENT'
       }
     },
     cookie: {

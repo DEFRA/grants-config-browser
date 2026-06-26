@@ -8,6 +8,11 @@ export const notifications = {
         {
           method: 'GET',
           path: '/notifications',
+          options: {
+            auth: {
+              mode: 'try'
+            }
+          },
           ...notificationsController
         }
       ])

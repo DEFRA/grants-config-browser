@@ -12,6 +12,11 @@ export const viewfile = {
         {
           method: 'GET',
           path: '/viewfile',
+          options: {
+            auth: {
+              mode: 'try'
+            }
+          },
           ...viewFileController
         }
       ])
