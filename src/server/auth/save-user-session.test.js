@@ -44,7 +44,8 @@ describe('saveUserSession', () => {
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
       expiresIn: 3600000,
-      expiresAt: expectedExpiresAt
+      expiresAt: expectedExpiresAt,
+      token: sessionData
     }
 
     const result = await saveUserSession(request, sessionId, sessionData)
