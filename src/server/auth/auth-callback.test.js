@@ -34,6 +34,7 @@ describe('auth-callback', () => {
     server.ext('onPreHandler', (request, h) => {
       request.callback = vi.fn().mockResolvedValue(credentials)
       request.sessionCookie = { set: vi.fn() }
+      request.logger = { info: vi.fn() }
       return h.continue
     })
 
@@ -62,6 +63,7 @@ describe('auth-callback', () => {
   test('should throw 401 if credentials are missing', async () => {
     server.ext('onPreHandler', (request, h) => {
       request.callback = vi.fn().mockResolvedValue(null)
+      request.logger = { info: vi.fn() }
       return h.continue
     })
 
