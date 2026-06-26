@@ -54,7 +54,7 @@ describe('saveUserSession', () => {
     expect(result).toEqual(expectedSession)
   })
 
-  test('should correctly format and save the session', async () => {
+  test('should correctly format and save the session when mising some credentials', async () => {
     const now = new Date('2026-06-25T07:45:00Z')
     vi.setSystemTime(now)
 
