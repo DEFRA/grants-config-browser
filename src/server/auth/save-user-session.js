@@ -1,5 +1,7 @@
 import { addSeconds } from 'date-fns'
 
+const DEFAULT_EXPIRES_IN = 3600
+const AS_MILLIS = 1000
 export async function saveUserSession(request, sessionId, credentials) {
   const { accessToken, refreshToken, expiresIn, claims } = credentials || {}
 
@@ -7,8 +9,8 @@ export async function saveUserSession(request, sessionId, credentials) {
     request.logger.error({ credentials }, 'saveUserSession: No claims found in credentials')
   }
 
-  const expiresInSeconds = expiresIn || 3600
-  const expiresInMilliSeconds = expiresInSeconds * 1000
+  const expiresInSeconds = expiresIn || DEFAULT_EXPIRES_IN
+  const expiresInMilliSeconds = expiresInSeconds * AS_MILLIS
   const expiresAt = addSeconds(new Date(), expiresInSeconds).toISOString()
 
   const session = {
