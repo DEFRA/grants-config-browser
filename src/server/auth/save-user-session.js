@@ -13,6 +13,8 @@ export async function saveUserSession(request, sessionId, credentials) {
   const expiresInMilliSeconds = expiresInSeconds * AS_MILLIS
   const expiresAt = addSeconds(new Date(), expiresInSeconds).toISOString()
 
+  request.logger.info(`saveUserSession: Saving user session ${JSON.stringify(claims)}`)
+
   const session = {
     id: claims?.oid,
     displayName: claims?.name,
