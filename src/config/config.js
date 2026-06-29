@@ -136,8 +136,8 @@ export const config = convict({
       },
       audience: {
         doc: 'Audience for federated credentials',
-        format: String,
-        default: 'grants_config_browser',
+        format: Array,
+        default: ['grants_config_browser'],
         env: 'FEDERATED_CREDENTIALS_AUDIENCE'
       }
     },
