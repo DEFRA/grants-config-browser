@@ -19,6 +19,9 @@ describe('saveUserSession', () => {
         session: {
           set: vi.fn()
         }
+      },
+      logger: {
+        info: vi.fn()
       }
     }
     const sessionId = 'test-session-id'
@@ -65,7 +68,8 @@ describe('saveUserSession', () => {
         }
       },
       logger: {
-        error: vi.fn()
+        error: vi.fn(),
+        info: vi.fn()
       }
     }
     const sessionId = 'test-session-id'
@@ -104,6 +108,9 @@ describe('saveUserSession', () => {
         session: {
           set: vi.fn()
         }
+      },
+      logger: {
+        info: vi.fn()
       }
     }
     const sessionId = 'test-session-id'
