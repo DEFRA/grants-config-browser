@@ -342,6 +342,14 @@ export const config = convict({
       default: 'x-cdp-request-id',
       env: 'TRACING_HEADER'
     }
+  },
+  visualiseJourney: {
+    yamlPath: {
+      doc: 'Path to the journey YAML file',
+      format: String,
+      default: path.resolve(dirname, '../../woodland.yaml'),
+      env: 'VISUALISE_JOURNEY_YAML_PATH'
+    }
   }
 })
 
