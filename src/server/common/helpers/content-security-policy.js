@@ -13,8 +13,14 @@ const contentSecurityPolicy = {
     fontSrc: ['self', 'data:'],
     connectSrc: ['self', 'wss', 'data:'],
     mediaSrc: ['self'],
-    styleSrc: ['self'],
-    scriptSrc: ['self', "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='"],
+    styleSrc: ['self', 'data:', 'unsafe-inline', 'https://cdn.jsdelivr.net'],
+    scriptSrc: [
+      'self',
+      'data:',
+      'unsafe-inline',
+      'https://cdn.jsdelivr.net',
+      "'sha256-GUQ5ad8JK5KmEWmROf3LZd9ge94daqNvd8xy9YS1iDw='"
+    ],
     imgSrc: ['self', 'data:'],
     frameSrc: ['self', 'data:'],
     objectSrc: ['none'],

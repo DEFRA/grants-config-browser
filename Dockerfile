@@ -16,6 +16,9 @@ EXPOSE ${PORT} ${PORT_DEBUG}
 COPY --chown=node:node --chmod=755 package*.json ./
 RUN npm ci --ignore-scripts
 COPY --chown=node:node --chmod=755 . .
+# Ensure woodland.yaml is available in the root if it exists in the build context
+# If it's outside the build context, it should be copied here before building
+COPY --chown=node:node --chmod=755 woodland.yaml* ./
 RUN npm run build:frontend
 
 CMD [ "npm", "run", "docker:dev" ]
@@ -41,6 +44,7 @@ USER node
 COPY --from=production_build /home/node/package*.json ./
 COPY --from=production_build /home/node/src ./src/
 COPY --from=production_build /home/node/.public/ ./.public/
+COPY --from=production_build /home/node/woodland.yaml* ./
 
 RUN npm ci --omit=dev --ignore-scripts
 

@@ -15,8 +15,9 @@ describe('#versionController', () => {
       response: {
         grant: 'some-grant',
         version: '1.2.3',
-        manifest: ['file1', 'file2', 'file3'],
-        status: 'active'
+        manifest: ['file1', 'grants-ui-file.yaml', 'some-gas-file.json', 'file3'],
+        status: 'active',
+        path: 'some-bucket'
       }
     })
   })
@@ -49,14 +50,41 @@ describe('#versionController', () => {
     expect(result).toEqual(expect.stringContaining('some-grant - 1.2.3 |'))
     const statusTag = $('strong.govuk-tag--green').text()
     expect(statusTag).toMatch('Active')
-    expect($('th.govuk-table__header').text()).toEqual('Config files')
-
-    const files = $('table')
-      .find('tbody tr')
-      .map((_, row) => $(row).find('td').eq(0).text().trim())
+    const headers = $('th.govuk-table__header')
+      .map((_, el) => $(el).text().trim())
       .get()
+    expect(headers).toContain('Config files')
+    expect(headers).toContain('Actions')
 
-    expect(files).toEqual(['file1', 'file2', 'file3'])
+    const rows = $('table tbody tr')
+
+    // Check first file (no visualise link)
+    const firstRowCells = rows.eq(0).find('td')
+    expect(firstRowCells.eq(0).text().trim()).toBe('file1')
+    expect(firstRowCells.eq(1).text().trim()).toBe('')
+
+    // Check second file (with visualise link)
+    const secondRowCells = rows.eq(1).find('td')
+    expect(secondRowCells.eq(0).text().trim()).toBe('grants-ui-file.yaml')
+    expect(secondRowCells.eq(1).text().trim()).toContain('Visualise')
+
+    const visualiseLink = secondRowCells.eq(1).find('a.visualise-link')
+    expect(visualiseLink.attr('href')).toBe('/visualise-journey?filename=grants-ui-file.yaml&bucket=some-bucket')
+    expect(visualiseLink.find('img.visualise-icon').length).toBe(1)
+    expect(visualiseLink.find('img.visualise-icon').attr('src')).toBe('/public/assets/images/visualise.svg')
+
+    // Check third file (with visualise-gas link)
+    const thirdRowCells = rows.eq(2).find('td')
+    expect(thirdRowCells.eq(0).text().trim()).toBe('some-gas-file.json')
+    expect(thirdRowCells.eq(1).text().trim()).toContain('Visualise')
+
+    const visualiseGasLink = thirdRowCells.eq(1).find('a.visualise-link')
+    expect(visualiseGasLink.attr('href')).toBe('/visualise-gas?filename=some-gas-file.json&bucket=some-bucket')
+
+    // Check fourth file (no visualise link)
+    const fourthRowCells = rows.eq(3).find('td')
+    expect(fourthRowCells.eq(0).text().trim()).toBe('file3')
+    expect(fourthRowCells.eq(1).text().trim()).toBe('')
 
     expect(statusCode).toBe(statusCodes.ok)
   })

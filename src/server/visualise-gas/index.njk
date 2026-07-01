@@ -1,0 +1,27 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+<div class="govuk-grid-row">
+  <div class="govuk-grid-column-full">
+    <span class="govuk-caption-l">GAS Visualisation</span>
+    <div class="govuk-button-group">
+      <h1 class="govuk-heading-l govuk-!-static-padding-right-5">{{ configName }}</h1>
+      <button id="reset-zoom" class="govuk-button govuk-button--secondary" data-module="govuk-button">
+        Reset Zoom
+      </button>
+    </div>
+
+    <div class="journey-visualisation-container govuk-!-margin-top-6" style="border: 1px solid #b1b4b6;">
+      <pre class="mermaid mermaid--pan-zoom">
+        {{ mermaidGraph | safe }}
+      </pre>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block bodyEnd %}
+  {{ super() }}
+  <script type="module" src="{{ getAssetPath('mermaid.js') }}"></script>
+{% endblock %}
