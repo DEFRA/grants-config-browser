@@ -29,7 +29,7 @@ export const visualiseJourneyController = {
 
     // for each condition, see which page's component it links to
     conditionsList.forEach((condition) => {
-      const componentId = condition.items[0]?.componentId
+      const componentId = condition.items?.[0]?.componentId
       const matchingPage = pages.find((page) => page.components?.some((component) => component.id === componentId))
       if (matchingPage) {
         condition.onPageId = matchingPage.id
@@ -57,13 +57,13 @@ export const visualiseJourneyController = {
     const links = []
 
     const createConditionalLabelAndLink = (page, condition, nextPageId) => {
-      const component = page.components?.find((c) => c.id === condition.items[0]?.componentId)
+      const component = page.components?.find((c) => c.id === condition.items?.[0]?.componentId)
 
       const label =
-        condition && component
+        condition && component && condition.items?.[0]
           ? (component.shortDescription || component.title) +
             ' ' +
-            condition.items[0]?.operator +
+            condition.items[0].operator +
             ' ' +
             getValue(condition.items[0], lists)
           : ''

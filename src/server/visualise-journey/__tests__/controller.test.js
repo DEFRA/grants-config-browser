@@ -119,12 +119,17 @@ describe('visualiseJourneyController', () => {
       name: 'Branching Journey',
       sections: [],
       pages: [
-        { id: 'p1', title: 'Start', path: '/p1' },
+        {
+          id: 'p1',
+          title: 'Start',
+          path: '/p1',
+          components: [{ id: 'comp1', name: 'Choice', shortDescription: 'Choice' }]
+        },
         { id: 'p2', title: 'Conditional Page', path: '/p2', condition: 'c1' },
         { id: 'p3', title: 'Page after conditional', path: '/p3' },
         { id: 'p4', title: 'Terminal', path: '/p4', terminal: true }
       ],
-      conditions: [{ id: 'c1', name: 'If True' }]
+      conditions: [{ id: 'c1', name: 'If True', items: [{ componentId: 'comp1', operator: '==', value: 'true' }] }]
     }
 
     fs.readFileSync.mockReturnValue('mock yaml content')
@@ -144,8 +149,8 @@ describe('visualiseJourneyController', () => {
       })
     )
     const callArgs = h.view.mock.calls[0][1]
-    expect(callArgs.mermaidGraph).toContain('p1 -- "" --> p2')
-    expect(callArgs.mermaidGraph).toContain('p1 -.-> p3')
+    expect(callArgs.mermaidGraph).toContain('p1 edge0@-- "Choice == true" --> p2')
+    expect(callArgs.mermaidGraph).toContain('p1 edge1@-.-> p3')
     expect(callArgs.mermaidGraph).toContain('p4(("🚩 Terminal<br/><small>/p4</small>"))')
     expect(callArgs.mermaidGraph).toContain('style p4 fill:#f8d7da,stroke:#dc3545')
     expect(result).toBe('rendered view')

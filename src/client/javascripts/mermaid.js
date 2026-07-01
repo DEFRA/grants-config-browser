@@ -33,34 +33,47 @@ async function run() {
   })
 
   document.querySelectorAll('pre.mermaid--pan-zoom > svg').forEach((svg) => {
-    const viewBox = svg.getAttribute('viewBox')
-    if (!viewBox) {
+    if (!svg.getAttribute('viewBox')) {
       return
     }
-
-    const [, , , height] = viewBox.split(' ')
-    const { width } = svg.parentElement.getBoundingClientRect()
 
     const panZoom = svgPanZoom(svg, {
       controlIconsEnabled: false,
       mouseWheelZoomEnabled: true,
-      zoomScaleSensitivity: 1,
-      minZoom: 0.2,
-      maxZoom: 20
+      zoomScaleSensitivity: 0.2,
+      minZoom: 0.01,
+      maxZoom: 100,
+      fit: true,
+      center: true
     })
+
+    const smartZoom = () => {
+      panZoom.fit()
+      panZoom.center()
+
+      const sizes = panZoom.getSizes()
+      const containerRatio = sizes.width / sizes.height
+      const graphRatio = sizes.viewBox.width / sizes.viewBox.height
+
+      // If the graph is much taller than the container ratio, fit to width instead of height
+      if (graphRatio < containerRatio) {
+        const newZoom = sizes.width / sizes.viewBox.width
+        panZoom.zoom(newZoom)
+        panZoom.center()
+        const pannedSizes = panZoom.getSizes()
+        panZoom.pan({ x: pannedSizes.pan.x, y: 0 })
+      }
+    }
+
+    smartZoom()
 
     const resetZoomButton = document.getElementById('reset-zoom')
     if (resetZoomButton) {
-      resetZoomButton.addEventListener('click', () => {
-        panZoom.resetZoom()
-        panZoom.center()
+      resetZoomButton.addEventListener('click', (e) => {
+        e.preventDefault()
+        smartZoom()
       })
     }
-
-    svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
-    svg.style.maxWidth = `${width}px`
-    svg.style.width = '100%'
-    svg.style.height = '100%'
   })
 }
 

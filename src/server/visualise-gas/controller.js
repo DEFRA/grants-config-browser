@@ -4,8 +4,7 @@ import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
 
 export const visualiseGasController = {
   async handler(request, h) {
-    const { bucket, filename, showComponents } = request.query || {}
-    const showComponentsBoolean = showComponents === 'true'
+    const { bucket, filename } = request.query || {}
     const jsonPath = appConfig.get('visualiseGas.jsonPath')
 
     let config
@@ -80,10 +79,8 @@ export const visualiseGasController = {
       mermaidGraph += '  end\n'
     })
 
-    let edgeCounter = 0
     // Add links to Mermaid graph
     links.forEach((link) => {
-      const edgeId = 'edge' + edgeCounter++
       const source = link.source.replace(/:/g, '_')
       const target = link.target.replace(/:/g, '_')
       const label = link.processes.length > 0 ? `|${link.processes.join(', ')}|` : ''
