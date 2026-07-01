@@ -9,6 +9,10 @@ const buildTableHeaders = () => {
         'aria-sort': 'none'
       },
       classes: 'col-25'
+    },
+    {
+      text: 'Actions',
+      classes: 'col-25'
     }
   ]
 }
@@ -16,11 +20,18 @@ const buildTableHeaders = () => {
 const createRowsForTable = (bucket, manifestEntries) => {
   return manifestEntries.map((manifestEntry) => {
     const centringClass = 'vertical-middle'
+    const visualizeLink =
+      manifestEntry.includes('grants-ui') && manifestEntry.endsWith('.yaml')
+        ? `<a class="visualise-link" href="/visualise-journey?filename=${manifestEntry}&bucket=${bucket}">
+             <img src="/public/assets/images/visualise.svg" class="visualise-icon" alt="" role="presentation" />Visualise</a>`
+        : ''
     return [
       {
-        html: `<div>
-                <a class="govuk-!-margin-0" href="/viewfile?filename=${manifestEntry}&bucket=${bucket}">${manifestEntry}</a>
-              </div>`,
+        html: `<a class="govuk-!-margin-0" href="/viewfile?filename=${manifestEntry}&bucket=${bucket}">${manifestEntry}</a>`,
+        classes: centringClass
+      },
+      {
+        html: visualizeLink,
         classes: centringClass
       }
     ]

@@ -163,6 +163,10 @@ export default {
         {
           from: path.join(mojFrontendPath, 'moj/assets'),
           to: 'assets'
+        },
+        {
+          from: path.join(dirname, 'src/client/images'),
+          to: 'assets/images'
         }
       ]
     })

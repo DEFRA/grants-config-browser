@@ -7,3 +7,20 @@
   padding-top: govuk-spacing(4);
   padding-bottom: govuk-spacing(3);
 }
+
+.visualise-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  .visualise-icon {
+    width: 18px !important;
+    height: 18px !important;
+    margin-right: 5px !important;
+    vertical-align: middle !important;
+  }
+}

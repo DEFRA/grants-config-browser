@@ -7,3 +7,5 @@ createAll(ErrorSummary)
 createAll(Radios)
 createAll(SkipLink)
 initMoj()
+
+import '../images/visualise.svg'

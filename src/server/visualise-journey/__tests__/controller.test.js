@@ -3,9 +3,11 @@ import { visualiseJourneyController } from '../controller.js'
 import fs from 'node:fs'
 import yaml from 'js-yaml'
 import { config as appConfig } from '../../../config/config.js'
+import { getS3FileContent } from '../../common/helpers/s3/s3-interactions.js'
 
 vi.mock('node:fs')
 vi.mock('js-yaml')
+vi.mock('../../common/helpers/s3/s3-interactions.js')
 vi.mock('../../../config/config.js', () => ({
   config: {
     get: vi.fn()
@@ -77,5 +79,75 @@ describe('visualiseJourneyController', () => {
 
     expect(h.response).toHaveBeenCalledWith(expect.stringContaining('Error loading YAML'))
     expect(result).toBe('error response')
+  })
+
+  it('should fetch from S3 if bucket and filename are provided', async () => {
+    const mockConfig = {
+      name: 'S3 Journey',
+      sections: [],
+      pages: []
+    }
+
+    getS3FileContent.mockResolvedValue('mock s3 yaml content')
+    yaml.load.mockReturnValue(mockConfig)
+
+    const request = {
+      query: {
+        bucket: 'test-bucket',
+        filename: 'test-grants-ui.yaml'
+      }
+    }
+    const h = {
+      view: vi.fn().mockReturnValue('rendered view')
+    }
+
+    const result = await visualiseJourneyController.handler(request, h)
+
+    expect(getS3FileContent).toHaveBeenCalledWith('test-bucket', 'test-grants-ui.yaml')
+    expect(fs.readFileSync).not.toHaveBeenCalled()
+    expect(h.view).toHaveBeenCalledWith(
+      'visualise-journey/index',
+      expect.objectContaining({
+        configName: 'S3 Journey'
+      })
+    )
+    expect(result).toBe('rendered view')
+  })
+
+  it('should highlight terminal pages and branching paths based on next page condition', async () => {
+    const mockConfig = {
+      name: 'Branching Journey',
+      sections: [],
+      pages: [
+        { id: 'p1', title: 'Start', path: '/p1' },
+        { id: 'p2', title: 'Conditional Page', path: '/p2', condition: 'c1' },
+        { id: 'p3', title: 'Page after conditional', path: '/p3' },
+        { id: 'p4', title: 'Terminal', path: '/p4', terminal: true }
+      ],
+      conditions: [{ id: 'c1', name: 'If True' }]
+    }
+
+    fs.readFileSync.mockReturnValue('mock yaml content')
+    yaml.load.mockReturnValue(mockConfig)
+
+    const request = {}
+    const h = {
+      view: vi.fn().mockReturnValue('rendered view')
+    }
+
+    const result = await visualiseJourneyController.handler(request, h)
+
+    expect(h.view).toHaveBeenCalledWith(
+      'visualise-journey/index',
+      expect.objectContaining({
+        // p1 should link to p2 (true) and p3 (false)
+        mermaidGraph: expect.stringContaining('p1 -- "If True" --> p2')
+      })
+    )
+    const callArgs = h.view.mock.calls[0][1]
+    expect(callArgs.mermaidGraph).toContain('p1 edge1@-.-> p3')
+    expect(callArgs.mermaidGraph).toContain('p4(("🚩 Terminal<br/><small>/p4</small>"))')
+    expect(callArgs.mermaidGraph).toContain('style p4 fill:#f8d7da,stroke:#dc3545')
+    expect(result).toBe('rendered view')
   })
 })
