@@ -42,7 +42,7 @@ async function run() {
     const { width } = svg.parentElement.getBoundingClientRect()
 
     const panZoom = svgPanZoom(svg, {
-      controlIconsEnabled: true,
+      controlIconsEnabled: false,
       mouseWheelZoomEnabled: true,
       zoomScaleSensitivity: 1,
       minZoom: 0.2,

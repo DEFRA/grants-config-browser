@@ -350,6 +350,14 @@ export const config = convict({
       default: path.resolve(dirname, '../../woodland.yaml'),
       env: 'VISUALISE_JOURNEY_YAML_PATH'
     }
+  },
+  visualiseGas: {
+    jsonPath: {
+      doc: 'Path to the GAS JSON file',
+      format: String,
+      default: path.resolve(dirname, '../../woodland.json'),
+      env: 'VISUALISE_GAS_JSON_PATH'
+    }
   }
 })
 

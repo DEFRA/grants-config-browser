@@ -140,12 +140,12 @@ describe('visualiseJourneyController', () => {
     expect(h.view).toHaveBeenCalledWith(
       'visualise-journey/index',
       expect.objectContaining({
-        // p1 should link to p2 (true) and p3 (false)
-        mermaidGraph: expect.stringContaining('p1 -- "If True" --> p2')
+        configName: 'Branching Journey'
       })
     )
     const callArgs = h.view.mock.calls[0][1]
-    expect(callArgs.mermaidGraph).toContain('p1 edge1@-.-> p3')
+    expect(callArgs.mermaidGraph).toContain('p1 -- "" --> p2')
+    expect(callArgs.mermaidGraph).toContain('p1 -.-> p3')
     expect(callArgs.mermaidGraph).toContain('p4(("🚩 Terminal<br/><small>/p4</small>"))')
     expect(callArgs.mermaidGraph).toContain('style p4 fill:#f8d7da,stroke:#dc3545')
     expect(result).toBe('rendered view')

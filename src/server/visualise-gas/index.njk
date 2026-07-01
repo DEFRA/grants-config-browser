@@ -3,19 +3,12 @@
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-full">
-    <span class="govuk-caption-l">Journey Visualisation</span>
+    <span class="govuk-caption-l">GAS Visualisation</span>
     <div class="govuk-button-group">
       <h1 class="govuk-heading-l govuk-!-static-padding-right-5">{{ configName }}</h1>
-      <button id="reset-zoom" class="govuk-button govuk-button--secondary" data-module="govuk-button">
+      <a href="/visualise-gas?bucket={{ bucket }}&filename={{ filename }}" id="reset-zoom" class="govuk-button govuk-button--secondary" data-module="govuk-button">
         Reset Zoom
-      </button>
-      <a href="/visualise-journey?bucket={{ bucket }}&filename={{ filename }}&showComponents={{ 'false' if showComponents else 'true' }}" id="show-components" class="govuk-button govuk-button--secondary" data-module="govuk-button">
-                  {% if showComponents %}
-                    Hide components
-                  {% else %}
-                    Show components
-                  {% endif %}
-          </a>
+      </a>
     </div>
 
     <div class="journey-visualisation-container govuk-!-margin-top-6" style="border: 1px solid #b1b4b6;">

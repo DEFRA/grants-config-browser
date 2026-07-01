@@ -26,6 +26,7 @@ import {
 } from './auth/mock-discovery.js'
 import { signOutController } from './auth/logout.js'
 import { visualiseJourney } from './visualise-journey/index.js'
+import { visualiseGas } from './visualise-gas/index.js'
 
 export const router = {
   plugin: {
@@ -37,7 +38,7 @@ export const router = {
       await server.register([health])
 
       // Application specific routes, add your own routes here
-      await server.register([home, about, grant, version, viewfile, notifications, api, visualiseJourney])
+      await server.register([home, about, grant, version, viewfile, notifications, api, visualiseJourney, visualiseGas])
 
       // Static assets
       await server.register([serveStaticFiles])

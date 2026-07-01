@@ -5,7 +5,8 @@ import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
 
 export const visualiseJourneyController = {
   async handler(request, h) {
-    const { bucket, filename } = request.query || {}
+    const { bucket, filename, showComponents } = request.query || {}
+    const showComponentsBoolean = showComponents === 'true'
     const yamlPath = appConfig.get('visualiseJourney.yamlPath')
 
     let config
@@ -26,7 +27,14 @@ export const visualiseJourneyController = {
     const pages = config.pages || []
     const conditionsList = config.conditions || []
 
-    console.log(conditionsList)
+    // for each condition, see which page's component it links to
+    conditionsList.forEach((condition) => {
+      const componentId = condition.items[0]?.componentId
+      const matchingPage = pages.find((page) => page.components?.some((component) => component.id === componentId))
+      if (matchingPage) {
+        condition.onPageId = matchingPage.id
+      }
+    })
 
     const nodes = pages.map((page) => ({
       id: page.id,
@@ -47,46 +55,45 @@ export const visualiseJourneyController = {
 
     // Build flow links
     const links = []
+
+    const createConditionalLabelAndLink = (page, condition, nextPageId) => {
+      const component = page.components?.find((c) => c.id === condition.items[0]?.componentId)
+
+      const label =
+        condition && component
+          ? (component.shortDescription || component.title) +
+            ' ' +
+            condition.items[0]?.operator +
+            ' ' +
+            getValue(condition.items[0], lists)
+          : ''
+
+      links.push({
+        source: page.id,
+        target: nextPageId,
+        type: 'conditional',
+        label
+      })
+    }
+
     pages.forEach((page, index) => {
       // If it's a terminal page, it has no next links
       if (page.terminal || page.controller?.includes('Terminal')) {
         return
       }
 
+      let foundNextPage = false
+
       // Check the NEXT page in the list to see if it's conditional
-      const nextPageIndex = index + 1
-      const nextPage = pages[nextPageIndex]
+      let nextPageIndex = index + 1
+      let nextPage = pages[nextPageIndex]
 
-      if (nextPage) {
+      while (!foundNextPage && nextPage) {
         if (nextPage.condition) {
-          // If the next page is conditional, we add two links from the CURRENT page
-          // 1. To the nextPage if the condition is true
+          // To the nextPage if the condition is true and the condition belongs to current page component
           const condition = conditionsList.find((c) => c.id === nextPage.condition)
-          const component = page.components?.find((c) => c.id === condition.items[0]?.componentId)
-          // console.log(condition, component)
-          const label = condition
-            ? component.shortDescription +
-              ' ' +
-              condition.items[0]?.operator +
-              ' ' +
-              getValue(condition.items[0], lists)
-            : ''
-
-          links.push({
-            source: page.id,
-            target: nextPage.id,
-            type: 'conditional',
-            label
-          })
-
-          // 2. To the page AFTER nextPage if the condition is false (if it exists)
-          const pageAfterNext = pages[nextPageIndex + 1]
-          if (pageAfterNext) {
-            links.push({
-              source: page.id,
-              target: pageAfterNext.id,
-              type: 'default' // Default path if condition is false
-            })
+          if (condition.onPageId === page.id) {
+            createConditionalLabelAndLink(page, condition, nextPage.id)
           }
         } else {
           // If the next page is NOT conditional, just link to it
@@ -95,18 +102,30 @@ export const visualiseJourneyController = {
             target: nextPage.id,
             type: 'default'
           })
+          foundNextPage = true
         }
+        nextPageIndex += 1
+        nextPage = pages[nextPageIndex]
       }
+
     })
 
     // Prepare Mermaid graph definition
     let mermaidGraph = 'flowchart TD\n'
 
-    const renderNode = (node) => {
+    const componentsAsListItems = (components, listTags = true) => {
+      return components.map((component) => `${listTags ? '<li>' : ''}${component.title} : ${component.type}${listTags ? '</li>' : ''}`).join(listTags ? '' : '\n')
+    }
+
+    const renderNode = (node, showComponents) => {
       const title = node.terminal ? `🚩 ${node.title}` : node.title
       const shapeStart = node.terminal ? '((' : '['
       const shapeEnd = node.terminal ? '))' : ']'
-      return `    ${node.id}${shapeStart}"${title}<br/><small>${node.path}</small>"${shapeEnd}\n`
+      const componentDetails = showComponents ? `<ul>${componentsAsListItems(node.components)}</ul>` : ''
+      const toolTip = componentsAsListItems(node.components, false)
+      const toolTipText = toolTip ? `click ${node.id} href "#" "${toolTip}"\n` : ''
+      console.log(toolTip)
+      return `    ${node.id}${shapeStart}"${title}<br/><small>${node.path}</small>${componentDetails}"${shapeEnd}\n${toolTipText}`
     }
 
     // Group nodes by section for Mermaid subgraphs
@@ -115,7 +134,7 @@ export const visualiseJourneyController = {
       if (sectionNodes.length > 0) {
         mermaidGraph += `  subgraph ${section.id}["${section.title}"]\n`
         sectionNodes.forEach((node) => {
-          mermaidGraph += renderNode(node)
+          mermaidGraph += renderNode(node, showComponentsBoolean)
         })
         mermaidGraph += '  end\n'
       }
@@ -124,7 +143,7 @@ export const visualiseJourneyController = {
     // Add unassigned nodes
     const unassignedNodes = nodes.filter((n) => !n.section)
     unassignedNodes.forEach((node) => {
-      mermaidGraph += renderNode(node)
+      mermaidGraph += renderNode(node, showComponentsBoolean)
     })
 
     let edgeCounter = 0
@@ -132,7 +151,7 @@ export const visualiseJourneyController = {
     links.forEach((link) => {
       const edgeId = 'edge' + edgeCounter++
       if (link.type === 'conditional') {
-        mermaidGraph += `  ${link.source} -- "${link.label}" --> ${link.target}\n`
+        mermaidGraph += `  ${link.source} ${edgeId}@-- "${link.label}" --> ${link.target}\n${edgeId}@{ animate: true }\n`
       } else {
         mermaidGraph += `  ${link.source} ${edgeId}@-.-> ${link.target}\n${edgeId}@{ animate: true }\n`
       }
@@ -152,7 +171,10 @@ export const visualiseJourneyController = {
     return h.view('visualise-journey/index', {
       pageTitle: 'Visualise Journey',
       configName: config.name,
-      mermaidGraph
+      mermaidGraph,
+      showComponents: showComponentsBoolean,
+      bucket,
+      filename
     })
   }
 }
@@ -165,3 +187,4 @@ const getValue = (conditionItem, lists) => {
   }
   return conditionItem.value
 }
+
