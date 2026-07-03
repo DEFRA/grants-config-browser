@@ -8,6 +8,10 @@ const TEXTFIELD_COMPONENT_TYPES = new Set([
   'UkAddressField'
 ])
 
+const DATE_FIELD_TYPES = new Set(['DatePartsField', 'MonthYearField'])
+const RADIOBUTTON_FIELD_TYPES = new Set(['YesNoField', 'RadiosField'])
+const NON_INPUT_FIELD_TYPES = new Set(['Html', 'Details', 'Markdown', 'InsetText'])
+
 export const createTooltipData = (node, sectionTitle, lists) => {
   let ttd = ''
   if (sectionTitle) {
@@ -34,9 +38,10 @@ export const createTooltipData = (node, sectionTitle, lists) => {
 
 const customiseToolTipDataForComponentType = (component, node, lists) => {
   let ttd = ''
-  if (component.type === 'Html') {
+  if (NON_INPUT_FIELD_TYPES.has(component.type)) {
+    //this includes some components that should be collapsible, inset, markdown etc but for now just show the content
     ttd += component.content
-  } else if (component.type === 'YesNoField' || component.type === 'RadiosField') {
+  } else if (RADIOBUTTON_FIELD_TYPES.has(component.type)) {
     ttd += getRadioFieldContent(node, component, lists)
   } else if (component.type === 'List') {
     ttd += getListsContent(component, lists)
@@ -44,25 +49,17 @@ const customiseToolTipDataForComponentType = (component, node, lists) => {
     ttd += getTextFieldContent(node, component)
   } else if (component.type === 'MultilineTextField') {
     ttd += getMultiLineTextFieldContent(node, component)
-  } else if (component.type === 'DatePartsField' || component.type === 'MonthYearField') {
+  } else if (DATE_FIELD_TYPES.has(component.type)) {
     ttd += getDateFieldContent(node, component)
   } else if (component.type === 'CheckboxesField') {
     ttd += getCheckBoxesContent(node, component, lists)
   } else if (component.type === 'SelectField') {
     ttd += getSelectFieldContent(component, lists)
-  } else if (component.type === 'Details' || component.type === 'Markdown' || component.type === 'InsetText') {
-    //these should be collapsible, inset, markdown etc but for now just show the content
-    ttd += component.content
   } else {
     ttd += `<h2>${component.title}</h2>`
   }
 
-  if (
-    component.type !== 'Html' &&
-    component.type !== 'Details' &&
-    component.type !== 'Markdown' &&
-    component.type !== 'InsetText'
-  ) {
+  if (!NON_INPUT_FIELD_TYPES.has(component.type)) {
     ttd += `<p><small><strong>Name:</strong></small> <small>${component.name}</small></p>`
   }
 
