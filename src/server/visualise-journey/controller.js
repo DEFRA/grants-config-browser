@@ -2,6 +2,16 @@ import yaml from 'js-yaml'
 import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 
+const TEXTFIELD_COMPONENT_TYPES = [
+  'TextField',
+  'NumberField',
+  'NationalGridFieldNumberField',
+  'AutocompleteField',
+  'EmailAddressField',
+  'TelephoneNumberField',
+  'UkAddressField'
+]
+
 export const visualiseJourneyController = {
   async handler(request, h) {
     const { bucket, filename, showComponents } = request.query || {}
@@ -227,15 +237,7 @@ const createTooltipData = (node, sectionTitle, lists) => {
                   }
                   </ul>
                   </div>`
-    } else if (
-      component.type === 'TextField' ||
-      component.type === 'NumberField' ||
-      component.type === 'NationalGridFieldNumberField' ||
-      component.type === 'AutocompleteField' ||
-      component.type === 'EmailAddressField' ||
-      component.type === 'TelephoneNumberField' ||
-      component.type === 'UkAddressField'
-    ) {
+    } else if (TEXTFIELD_COMPONENT_TYPES.some((type) => type === component.type)) {
       ttd += `<div class="govuk-form-group">
                     ${createLabellingForTextField(component, node.components.length)}
                     <input class="govuk-input govuk-!-width-two-thirds" id="textField" name="textField" type="text"
@@ -257,10 +259,11 @@ const createTooltipData = (node, sectionTitle, lists) => {
                     </div>
                   </div>`
     } else if (component.type === 'CheckboxesField') {
+      const possibleHintPrefix = component.hint ? '<h2 class="govuk-hint">' + component.hint : ''
       ttd += `<div class="govuk-form-group">
                     <fieldset class="govuk-fieldset">
                       <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
-                          ${node.components.length === 1 ? (component.hint ? '<h2 class="govuk-hint">' + component.hint : '') : '<h2 class="govuk-fieldset__heading">' + component.title}
+                          ${node.components.length === 1 ? possibleHintPrefix : '<h2 class="govuk-fieldset__heading">' + component.title}
                         </h2>
                       </legend>
                       <div class="govuk-checkboxes" data-module="govuk-checkboxes">
@@ -424,5 +427,7 @@ const createLabellingForTextField = (component, componentsLength) => {
     return component.hint ? `<label class="govuk-label" for="textField">${component.hint}</label>` : ''
   }
 
-  return `<label class="govuk-label" for="textField">${component.title}</label>${component.hint ? `<div id="text-hint" class="govuk-hint">${component.hint}</div>` : ''}`
+  const hintSuffix = component.hint ? `<div id="text-hint" class="govuk-hint">${component.hint}</div>` : ''
+
+  return `<label class="govuk-label" for="textField">${component.title}</label>${hintSuffix}`
 }
