@@ -1,4 +1,5 @@
 import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
+import { statusCodes } from '../common/constants/status-codes.js'
 
 export const visualiseGasController = {
   async handler(request, h) {
@@ -14,7 +15,7 @@ export const visualiseGasController = {
       }
       config = JSON.parse(fileContent)
     } catch (e) {
-      return h.response(`Error loading JSON: ${e.message}`).code(500)
+      return h.response(`Error loading JSON: ${e.message}`).code(statusCodes.internalServerError)
     }
 
     const phases = config.phases || []
@@ -30,12 +31,12 @@ export const visualiseGasController = {
         const statuses = stage.statuses || []
         statuses.forEach((status) => {
           const fullId = `${phase.code}:${stage.code}:${status.code}`
-          const nodeId = fullId.replace(/:/g, '_')
+          const nodeId = fullId.replaceAll(':', '_')
           nodes.push({
             id: fullId,
             nodeId,
             code: status.code,
-            name: status.code.replace('STATUS_', '').replace(/_/g, ' '),
+            name: status.code.replace('STATUS_', '').replaceAll('_', ' '),
             phase: phase.code,
             stage: stage.code,
             stageName: stage.name
@@ -47,19 +48,7 @@ export const visualiseGasController = {
             <strong>Status:</strong> ${status.code}
           `.trim()
 
-          const validFrom = status.validFrom || []
-          validFrom.forEach((vf) => {
-            let sourceId = vf.code
-            if (!sourceId.includes(':')) {
-              // If it's a short code, assume it's in the same stage
-              sourceId = `${phase.code}:${stage.code}:${vf.code}`
-            }
-            links.push({
-              source: sourceId,
-              target: fullId,
-              processes: vf.processes || []
-            })
-          })
+          createLinks(phase, stage, status, fullId, links)
         })
       })
     })
@@ -88,8 +77,8 @@ export const visualiseGasController = {
 
     // Add links to Mermaid graph
     links.forEach((link) => {
-      const source = link.source.replace(/:/g, '_')
-      const target = link.target.replace(/:/g, '_')
+      const source = link.source.replaceAll(':', '_')
+      const target = link.target.replaceAll(':', '_')
       const label = link.processes.length > 0 ? `|${link.processes.join(', ')}|` : ''
       mermaidGraph += `  ${source} -->${label} ${target}\n`
     })
@@ -108,4 +97,20 @@ export const visualiseGasController = {
       tooltipData
     })
   }
+}
+
+const createLinks = (phase, stage, status, fullId, links) => {
+  const validFrom = status.validFrom || []
+  validFrom.forEach((vf) => {
+    let sourceId = vf.code
+    if (!sourceId.includes(':')) {
+      // If it's a short code, assume it's in the same stage
+      sourceId = `${phase.code}:${stage.code}:${vf.code}`
+    }
+    links.push({
+      source: sourceId,
+      target: fullId,
+      processes: vf.processes || []
+    })
+  })
 }
