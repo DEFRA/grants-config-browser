@@ -26,7 +26,6 @@ services:
       - grants-framework
     volumes:
       - ./src:/home/node/src
-      - /Users/aaroncarroll/gitrepos/defra/grants/grants-config-woodland/configurations/woodland/grants-ui/woodland.yaml:/home/node/woodland.yaml
 
 ################################################################################
 

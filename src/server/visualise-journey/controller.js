@@ -126,7 +126,9 @@ export const visualiseJourneyController = {
     let mermaidGraph = 'flowchart TD\n'
 
     const componentsAsListItems = (components) => {
-      if (components.length === 0) return 'No components'
+      if (components.length === 0) {
+        return 'No components'
+      }
       return components.map((component) => `<li><strong>${component.title}</strong>: ${component.type}</li>`).join('')
     }
 

@@ -17,17 +17,22 @@ const buildTableHeaders = () => {
   ]
 }
 
+const getVisualiseLink = (filename, bucket, type) => {
+  return `<a class="visualise-link" href="/visualise-${type}?filename=${filename}&bucket=${bucket}">
+             <img src="/public/assets/images/visualise.svg" class="visualise-icon" alt="" role="presentation" />Visualise</a>`
+}
+
 const createRowsForTable = (bucket, manifestEntries) => {
   return manifestEntries.map((manifestEntry) => {
     const centringClass = 'vertical-middle'
 
     let visualizeLink = ''
     if (manifestEntry.includes('grants-ui') && manifestEntry.endsWith('.yaml')) {
-      visualizeLink = `<a class="visualise-link" href="/visualise-journey?filename=${manifestEntry}&bucket=${bucket}">
-             <img src="/public/assets/images/visualise.svg" class="visualise-icon" alt="" role="presentation" />Visualise</a>`
+      visualizeLink = getVisualiseLink(manifestEntry, bucket, 'journey')
     } else if (manifestEntry.includes('gas')) {
-      visualizeLink = `<a class="visualise-link" href="/visualise-gas?filename=${manifestEntry}&bucket=${bucket}">
-             <img src="/public/assets/images/visualise.svg" class="visualise-icon" alt="" role="presentation" />Visualise</a>`
+      visualizeLink = getVisualiseLink(manifestEntry, bucket, 'gas')
+    } else {
+      visualizeLink = '&nbsp;'
     }
 
     return [
