@@ -28,45 +28,9 @@ export const visualiseJourneyController = {
     const pages = config.pages || []
     const conditionsList = config.conditions || []
 
-    lists.push({
-      id: 'yes-no',
-      items: [
-        { text: 'Yes', value: 'yes' },
-        { text: 'No', value: 'no' }
-      ]
-    })
-
-    // for each condition, see which page's component it links to
-    conditionsList.forEach((condition) => {
-      const componentId = condition.items?.[0]?.componentId
-      const matchingPage = pages.find((page) => page.components?.some((component) => component.id === componentId))
-      if (matchingPage) {
-        condition.onPageId = matchingPage.id
-      }
-    })
-
-    const nodes = pages.map((page) => ({
-      id: page.id,
-      title: page.title,
-      path: page.path,
-      section: page.section,
-      controller: page.controller,
-      condition: page.condition,
-      terminal: page.terminal || page.controller?.includes('Terminal') || false,
-      next: page.next,
-      config: page.config || {},
-      components: (page.components || []).map((c) => ({
-        type: c.type,
-        title: c.title || 'Component',
-        shortDescription: c.shortDescription,
-        id: c.id,
-        list: c.list,
-        content: c.content,
-        hint: c.hint,
-        name: c.name,
-        options: c.options
-      }))
-    }))
+    addYesNoListData(lists)
+    mapConditions(conditionsList, pages)
+    const nodes = mapPagesToNodes(pages)
 
     // Build flow links
     const links = []
@@ -76,7 +40,6 @@ export const visualiseJourneyController = {
       if (page.terminal || page.controller?.includes('Terminal')) {
         return
       }
-
       createPageLinks(page, index, pages, conditionsList, links, lists)
     })
 
@@ -120,10 +83,7 @@ export const visualiseJourneyController = {
       } else if (node.condition) {
         mermaidGraph += `  style ${node.id} fill:#fff9c4,stroke:#fbc02d\n`
       }
-    })
 
-    // Add click handlers for tooltips
-    nodes.forEach((node) => {
       mermaidGraph += `    click ${node.id} noop\n`
     })
 
@@ -137,6 +97,42 @@ export const visualiseJourneyController = {
       tooltipData
     })
   }
+}
+
+const mapConditions = (conditionsList, pages) => {
+  // for each condition, see which page's component it links to
+  conditionsList.forEach((condition) => {
+    const componentId = condition.items?.[0]?.componentId
+    const matchingPage = pages.find((page) => page.components?.some((component) => component.id === componentId))
+    if (matchingPage) {
+      condition.onPageId = matchingPage.id
+    }
+  })
+}
+
+const mapPagesToNodes = (pages) => {
+  return pages.map((page) => ({
+    id: page.id,
+    title: page.title,
+    path: page.path,
+    section: page.section,
+    controller: page.controller,
+    condition: page.condition,
+    terminal: page.terminal || page.controller?.includes('Terminal') || false,
+    next: page.next,
+    config: page.config || {},
+    components: (page.components || []).map((c) => ({
+      type: c.type,
+      title: c.title || 'Component',
+      shortDescription: c.shortDescription,
+      id: c.id,
+      list: c.list,
+      content: c.content,
+      hint: c.hint,
+      name: c.name,
+      options: c.options
+    }))
+  }))
 }
 
 const createPageLinks = (page, index, pages, conditionsList, links, lists) => {
@@ -180,6 +176,16 @@ const createConditionalLabelAndLink = (page, condition, nextPageId, links, lists
     target: nextPageId,
     type: 'conditional',
     label
+  })
+}
+
+const addYesNoListData = (lists) => {
+  lists.push({
+    id: 'yes-no',
+    items: [
+      { text: 'Yes', value: 'yes' },
+      { text: 'No', value: 'no' }
+    ]
   })
 }
 

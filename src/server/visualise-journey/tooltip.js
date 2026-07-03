@@ -20,13 +20,70 @@ export const createTooltipData = (node, sectionTitle, lists) => {
   }
 
   for (const component of node.components) {
-    if (component.type === 'Html') {
-      ttd += component.content
-    } else if (component.type === 'YesNoField' || component.type === 'RadiosField') {
-      ttd += `<div class="govuk-form-group">
+    ttd += customiseToolTipDataForComponentType(component, node, lists)
+  }
+
+  if (!node.components?.length) {
+    ttd += `<p><strong>No configurable components</strong></p>`
+    ttd += getControllerSpecificMessage(node)
+  } else if (!node.terminal) {
+    ttd += getContinueButton(node)
+  }
+  return ttd
+}
+
+const customiseToolTipDataForComponentType = (component, node, lists) => {
+  let ttd = ''
+  if (component.type === 'Html') {
+    ttd += component.content
+  } else if (component.type === 'YesNoField' || component.type === 'RadiosField') {
+    ttd += getRadioFieldContent(node, component, lists)
+  } else if (component.type === 'List') {
+    ttd += getListsContent(component, lists)
+  } else if (TEXTFIELD_COMPONENT_TYPES.has(component.type)) {
+    ttd += getTextFieldContent(node, component)
+  } else if (component.type === 'MultilineTextField') {
+    ttd += getMultiLineTextFieldContent(node, component)
+  } else if (component.type === 'DatePartsField' || component.type === 'MonthYearField') {
+    ttd += getDateFieldContent(node, component)
+  } else if (component.type === 'CheckboxesField') {
+    ttd += getCheckBoxesContent(node, component, lists)
+  } else if (component.type === 'SelectField') {
+    ttd += getSelectFieldContent(component, lists)
+  } else if (component.type === 'Details' || component.type === 'Markdown' || component.type === 'InsetText') {
+    //these should be collapsible, inset, markdown etc but for now just show the content
+    ttd += component.content
+  } else {
+    ttd += `<h2>${component.title}</h2>`
+  }
+
+  if (
+    component.type !== 'Html' &&
+    component.type !== 'Details' &&
+    component.type !== 'Markdown' &&
+    component.type !== 'InsetText'
+  ) {
+    ttd += `<p><small><strong>Name:</strong></small> <small>${component.name}</small></p>`
+  }
+
+  return ttd
+}
+
+const getSelectFieldContent = (component, lists) => {
+  return `<div class="govuk-form-group">
+                      <label class="govuk-label govuk-label--m" for="selectField">${component.title}</label>
+                      <select class="govuk-select" id="selectField" name="selectField">
+                        ${createSelectOptions(lists, component.list)}
+                      </select>
+                  </div>`
+}
+
+const getRadioFieldContent = (node, component, lists) => {
+  const possibleHintPrefix = component.hint ? '<h2 class="govuk-hint">' + component.hint : ''
+  return `<div class="govuk-form-group">
                     <fieldset class="govuk-fieldset">
                       <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
-                          ${node.components.length === 1 ? (component.hint ? '<h2 class="govuk-hint">' + component.hint : '') : '<h2 class="govuk-fieldset__heading">' + component.title}
+                          ${node.components.length === 1 ? possibleHintPrefix : '<h2 class="govuk-fieldset__heading">' + component.title}
                         </h2>
                       </legend>
                       <div class="govuk-radios" data-module="govuk-radios">
@@ -34,8 +91,25 @@ export const createTooltipData = (node, sectionTitle, lists) => {
                       </div>
                     </fieldset>
                   </div>`
-    } else if (component.type === 'List') {
-      ttd += `<div class="govuk-form-group">
+}
+
+const getCheckBoxesContent = (node, component, lists) => {
+  const possibleHintPrefix = component.hint ? '<h2 class="govuk-hint">' + component.hint : ''
+  return `<div class="govuk-form-group">
+                    <fieldset class="govuk-fieldset">
+                      <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+                          ${node.components.length === 1 ? possibleHintPrefix : '<h2 class="govuk-fieldset__heading">' + component.title}
+                        </h2>
+                      </legend>
+                      <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+                        ${createCbOptions(lists, component.list)}
+                      </div>
+                    </fieldset>
+                  </div>`
+}
+
+const getListsContent = (component, lists) => {
+  return `<div class="govuk-form-group">
                   <h2 class="govuk-heading-m govuk-!-margin-bottom-3">
                     ${component.title}
                   </h2>
@@ -48,20 +122,26 @@ export const createTooltipData = (node, sectionTitle, lists) => {
                   }
                   </ul>
                   </div>`
-    } else if (TEXTFIELD_COMPONENT_TYPES.has(component.type)) {
-      ttd += `<div class="govuk-form-group">
+}
+
+const getTextFieldContent = (node, component) => {
+  return `<div class="govuk-form-group">
                     ${createLabellingForTextField(component, node.components.length)}
                     <input class="govuk-input govuk-!-width-two-thirds" id="textField" name="textField" type="text"
                     ${component.type === 'UkAddressField' ? `value="Address Field - multiple fields will be shown on real UI"` : ''}>
                   </div>`
-    } else if (component.type === 'MultilineTextField') {
-      ttd += `<div class="govuk-form-group">
+}
+
+const getMultiLineTextFieldContent = (node, component) => {
+  return `<div class="govuk-form-group">
                     ${createLabellingForTextField(component, node.components.length)}
                     <textarea class="govuk-textarea govuk-js-character-count" id="textField" name="textField" rows="${component.options?.rows ?? 10}"></textarea>
                     <div class="govuk-hint govuk-character-count__message govuk-character-count__status" aria-hidden="true">You have ${component.options?.maxWords ?? 0} words remaining</div>
                   </div>`
-    } else if (component.type === 'DatePartsField' || component.type === 'MonthYearField') {
-      ttd += `<div class="govuk-form-group">
+}
+
+const getDateFieldContent = (node, component) => {
+  return `<div class="govuk-form-group">
                     ${createLabellingForTextField(component, node.components.length)}
                     <div class="govuk-date-input" autocomplete="off" id="datePartsField">
                       ${component.type === 'DatePartsField' ? getDateFieldInput('day') : ''}
@@ -69,50 +149,6 @@ export const createTooltipData = (node, sectionTitle, lists) => {
                       ${getDateFieldInput('year')}
                     </div>
                   </div>`
-    } else if (component.type === 'CheckboxesField') {
-      const possibleHintPrefix = component.hint ? '<h2 class="govuk-hint">' + component.hint : ''
-      ttd += `<div class="govuk-form-group">
-                    <fieldset class="govuk-fieldset">
-                      <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
-                          ${node.components.length === 1 ? possibleHintPrefix : '<h2 class="govuk-fieldset__heading">' + component.title}
-                        </h2>
-                      </legend>
-                      <div class="govuk-checkboxes" data-module="govuk-checkboxes">
-                        ${createCbOptions(lists, component.list)}
-                      </div>
-                    </fieldset>
-                  </div>`
-    } else if (component.type === 'SelectField') {
-      ttd += `<div class="govuk-form-group">
-                      <label class="govuk-label govuk-label--m" for="selectField">${component.title}</label>
-                      <select class="govuk-select" id="selectField" name="selectField">
-                        ${createSelectOptions(lists, component.list)}
-                      </select>
-                  </div>`
-    } else if (component.type === 'Details' || component.type === 'Markdown' || component.type === 'InsetText') {
-      //these should be collapsible, inset, markdown etc but for now just show the content
-      ttd += component.content
-    } else {
-      ttd += `<h2>${component.title}</h2>`
-    }
-
-    if (
-      component.type !== 'Html' &&
-      component.type !== 'Details' &&
-      component.type !== 'Markdown' &&
-      component.type !== 'InsetText'
-    ) {
-      ttd += `<p><small><strong>Name:</strong></small> <small>${component.name}</small></p>`
-    }
-  }
-
-  if (!node.components?.length) {
-    ttd += `<p><strong>No configurable components</strong></p>`
-    ttd += getControllerSpecificMessage(node)
-  } else if (!node.terminal) {
-    ttd += getContinueButton(node)
-  }
-  return ttd
 }
 
 const getDateFieldInput = (element) => {
