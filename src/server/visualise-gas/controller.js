@@ -42,12 +42,7 @@ export const visualiseGasController = {
             stageName: stage.name
           })
 
-          tooltipData[nodeId] = `
-            <strong>Phase:</strong> ${phase.name} (${phase.code})<br/>
-            <strong>Stage:</strong> ${stage.name} (${stage.code})<br/>
-            <strong>Status:</strong> ${status.code}
-          `.trim()
-
+          createTooltipData(nodeId, tooltipData, phase, stage, status)
           createLinks(phase, stage, status, fullId, links)
         })
       })
@@ -97,6 +92,14 @@ export const visualiseGasController = {
       tooltipData
     })
   }
+}
+
+const createTooltipData = (nodeId, tooltipData, phase, stage, status) => {
+  tooltipData[nodeId] = `
+            <strong>Phase:</strong> ${phase.name} (${phase.code})<br/>
+            <strong>Stage:</strong> ${stage.name} (${stage.code})<br/>
+            <strong>Status:</strong> ${status.code}
+          `.trim()
 }
 
 const createLinks = (phase, stage, status, fullId, links) => {

@@ -132,23 +132,13 @@ export const visualiseJourneyController = {
     // Prepare Mermaid graph definition
     let mermaidGraph = 'flowchart TD\n'
 
-    const renderNode = (node, showComponents, sectionTitle) => {
-      const title = node.terminal ? `🚩 ${node.title}` : node.title
-      const shapeStart = node.terminal ? '((' : '['
-      const shapeEnd = node.terminal ? '))' : ']'
-      const componentDetails = showComponents ? `<ul>${componentsAsListItems(node.components)}</ul>` : ''
-
-      tooltipData[node.id] = createTooltipData(node, sectionTitle, lists)
-      return `    ${node.id}${shapeStart}"${title}<br/><small>${node.path}</small>${componentDetails}"${shapeEnd}\n`
-    }
-
     // Group nodes by section for Mermaid subgraphs
     sections.forEach((section) => {
       const sectionNodes = nodes.filter((n) => n.section === section.id)
       if (sectionNodes.length > 0) {
         mermaidGraph += `  subgraph ${section.id}["${section.title}"]\n`
         sectionNodes.forEach((node) => {
-          mermaidGraph += renderNode(node, showComponentsBoolean, section.title)
+          mermaidGraph += renderNode(node, lists, tooltipData, showComponentsBoolean, section.title)
         })
         mermaidGraph += '  end\n'
       }
@@ -157,13 +147,14 @@ export const visualiseJourneyController = {
     // Add unassigned nodes
     const unassignedNodes = nodes.filter((n) => !n.section)
     unassignedNodes.forEach((node) => {
-      mermaidGraph += renderNode(node, showComponentsBoolean)
+      mermaidGraph += renderNode(node, lists, tooltipData, showComponentsBoolean)
     })
 
     let edgeCounter = 0
     // Add links to Mermaid graph
     links.forEach((link) => {
-      const edgeId = 'edge' + edgeCounter++
+      const thisEdge = edgeCounter++
+      const edgeId = 'edge' + thisEdge
       if (link.type === 'conditional') {
         mermaidGraph += `  ${link.source} ${edgeId}@-- "${link.label}" --> ${link.target}\n${edgeId}@{ animate: true }\n`
       } else {
@@ -237,7 +228,7 @@ const createTooltipData = (node, sectionTitle, lists) => {
                   }
                   </ul>
                   </div>`
-    } else if (TEXTFIELD_COMPONENT_TYPES.some((type) => type === component.type)) {
+    } else if (TEXTFIELD_COMPONENT_TYPES.includes(component.type)) {
       ttd += `<div class="govuk-form-group">
                     ${createLabellingForTextField(component, node.components.length)}
                     <input class="govuk-input govuk-!-width-two-thirds" id="textField" name="textField" type="text"
@@ -302,6 +293,16 @@ const createTooltipData = (node, sectionTitle, lists) => {
     ttd += getContinueButton(node)
   }
   return ttd
+}
+
+const renderNode = (node, lists, tooltipData, showComponents, sectionTitle) => {
+  const title = node.terminal ? `🚩 ${node.title}` : node.title
+  const shapeStart = node.terminal ? '((' : '['
+  const shapeEnd = node.terminal ? '))' : ']'
+  const componentDetails = showComponents ? `<ul>${componentsAsListItems(node.components)}</ul>` : ''
+
+  tooltipData[node.id] = createTooltipData(node, sectionTitle, lists)
+  return `    ${node.id}${shapeStart}"${title}<br/><small>${node.path}</small>${componentDetails}"${shapeEnd}\n`
 }
 
 const getValue = (conditionItem, lists) => {
