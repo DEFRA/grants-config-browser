@@ -1,13 +1,12 @@
-import fs from 'node:fs'
 import yaml from 'js-yaml'
-import { config as appConfig } from '../../config/config.js'
 import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
 
 export const visualiseJourneyController = {
   async handler(request, h) {
     const { bucket, filename, showComponents } = request.query || {}
     const showComponentsBoolean = showComponents === 'true'
-    const yamlPath = appConfig.get('visualiseJourney.yamlPath')
+
+    const tooltipData = {}
 
     let config
     try {
@@ -15,7 +14,7 @@ export const visualiseJourneyController = {
       if (bucket && filename) {
         fileContent = await getS3FileContent(bucket, filename)
       } else {
-        fileContent = fs.readFileSync(yamlPath, 'utf8')
+        throw new Error('No bucket or filename provided')
       }
       config = yaml.load(fileContent)
     } catch (e) {
@@ -26,6 +25,14 @@ export const visualiseJourneyController = {
     const lists = config.lists || []
     const pages = config.pages || []
     const conditionsList = config.conditions || []
+
+    lists.push({
+      id: 'yes-no',
+      items: [
+        { text: 'Yes', value: 'yes' },
+        { text: 'No', value: 'no' }
+      ]
+    })
 
     // for each condition, see which page's component it links to
     conditionsList.forEach((condition) => {
@@ -45,11 +52,17 @@ export const visualiseJourneyController = {
       condition: page.condition,
       terminal: page.terminal || page.controller?.includes('Terminal') || false,
       next: page.next,
+      config: page.config || {},
       components: (page.components || []).map((c) => ({
         type: c.type,
-        title: c.title || c.name || 'Component',
+        title: c.title || 'Component',
         shortDescription: c.shortDescription,
-        id: c.id
+        id: c.id,
+        list: c.list,
+        content: c.content,
+        hint: c.hint,
+        name: c.name,
+        options: c.options
       }))
     }))
 
@@ -107,25 +120,220 @@ export const visualiseJourneyController = {
         nextPageIndex += 1
         nextPage = pages[nextPageIndex]
       }
-
     })
 
     // Prepare Mermaid graph definition
     let mermaidGraph = 'flowchart TD\n'
 
-    const componentsAsListItems = (components, listTags = true) => {
-      return components.map((component) => `${listTags ? '<li>' : ''}${component.title} : ${component.type}${listTags ? '</li>' : ''}`).join(listTags ? '' : '\n')
+    const componentsAsListItems = (components) => {
+      if (components.length === 0) return 'No components'
+      return components.map((component) => `<li><strong>${component.title}</strong>: ${component.type}</li>`).join('')
     }
 
-    const renderNode = (node, showComponents) => {
+    const createLabellingForTextField = (component, componentsLength) => {
+      //if this is only component then no need to show the title as already shown
+      if (componentsLength === 1) {
+        return component.hint ? `<label class="govuk-label" for="textField">${component.hint}</label>` : ''
+      }
+
+      return (
+        '<label class="govuk-label" for="textField">' +
+        component.title +
+        '</label>' +
+        (component.hint ? `<div id="text-hint" class="govuk-hint">${component.hint}</div>` : '')
+      )
+    }
+
+    const createRadioOptions = (component, lists, id) => {
+      const list = lists.find((l) => l.id === id)
+      if (!list) {
+        return `
+        <div class="govuk-radios__item">
+          <input class="govuk-radios__input" id="external" name="${id}" type="radio" value="external">
+          <label class="govuk-label govuk-radios__label" for="external">
+            Options defined externally
+          </label>
+        </div>
+      `
+      }
+
+      return list.items
+        .map(
+          (item) => `
+        <div class="govuk-radios__item">
+          <input class="govuk-radios__input" id="${item.value}" name="${id}" type="radio" value="${item.value}">
+          <label class="govuk-label govuk-radios__label" for="${item.value}">
+            ${item.text}
+          </label>
+          ${item.description ? `<div id="govuk-hint govuk-radios__hint" class="govuk-hint govuk-radios__hint">${item.description}</div>` : ''}
+        </div>
+      `
+        )
+        .join('')
+    }
+
+    const createCbOptions = (component, lists, id) => {
+      const list = lists.find((l) => l.id === id)
+      if (!list) {
+        return `
+        <div class="govuk-checkboxes__item">
+          <input class="govuk-checkboxes__input" id="external" name="${id}" type="checkbox" value="external">
+          <label class="govuk-label govuk-checkboxes__label" for="external">
+            Options defined externally
+          </label>
+        </div>
+      `
+      }
+
+      return list.items
+        .map(
+          (item) => `
+        <div class="govuk-checkboxes__item">
+          <input class="govuk-checkboxes__input" id="${item.value}" name="${id}" type="checkbox" value="${item.value}">
+          <label class="govuk-label govuk-checkboxes__label" for="${item.value}">
+            ${item.text}
+          </label>
+          ${item.description ? `<div id="govuk-hint govuk-checkboxes__hint" class="govuk-hint govuk-checkboxes__hint">${item.description}</div>` : ''}
+        </div>
+      `
+        )
+        .join('')
+    }
+
+    const createSelectOptions = (component, lists, id) => {
+      const list = lists.find((l) => l.id === id)
+      if (!list) {
+        return `<option value="selectFieldOption-A1">Options defined externally</option>`
+      }
+
+      const selectOptions = list.items.map((item) => `<option value="${item.value}">${item.text}</option>`)
+      selectOptions.unshift(`<option value=""></option>`)
+
+      return selectOptions.join('')
+    }
+
+    const createTooltipData = (node, sectionTitle) => {
+      let ttd = ''
+      if (sectionTitle) {
+        ttd = `<span class="govuk-caption-l">${sectionTitle}</span>`
+      }
+      ttd += `<h1 class="govuk-heading-l">${node.title}</h1></br>`
+
+      if (node.config?.topSection) {
+        ttd += node.config.topSection
+      }
+
+      for (const component of node.components) {
+        if (component.type === 'Html') {
+          ttd += component.content
+        } else if (component.type === 'YesNoField' || component.type === 'RadiosField') {
+          ttd += `<div class="govuk-form-group">
+                    <fieldset class="govuk-fieldset">
+                      <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+                          ${node.components.length === 1 ? (component.hint ? '<h2 class="govuk-hint">' + component.hint : '') : '<h2 class="govuk-fieldset__heading">' + component.title}
+                        </h2>
+                      </legend>
+                      <div class="govuk-radios" data-module="govuk-radios">
+                        ${createRadioOptions(component, lists, component.type === 'YesNoField' ? 'yes-no' : component.list)}
+                      </div>
+                    </fieldset>
+                  </div>`
+        } else if (component.type === 'List') {
+          ttd += `<div class="govuk-form-group">
+                  <h2 class="govuk-heading-m govuk-!-margin-bottom-3">
+                    ${component.title}
+                  </h2>
+                  <ul class="govuk-list govuk-list--bullet">
+                  ${
+                    lists
+                      .find((l) => l.id === component.list)
+                      ?.items.map((item) => `<li>${item.text}</li>`)
+                      .join('') || ''
+                  }
+                  </ul>
+                  </div>`
+        } else if (
+          component.type === 'TextField' ||
+          component.type === 'NumberField' ||
+          component.type === 'NationalGridFieldNumberField' ||
+          component.type === 'AutocompleteField' ||
+          component.type === 'EmailAddressField' ||
+          component.type === 'TelephoneNumberField' ||
+          component.type === 'UkAddressField'
+        ) {
+          ttd += `<div class="govuk-form-group">
+                    ${createLabellingForTextField(component, node.components.length)}
+                    <input class="govuk-input govuk-!-width-two-thirds" id="textField" name="textField" type="text"
+                    ${component.type === 'UkAddressField' ? `value="Address Field - multiple fields will be shown on real UI"` : ''}>
+                  </div>`
+        } else if (component.type === 'MultilineTextField') {
+          ttd += `<div class="govuk-form-group">
+                    ${createLabellingForTextField(component, node.components.length)}
+                    <textarea class="govuk-textarea govuk-js-character-count" id="textField" name="textField" rows="${component.options?.rows ?? 10}"></textarea>
+                    <div class="govuk-hint govuk-character-count__message govuk-character-count__status" aria-hidden="true">You have ${component.options?.maxWords ?? 0} words remaining</div>
+                  </div>`
+        } else if (component.type === 'DatePartsField' || component.type === 'MonthYearField') {
+          ttd += `<div class="govuk-form-group">
+                    ${createLabellingForTextField(component, node.components.length)}
+                    <div class="govuk-date-input" autocomplete="off" id="datePartsField">
+                      ${component.type === 'DatePartsField' ? getDateFieldInput('day') : ''}
+                      ${getDateFieldInput('month')}
+                      ${getDateFieldInput('year')}
+                    </div>
+                  </div>`
+        } else if (component.type === 'CheckboxesField') {
+          ttd += `<div class="govuk-form-group">
+                    <fieldset class="govuk-fieldset">
+                      <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
+                          ${node.components.length === 1 ? (component.hint ? '<h2 class="govuk-hint">' + component.hint : '') : '<h2 class="govuk-fieldset__heading">' + component.title}
+                        </h2>
+                      </legend>
+                      <div class="govuk-checkboxes" data-module="govuk-checkboxes">
+                        ${createCbOptions(component, lists, component.list)}
+                      </div>
+                    </fieldset>
+                  </div>`
+        } else if (component.type === 'SelectField') {
+          ttd += `<div class="govuk-form-group">
+                      <label class="govuk-label govuk-label--m" for="selectField">${component.title}</label>
+                      <select class="govuk-select" id="selectField" name="selectField">
+                        ${createSelectOptions(component, lists, component.list)}
+                      </select>
+                  </div>`
+        } else if (component.type === 'Details' || component.type === 'Markdown' || component.type === 'InsetText') {
+          //these should be collapsible, inset, markdown etc but for now just show the content
+          ttd += component.content
+        } else {
+          ttd += `<h2>${component.title}</h2>`
+        }
+
+        if (
+          component.type !== 'Html' &&
+          component.type !== 'Details' &&
+          component.type !== 'Markdown' &&
+          component.type !== 'InsetText'
+        ) {
+          ttd += `<p><small><strong>Name:</strong></small> <small>${component.name}</small></p>`
+        }
+      }
+
+      if (!node.components?.length) {
+        ttd += `<p><strong>No configurable components</strong></p>`
+        ttd += getControllerSpecificMessage(node)
+      } else if (!node.terminal) {
+        ttd += getContinueButton(node)
+      }
+      return ttd
+    }
+
+    const renderNode = (node, showComponents, sectionTitle) => {
       const title = node.terminal ? `🚩 ${node.title}` : node.title
       const shapeStart = node.terminal ? '((' : '['
       const shapeEnd = node.terminal ? '))' : ']'
       const componentDetails = showComponents ? `<ul>${componentsAsListItems(node.components)}</ul>` : ''
-      const toolTip = componentsAsListItems(node.components, false)
-      const toolTipText = toolTip ? `click ${node.id} href "#" "${toolTip}"\n` : ''
-      console.log(toolTip)
-      return `    ${node.id}${shapeStart}"${title}<br/><small>${node.path}</small>${componentDetails}"${shapeEnd}\n${toolTipText}`
+
+      tooltipData[node.id] = createTooltipData(node, sectionTitle)
+      return `    ${node.id}${shapeStart}"${title}<br/><small>${node.path}</small>${componentDetails}"${shapeEnd}\n`
     }
 
     // Group nodes by section for Mermaid subgraphs
@@ -134,7 +342,7 @@ export const visualiseJourneyController = {
       if (sectionNodes.length > 0) {
         mermaidGraph += `  subgraph ${section.id}["${section.title}"]\n`
         sectionNodes.forEach((node) => {
-          mermaidGraph += renderNode(node, showComponentsBoolean)
+          mermaidGraph += renderNode(node, showComponentsBoolean, section.title)
         })
         mermaidGraph += '  end\n'
       }
@@ -166,7 +374,10 @@ export const visualiseJourneyController = {
       }
     })
 
-    console.log(mermaidGraph)
+    // Add click handlers for tooltips
+    nodes.forEach((node) => {
+      mermaidGraph += `    click ${node.id} noop\n`
+    })
 
     return h.view('visualise-journey/index', {
       pageTitle: 'Visualise Journey',
@@ -174,17 +385,50 @@ export const visualiseJourneyController = {
       mermaidGraph,
       showComponents: showComponentsBoolean,
       bucket,
-      filename
+      filename,
+      tooltipData
     })
   }
 }
 
-
 const getValue = (conditionItem, lists) => {
   if (conditionItem.type === 'ListItemRef') {
     const list = lists.find((l) => l.id === conditionItem.value.listId)
-    return list.items.find(item => item.id === conditionItem.value.itemId).text
+    return list.items.find((item) => item.id === conditionItem.value.itemId).text
   }
   return conditionItem.value
 }
 
+const getDateFieldInput = (element) => {
+  return `<div class="govuk-date-input__item">
+            <div class="govuk-form-group">
+              <label class="govuk-label govuk-date-input__label" for="datePartsField__${element}">
+                ${element.charAt(0).toUpperCase() + element.slice(1)}
+              </label>
+              <input class="govuk-input govuk-date-input__input govuk-input--width-${element === 'year' ? 4 : 2}" id="datePartsField__${element}" name="datePartsField__${element}" type="text" inputmode="numeric">
+            </div>
+          </div>`
+}
+
+const getContinueButton = (node) => {
+  return `<button type="submit" class="govuk-button" data-module="govuk-button" data-govuk-button-init="">
+                  ${node.controller === 'StartPageController' ? 'Start Now >' : 'Save and continue'}
+                </button>`
+}
+
+const getControllerSpecificMessage = (node) => {
+  switch (node.controller) {
+    case 'CheckDetailsController':
+      return '<p>CheckDetailsController provides person/business details and selector to indicate if correct or not</p>'
+    case 'TaskListPageController':
+      return '<p>TaskListPageController provides a task list page showing user progress</p>'
+    case 'CheckResponsesPageController':
+      return '<p>CheckResponsesPageController provides a check of answers supplied</p>'
+    case 'PaymentPageController':
+      return node.config?.paymentExplanation
+    case 'DeclarationPageController':
+      return '<p>DeclarationPageController provides a declaration page for users to confirm their information</p>'
+    default:
+      return ''
+  }
+}

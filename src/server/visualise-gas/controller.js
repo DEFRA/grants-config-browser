@@ -1,11 +1,8 @@
-import fs from 'node:fs'
-import { config as appConfig } from '../../config/config.js'
 import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
 
 export const visualiseGasController = {
   async handler(request, h) {
     const { bucket, filename } = request.query || {}
-    const jsonPath = appConfig.get('visualiseGas.jsonPath')
 
     let config
     try {
@@ -13,7 +10,7 @@ export const visualiseGasController = {
       if (bucket && filename) {
         fileContent = await getS3FileContent(bucket, filename)
       } else {
-        fileContent = fs.readFileSync(jsonPath, 'utf8')
+        throw new Error('No bucket or filename provided')
       }
       config = JSON.parse(fileContent)
     } catch (e) {
@@ -21,9 +18,11 @@ export const visualiseGasController = {
     }
 
     const phases = config.phases || []
+    // const externalStatusMap = config.externalStatusMap || []
 
     const nodes = []
     const links = []
+    const tooltipData = {}
 
     phases.forEach((phase) => {
       const stages = phase.stages || []
@@ -31,14 +30,22 @@ export const visualiseGasController = {
         const statuses = stage.statuses || []
         statuses.forEach((status) => {
           const fullId = `${phase.code}:${stage.code}:${status.code}`
+          const nodeId = fullId.replace(/:/g, '_')
           nodes.push({
             id: fullId,
+            nodeId,
             code: status.code,
             name: status.code.replace('STATUS_', '').replace(/_/g, ' '),
             phase: phase.code,
             stage: stage.code,
             stageName: stage.name
           })
+
+          tooltipData[nodeId] = `
+            <strong>Phase:</strong> ${phase.name} (${phase.code})<br/>
+            <strong>Stage:</strong> ${stage.name} (${stage.code})<br/>
+            <strong>Status:</strong> ${status.code}
+          `.trim()
 
           const validFrom = status.validFrom || []
           validFrom.forEach((vf) => {
@@ -61,7 +68,7 @@ export const visualiseGasController = {
     let mermaidGraph = 'flowchart TD\n'
 
     const renderNode = (node) => {
-      return `        ${node.id.replace(/:/g, '_')}["${node.name}"]\n`
+      return `        ${node.nodeId}["${node.name}"]\n`
     }
 
     // Group by Phase and Stage
@@ -87,12 +94,18 @@ export const visualiseGasController = {
       mermaidGraph += `  ${source} -->${label} ${target}\n`
     })
 
+    // Add click handlers for tooltips
+    nodes.forEach((node) => {
+      mermaidGraph += `  click ${node.nodeId} noop\n`
+    })
+
     return h.view('visualise-gas/index', {
       pageTitle: 'Visualise GAS',
       configName: config.metadata?.description || config.code,
       mermaidGraph,
       bucket,
-      filename
+      filename,
+      tooltipData
     })
   }
 }

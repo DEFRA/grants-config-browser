@@ -1,5 +1,6 @@
 import mermaid from 'mermaid'
 import svgPanZoom from 'svg-pan-zoom'
+import tippy from 'tippy.js'
 
 window.noop = () => {} // Used when defining tooltips
 
@@ -26,6 +27,9 @@ mermaid.initialize({
 })
 
 async function run() {
+  const tooltipDataElement = document.getElementById('tooltip-data')
+  const tooltipData = tooltipDataElement ? JSON.parse(tooltipDataElement.textContent) : {}
+
   await mermaid.run()
 
   document.querySelectorAll('pre.mermaid').forEach((pre) => {
@@ -60,8 +64,8 @@ async function run() {
         const newZoom = sizes.width / sizes.viewBox.width
         panZoom.zoom(newZoom)
         panZoom.center()
-        const pannedSizes = panZoom.getSizes()
-        panZoom.pan({ x: pannedSizes.pan.x, y: 0 })
+        const currentPan = panZoom.getPan()
+        panZoom.pan({ x: currentPan.x, y: 0 })
       }
     }
 
@@ -74,6 +78,51 @@ async function run() {
         smartZoom()
       })
     }
+  })
+
+  tippy('.node', {
+    content: (reference) => {
+      let id = reference.id
+
+      // Mermaid v11 might put the ID on a child or parent
+      if (!id) {
+        const withId = reference.querySelector('[id]')
+        if (withId) {
+          id = withId.id
+        }
+      }
+
+      if (!id && reference.parentElement?.id) {
+        id = reference.parentElement.id
+      }
+
+      if (!id || !tooltipData) {
+        return null
+      }
+
+      if (tooltipData[id]) {
+        return tooltipData[id]
+      }
+
+      // Mermaid sometimes uses ids like flowchart-nodeId-index
+      const keys = Object.keys(tooltipData)
+      // Sort keys by length descending to match the longest (most specific) key first
+      const sortedKeys = keys.sort((a, b) => b.length - a.length)
+
+      const matchingKey = sortedKeys.find((key) => {
+        const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const regex = new RegExp(`(^|[-])${escapedKey}([-]|$)`)
+        return regex.test(id)
+      })
+
+      return matchingKey ? tooltipData[matchingKey] : null
+    },
+    allowHTML: true,
+    interactive: true,
+    placement: 'top-end',
+    theme: 'white-bg',
+    maxWidth: 800,
+    appendTo: () => document.body
   })
 }
 

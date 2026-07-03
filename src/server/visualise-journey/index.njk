@@ -27,8 +27,10 @@
 </div>
 
 {% endblock %}
-
 {% block bodyEnd %}
   {{ super() }}
+  <script type="application/json" id="tooltip-data">
+    {{ tooltipData | dump | safe }}
+  </script>
   <script type="module" src="{{ getAssetPath('mermaid.js') }}"></script>
 {% endblock %}
