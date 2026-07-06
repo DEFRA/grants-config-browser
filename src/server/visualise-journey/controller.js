@@ -41,12 +41,18 @@ export const visualiseJourneyController = {
     let mermaidGraph = 'flowchart TD\n'
 
     // Group nodes by section for Mermaid subgraphs
-    mermaidGraph += generateSectionData(sections, nodes, lists, tooltipData, showComponentsBoolean, pages)
+    mermaidGraph += generateSectionData({ sections, nodes, lists, tooltipData, showComponentsBoolean, pages, taskList })
 
     // Add unassigned nodes
     const unassignedNodes = nodes.filter((n) => !n.section)
     unassignedNodes.forEach((node) => {
-      mermaidGraph += renderNode(node, lists, tooltipData, showComponentsBoolean, filterSections(sections, pages))
+      mermaidGraph += renderNode(
+        node,
+        lists,
+        tooltipData,
+        showComponentsBoolean,
+        filterSections(sections, pages, taskList)
+      )
     })
 
     mermaidGraph += addStartAndEndNodes(nodes[0].id, nodes[nodes.length - 1].id)
@@ -95,7 +101,7 @@ export const visualiseJourneyController = {
   }
 }
 
-const generateSectionData = (sections, nodes, lists, tooltipData, showComponentsBoolean, pages) => {
+const generateSectionData = ({ sections, nodes, lists, tooltipData, showComponentsBoolean, pages, taskList }) => {
   let mermaidGraph = ''
   sections.forEach((section) => {
     const sectionNodes = nodes.filter((n) => n.section === section.id)
@@ -107,7 +113,7 @@ const generateSectionData = (sections, nodes, lists, tooltipData, showComponents
           lists,
           tooltipData,
           showComponentsBoolean,
-          filterSections(sections, pages),
+          filterSections(sections, pages, taskList),
           section.title
         )
       })
@@ -232,8 +238,16 @@ const createConditionalLabelAndLink = (page, condition, nextPageId, links, lists
   })
 }
 
-const filterSections = (sections, pages) => {
-  return sections.filter((section) => pages.some((page) => page.section === section.id)) ?? []
+const filterSections = (sections, pages, taskList) => {
+  return (
+    sections
+      .filter((section) => pages.some((page) => page.section === section.id))
+      .map((section, index) => ({
+        ...section,
+        initialStatus: index === 0 ? taskList.statuses?.notStarted.text : taskList.statuses?.cannotStart.text,
+        initialClasses: index === 0 ? taskList.statuses?.notStarted.classes : taskList.statuses?.cannotStart.classes
+      })) ?? []
+  )
 }
 
 const addStartAndEndNodes = (firstNodeId, endNodeId) => {

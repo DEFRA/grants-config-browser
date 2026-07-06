@@ -197,6 +197,11 @@ const generateTaskList = (sections) => {
         <div class="govuk-task-list__name-and-hint">
         ${section.title}
         </div>
+        <div class="govuk-task-list__status">
+          <strong class="govuk-tag ${section.initialClasses}">
+            ${section.initialStatus}
+          </strong>
+        </div>
       </li>`
       })
       .join('')}
