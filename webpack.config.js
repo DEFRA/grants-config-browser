@@ -22,6 +22,9 @@ export default {
   entry: {
     application: {
       import: ['./javascripts/application.js', './stylesheets/application.scss']
+    },
+    mermaid: {
+      import: ['./javascripts/mermaid.js']
     }
   },
   experiments: {
@@ -160,6 +163,10 @@ export default {
         {
           from: path.join(mojFrontendPath, 'moj/assets'),
           to: 'assets'
+        },
+        {
+          from: path.join(dirname, 'src/client/images'),
+          to: 'assets/images'
         }
       ]
     })

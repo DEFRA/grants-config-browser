@@ -9,18 +9,39 @@ const buildTableHeaders = () => {
         'aria-sort': 'none'
       },
       classes: 'col-25'
+    },
+    {
+      text: 'Actions',
+      classes: 'col-25'
     }
   ]
+}
+
+const getVisualiseLink = (filename, bucket, type) => {
+  return `<a class="visualise-link" href="/visualise-${type}?filename=${filename}&bucket=${bucket}">
+             <img src="/public/assets/images/visualise.svg" class="visualise-icon" alt="" role="presentation" />Visualise</a>`
 }
 
 const createRowsForTable = (bucket, manifestEntries) => {
   return manifestEntries.map((manifestEntry) => {
     const centringClass = 'vertical-middle'
+
+    let visualizeLink = ''
+    if (manifestEntry.includes('grants-ui') && manifestEntry.endsWith('.yaml')) {
+      visualizeLink = getVisualiseLink(manifestEntry, bucket, 'journey')
+    } else if (manifestEntry.includes('gas') && manifestEntry.endsWith('.json')) {
+      visualizeLink = getVisualiseLink(manifestEntry, bucket, 'gas')
+    } else {
+      visualizeLink = '&nbsp;'
+    }
+
     return [
       {
-        html: `<div>
-                <a class="govuk-!-margin-0" href="/viewfile?filename=${manifestEntry}&bucket=${bucket}">${manifestEntry}</a>
-              </div>`,
+        html: `<a class="govuk-!-margin-0" href="/viewfile?filename=${manifestEntry}&bucket=${bucket}">${manifestEntry}</a>`,
+        classes: centringClass
+      },
+      {
+        html: visualizeLink,
         classes: centringClass
       }
     ]

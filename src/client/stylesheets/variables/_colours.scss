@@ -1,2 +1,8 @@
+@use 'govuk-frontend' as *;
 // Example custom CSS variables
 $app-light-grey: #f8f8f8;
+
+$app-brand-background-colour: govuk-colour('blue', $variant: 'tint-80');
+$app-brand-background-colour-light: govuk-colour('blue', $variant: 'tint-95');
+$app-brand-border-colour-light: govuk-colour('blue', $variant: 'tint-80');
+$app-brand-border-colour: govuk-colour('blue', $variant: 'tint-50');

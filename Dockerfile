@@ -16,6 +16,7 @@ EXPOSE ${PORT} ${PORT_DEBUG}
 COPY --chown=node:node --chmod=755 package*.json ./
 RUN npm ci --ignore-scripts
 COPY --chown=node:node --chmod=755 . .
+
 RUN npm run build:frontend
 
 CMD [ "npm", "run", "docker:dev" ]

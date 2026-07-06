@@ -66,5 +66,13 @@ describe('s3-interactions', () => {
 
       expect(result).toEqual('http://localhost/mock-signed-url')
     })
+
+    it('should not replace localstack with localhost if internal option is true', async () => {
+      getSignedUrl.mockResolvedValueOnce('http://localstack/mock-signed-url')
+      const key = 'test.yaml'
+      const bucket = 'some-bucket'
+      const result = await getS3SignedUrl(bucket, key, { internal: true })
+      expect(result).toEqual('http://localstack/mock-signed-url')
+    })
   })
 })
