@@ -41,23 +41,15 @@ export const visualiseJourneyController = {
     let mermaidGraph = 'flowchart TD\n'
 
     // Group nodes by section for Mermaid subgraphs
-    sections.forEach((section) => {
-      const sectionNodes = nodes.filter((n) => n.section === section.id)
-      if (sectionNodes.length > 0) {
-        mermaidGraph += `  subgraph ${section.id}["${section.title}"]\n`
-        sectionNodes.forEach((node) => {
-          mermaidGraph += renderNode(
-            node,
-            lists,
-            tooltipData,
-            showComponentsBoolean,
-            filterSections(sections, pages),
-            section.title
-          )
-        })
-        mermaidGraph += '  end\n'
-      }
-    })
+    mermaidGraph += generateSectionData(
+      sections,
+      nodes,
+      lists,
+      tooltipData,
+      showComponentsBoolean,
+      filterSections,
+      pages
+    )
 
     // Add unassigned nodes
     const unassignedNodes = nodes.filter((n) => !n.section)
@@ -72,7 +64,7 @@ export const visualiseJourneyController = {
       if (page.terminal || page.controller?.includes('Terminal')) {
         return
       }
-      createPageLinks(page, index, pages, conditionsList, links, lists, sections, taskList)
+      createPageLinks({ page, index, pages, conditionsList, links, lists, sections, taskList })
     })
 
     let edgeCounter = 0
@@ -106,25 +98,52 @@ export const visualiseJourneyController = {
       bucket,
       filename,
       tooltipData,
-      breadcrumbs: [
-        {
-          text: 'Home',
-          href: '/'
-        },
-        {
-          text: grant,
-          href: `/grant?grant=${grant}`
-        },
-        {
-          text: version,
-          href: `/version?grant=${grant}&version=${version}`
-        },
-        {
-          text: `Visualise Journey - ${filename}`
-        }
-      ]
+      breadcrumbs: generateBreadcrumbs(filename, grant, version)
     })
   }
+}
+
+const generateSectionData = (sections, nodes, lists, tooltipData, showComponentsBoolean, filterSections, pages) => {
+  let mermaidGraph = ''
+  sections.forEach((section) => {
+    const sectionNodes = nodes.filter((n) => n.section === section.id)
+    if (sectionNodes.length > 0) {
+      mermaidGraph += `  subgraph ${section.id}["${section.title}"]\n`
+      sectionNodes.forEach((node) => {
+        mermaidGraph += renderNode(
+          node,
+          lists,
+          tooltipData,
+          showComponentsBoolean,
+          filterSections(sections, pages),
+          section.title
+        )
+      })
+      mermaidGraph += '  end\n'
+    }
+  })
+
+  return mermaidGraph
+}
+
+const generateBreadcrumbs = (filename, grant, version) => {
+  return [
+    {
+      text: 'Home',
+      href: '/'
+    },
+    {
+      text: grant,
+      href: `/grant?grant=${grant}`
+    },
+    {
+      text: version,
+      href: `/version?grant=${grant}&version=${version}`
+    },
+    {
+      text: `Visualise Journey - ${filename}`
+    }
+  ]
 }
 
 const mapConditions = (conditionsList, pages) => {
@@ -163,7 +182,7 @@ const mapPagesToNodes = (pages) => {
   }))
 }
 
-const createPageLinks = (page, index, pages, conditionsList, links, lists, sections, taskList) => {
+const createPageLinks = ({ page, index, pages, conditionsList, links, lists, sections, taskList }) => {
   // For a tasklist, if the config is set to returnAfterSection, we should link back to the task list page after last in section page
   if (page.controller === 'TaskListPageController') {
     addTaskListLinks(page, pages, links, sections)

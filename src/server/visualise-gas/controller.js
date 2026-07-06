@@ -90,25 +90,29 @@ export const visualiseGasController = {
       bucket,
       filename,
       tooltipData,
-      breadcrumbs: [
-        {
-          text: 'Home',
-          href: '/'
-        },
-        {
-          text: grant,
-          href: `/grant?grant=${grant}`
-        },
-        {
-          text: version,
-          href: `/version?grant=${grant}&version=${version}`
-        },
-        {
-          text: `Visualise GAS config - ${filename}`
-        }
-      ]
+      breadcrumbs: createBreadCrumbs(filename, grant, version)
     })
   }
+}
+
+const createBreadCrumbs = (filename, grant, version) => {
+  return [
+    {
+      text: 'Home',
+      href: '/'
+    },
+    {
+      text: grant,
+      href: `/grant?grant=${grant}`
+    },
+    {
+      text: version,
+      href: `/version?grant=${grant}&version=${version}`
+    },
+    {
+      text: `Visualise GAS config - ${filename}`
+    }
+  ]
 }
 
 const createTooltipData = (nodeId, tooltipData, phase, stage, status) => {
