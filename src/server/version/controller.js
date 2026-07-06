@@ -29,7 +29,7 @@ const createRowsForTable = (bucket, manifestEntries) => {
     let visualizeLink = ''
     if (manifestEntry.includes('grants-ui') && manifestEntry.endsWith('.yaml')) {
       visualizeLink = getVisualiseLink(manifestEntry, bucket, 'journey')
-    } else if (manifestEntry.includes('gas')) {
+    } else if (manifestEntry.includes('gas') && manifestEntry.endsWith('.json')) {
       visualizeLink = getVisualiseLink(manifestEntry, bucket, 'gas')
     } else {
       visualizeLink = '&nbsp;'
