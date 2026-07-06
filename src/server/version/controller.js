@@ -17,20 +17,20 @@ const buildTableHeaders = () => {
   ]
 }
 
-const getVisualiseLink = (filename, bucket, type) => {
-  return `<a class="visualise-link" href="/visualise-${type}?filename=${filename}&bucket=${bucket}">
+const getVisualiseLink = (filename, bucket, grant, version, type) => {
+  return `<a class="visualise-link" href="/visualise-${type}?filename=${filename}&bucket=${bucket}&grant=${grant}&version=${version}">
              <img src="/public/assets/images/visualise.svg" class="visualise-icon" alt="" role="presentation" />Visualise</a>`
 }
 
-const createRowsForTable = (bucket, manifestEntries) => {
+const createRowsForTable = (bucket, manifestEntries, grant, version) => {
   return manifestEntries.map((manifestEntry) => {
     const centringClass = 'vertical-middle'
 
     let visualizeLink = ''
-    if (manifestEntry.includes('grants-ui') && manifestEntry.endsWith('.yaml')) {
-      visualizeLink = getVisualiseLink(manifestEntry, bucket, 'journey')
-    } else if (manifestEntry.includes('gas') && manifestEntry.endsWith('.json')) {
-      visualizeLink = getVisualiseLink(manifestEntry, bucket, 'gas')
+    if (isGrantsUiJourneyConfig(manifestEntry)) {
+      visualizeLink = getVisualiseLink(manifestEntry, bucket, grant, version, 'journey')
+    } else if (isGasConfig(manifestEntry)) {
+      visualizeLink = getVisualiseLink(manifestEntry, bucket, grant, version, 'gas')
     } else {
       visualizeLink = '&nbsp;'
     }
@@ -61,7 +61,7 @@ export const versionController = {
     }
     //go fetch metadata from the config broker
     const { response: thisVersion } = await requestFromApi(`version?grant=${grant}&version=${version}`, request)
-    const allFiles = createRowsForTable(thisVersion.path, thisVersion.manifest)
+    const allFiles = createRowsForTable(thisVersion.path, thisVersion.manifest, grant, version)
     return h.view('version/index', {
       pageTitle: `${grant} - ${version}`,
       heading: grant,
@@ -85,3 +85,7 @@ export const versionController = {
     })
   }
 }
+
+const isGrantsUiJourneyConfig = (filename) =>
+  filename.includes('grants-ui') && filename.endsWith('.yaml') && !filename.toLowerCase().includes('allowlist')
+const isGasConfig = (filename) => filename.includes('gas') && filename.endsWith('.json')

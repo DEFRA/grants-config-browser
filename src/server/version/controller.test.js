@@ -15,7 +15,7 @@ describe('#versionController', () => {
       response: {
         grant: 'some-grant',
         version: '1.2.3',
-        manifest: ['file1', 'grants-ui-file.yaml', 'some-gas-file.json', 'file3'],
+        manifest: ['file1', 'grants-ui-file.yaml', 'some-gas-file.json', 'grants-ui/allowlist.yaml'],
         status: 'active',
         path: 'some-bucket'
       }
@@ -69,7 +69,9 @@ describe('#versionController', () => {
     expect(secondRowCells.eq(1).text().trim()).toContain('Visualise')
 
     const visualiseLink = secondRowCells.eq(1).find('a.visualise-link')
-    expect(visualiseLink.attr('href')).toBe('/visualise-journey?filename=grants-ui-file.yaml&bucket=some-bucket')
+    expect(visualiseLink.attr('href')).toBe(
+      '/visualise-journey?filename=grants-ui-file.yaml&bucket=some-bucket&grant=some-grant&version=1.2.3'
+    )
     expect(visualiseLink.find('img.visualise-icon').length).toBe(1)
     expect(visualiseLink.find('img.visualise-icon').attr('src')).toBe('/public/assets/images/visualise.svg')
 
@@ -79,11 +81,13 @@ describe('#versionController', () => {
     expect(thirdRowCells.eq(1).text().trim()).toContain('Visualise')
 
     const visualiseGasLink = thirdRowCells.eq(1).find('a.visualise-link')
-    expect(visualiseGasLink.attr('href')).toBe('/visualise-gas?filename=some-gas-file.json&bucket=some-bucket')
+    expect(visualiseGasLink.attr('href')).toBe(
+      '/visualise-gas?filename=some-gas-file.json&bucket=some-bucket&grant=some-grant&version=1.2.3'
+    )
 
     // Check fourth file (no visualise link)
     const fourthRowCells = rows.eq(3).find('td')
-    expect(fourthRowCells.eq(0).text().trim()).toBe('file3')
+    expect(fourthRowCells.eq(0).text().trim()).toBe('grants-ui/allowlist.yaml')
     expect(fourthRowCells.eq(1).text().trim()).toBe('')
 
     expect(statusCode).toBe(statusCodes.ok)

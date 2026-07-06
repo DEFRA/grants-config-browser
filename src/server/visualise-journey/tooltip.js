@@ -12,7 +12,7 @@ const DATE_FIELD_TYPES = new Set(['DatePartsField', 'MonthYearField'])
 const RADIOBUTTON_FIELD_TYPES = new Set(['YesNoField', 'RadiosField'])
 const NON_INPUT_FIELD_TYPES = new Set(['Html', 'Details', 'Markdown', 'InsetText'])
 
-export const createTooltipData = (node, sectionTitle, lists) => {
+export const createTooltipData = (node, sections, sectionTitle, lists) => {
   let ttd = ''
   if (sectionTitle) {
     ttd = `<span class="govuk-caption-l">${sectionTitle}</span>`
@@ -28,8 +28,7 @@ export const createTooltipData = (node, sectionTitle, lists) => {
   }
 
   if (!node.components?.length) {
-    ttd += `<p><strong>No configurable components</strong></p>`
-    ttd += getControllerSpecificMessage(node)
+    ttd += getControllerSpecificMessage(node, sections)
   } else if (!node.terminal) {
     ttd += getContinueButton(node)
   }
@@ -165,21 +164,44 @@ const getContinueButton = (node) => {
                 </button>`
 }
 
-const getControllerSpecificMessage = (node) => {
+const getControllerSpecificMessage = (node, sections) => {
+  const controllerSpecificMessage =
+    node.controller === 'TaskListPageController' ? '' : `<p><strong>No configurable components</strong></p>`
   switch (node.controller) {
     case 'CheckDetailsController':
-      return '<p>CheckDetailsController provides person/business details and selector to indicate if correct or not</p>'
+      return (
+        controllerSpecificMessage +
+        '<p>CheckDetailsController provides person/business details and selector to indicate if correct or not</p>'
+      )
     case 'TaskListPageController':
-      return '<p>TaskListPageController provides a task list page showing user progress</p>'
+      return generateTaskList(sections)
     case 'CheckResponsesPageController':
-      return '<p>CheckResponsesPageController provides a check of answers supplied</p>'
+      return controllerSpecificMessage + '<p>CheckResponsesPageController provides a check of answers supplied</p>'
     case 'PaymentPageController':
-      return node.config?.paymentExplanation
+      return controllerSpecificMessage + node.config?.paymentExplanation
     case 'DeclarationPageController':
-      return '<p>DeclarationPageController provides a declaration page for users to confirm their information</p>'
+      return (
+        controllerSpecificMessage +
+        '<p>DeclarationPageController provides a declaration page for users to confirm their information</p>'
+      )
     default:
       return ''
   }
+}
+
+const generateTaskList = (sections) => {
+  return `<ul class="govuk-task-list">
+    ${sections
+      .map((section) => {
+        return `<li class = "govuk-task-list__item govuk-task-list__item--with-link">
+        <div class="govuk-task-list__name-and-hint">
+        ${section.title}
+        </div>
+      </li>`
+      })
+      .join('')}
+  </ul>
+  `
 }
 
 const createRadioOptions = (lists, id) => {

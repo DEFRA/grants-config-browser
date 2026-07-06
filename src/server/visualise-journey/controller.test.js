@@ -62,6 +62,10 @@ describe('visualiseJourneyController', () => {
     const callArgs = h.view.mock.calls[0][1]
     expect(callArgs.mermaidGraph).toContain('subgraph sec1["Section 1"]')
     expect(callArgs.mermaidGraph).toContain('p1["Page 1<br/><small>/p1</small>"]')
+    expect(callArgs.mermaidGraph).toContain('id1[Start]')
+    expect(callArgs.mermaidGraph).toContain('id2[End]')
+    expect(callArgs.mermaidGraph).toContain('id1 --> p1')
+    expect(callArgs.mermaidGraph).toContain('p2 --> id2')
     expect(callArgs.mermaidGraph).toContain('click p1 noop')
 
     expect(result).toBe('rendered view')
@@ -130,7 +134,9 @@ describe('visualiseJourneyController', () => {
     )
     const callArgs = h.view.mock.calls[0][1]
     expect(callArgs.mermaidGraph).toContain('p1 edge0@-- "Choice == true" --> p2')
+    expect(callArgs.mermaidGraph).toContain('edge0@{ animate: true }')
     expect(callArgs.mermaidGraph).toContain('p1 edge1@-.-> p3')
+    expect(callArgs.mermaidGraph).toContain('edge1@{ animate: true }')
     expect(callArgs.mermaidGraph).toContain('p4(("🚩 Terminal<br/><small>/p4</small>"))')
     expect(callArgs.mermaidGraph).toContain('style p4 fill:#f8d7da,stroke:#dc3545')
     expect(result).toBe('rendered view')
@@ -191,5 +197,56 @@ describe('visualiseJourneyController', () => {
     const mermaidGraph = h.view.mock.calls[0][1].mermaidGraph
     expect(mermaidGraph).toContain('Comp 1')
     expect(mermaidGraph).toContain('No components')
+  })
+
+  it('should handle TaskListPageController and link to section starts', async () => {
+    const mockConfig = {
+      name: 'Task List Journey',
+      sections: [
+        { id: 'sec1', title: 'Section 1' },
+        { id: 'sec2', title: 'Section 2' }
+      ],
+      pages: [
+        { id: 'tl', title: 'Task List', path: '/tl', controller: 'TaskListPageController' },
+        { id: 'p1', title: 'P1', path: '/p1', section: 'sec1' },
+        { id: 'p2', title: 'P2', path: '/p2', section: 'sec2' }
+      ]
+    }
+
+    getS3FileContent.mockResolvedValue('mock yaml')
+    yaml.load.mockReturnValue(mockConfig)
+
+    const request = { query: { bucket: 'b', filename: 'f' } }
+    const h = { view: vi.fn() }
+
+    await visualiseJourneyController.handler(request, h)
+
+    const mermaidGraph = h.view.mock.calls[0][1].mermaidGraph
+    expect(mermaidGraph).toContain('tl edge0@-- "Task #1" --> p1')
+    expect(mermaidGraph).toContain('tl edge1@-- "Task #2" --> p2')
+  })
+
+  it('should handle returnAfterSection metadata', async () => {
+    const mockConfig = {
+      name: 'Return Journey',
+      metadata: { tasklist: { returnAfterSection: true } },
+      pages: [
+        { id: 'tl', title: 'Task List', path: '/tl', controller: 'TaskListPageController' },
+        { id: 'p1', title: 'P1', path: '/p1', section: 'sec1' },
+        { id: 'p2', title: 'P2', path: '/p2', section: 'sec2' }
+      ]
+    }
+
+    getS3FileContent.mockResolvedValue('mock yaml')
+    yaml.load.mockReturnValue(mockConfig)
+
+    const request = { query: { bucket: 'b', filename: 'f' } }
+    const h = { view: vi.fn() }
+
+    await visualiseJourneyController.handler(request, h)
+
+    const mermaidGraph = h.view.mock.calls[0][1].mermaidGraph
+    // p1 is the last (and only) page in sec1. Since returnAfterSection is true, it should link back to tl
+    expect(mermaidGraph).toContain('p1 edge0@-.-> tl')
   })
 })
