@@ -41,15 +41,7 @@ export const visualiseJourneyController = {
     let mermaidGraph = 'flowchart TD\n'
 
     // Group nodes by section for Mermaid subgraphs
-    mermaidGraph += generateSectionData(
-      sections,
-      nodes,
-      lists,
-      tooltipData,
-      showComponentsBoolean,
-      filterSections,
-      pages
-    )
+    mermaidGraph += generateSectionData(sections, nodes, lists, tooltipData, showComponentsBoolean, pages)
 
     // Add unassigned nodes
     const unassignedNodes = nodes.filter((n) => !n.section)
@@ -103,7 +95,7 @@ export const visualiseJourneyController = {
   }
 }
 
-const generateSectionData = (sections, nodes, lists, tooltipData, showComponentsBoolean, filterSections, pages) => {
+const generateSectionData = (sections, nodes, lists, tooltipData, showComponentsBoolean, pages) => {
   let mermaidGraph = ''
   sections.forEach((section) => {
     const sectionNodes = nodes.filter((n) => n.section === section.id)
