@@ -5,7 +5,7 @@ import { createTooltipData } from './tooltip.js'
 
 export const visualiseJourneyController = {
   async handler(request, h) {
-    const { bucket, filename, showComponents } = request.query || {}
+    const { bucket, filename, grant, version, showComponents } = request.query || {}
     const showComponentsBoolean = showComponents === 'true'
 
     const tooltipData = {}
@@ -27,6 +27,8 @@ export const visualiseJourneyController = {
     const lists = config.lists || []
     const pages = config.pages || []
     const conditionsList = config.conditions || []
+    const taskList = config.metadata?.tasklist || {}
+    taskList.controllerId = pages.find((page) => page.controller === 'TaskListPageController')?.id
 
     addYesNoListData(lists)
     mapConditions(conditionsList, pages)
@@ -35,33 +37,32 @@ export const visualiseJourneyController = {
     // Build flow links
     const links = []
 
+    // Prepare Mermaid graph definition
+    let mermaidGraph = 'flowchart TD\n'
+
+    // Group nodes by section for Mermaid subgraphs
+    mermaidGraph += generateSectionData({ sections, nodes, lists, tooltipData, showComponentsBoolean, pages, taskList })
+
+    // Add unassigned nodes
+    const unassignedNodes = nodes.filter((n) => !n.section)
+    unassignedNodes.forEach((node) => {
+      mermaidGraph += renderNode(
+        node,
+        lists,
+        tooltipData,
+        showComponentsBoolean,
+        filterSections(sections, pages, taskList)
+      )
+    })
+
+    mermaidGraph += addStartAndEndNodes(nodes[0].id, nodes[nodes.length - 1].id)
+
     pages.forEach((page, index) => {
       // If it's a terminal page, it has no next links
       if (page.terminal || page.controller?.includes('Terminal')) {
         return
       }
-      createPageLinks(page, index, pages, conditionsList, links, lists)
-    })
-
-    // Prepare Mermaid graph definition
-    let mermaidGraph = 'flowchart TD\n'
-
-    // Group nodes by section for Mermaid subgraphs
-    sections.forEach((section) => {
-      const sectionNodes = nodes.filter((n) => n.section === section.id)
-      if (sectionNodes.length > 0) {
-        mermaidGraph += `  subgraph ${section.id}["${section.title}"]\n`
-        sectionNodes.forEach((node) => {
-          mermaidGraph += renderNode(node, lists, tooltipData, showComponentsBoolean, section.title)
-        })
-        mermaidGraph += '  end\n'
-      }
-    })
-
-    // Add unassigned nodes
-    const unassignedNodes = nodes.filter((n) => !n.section)
-    unassignedNodes.forEach((node) => {
-      mermaidGraph += renderNode(node, lists, tooltipData, showComponentsBoolean)
+      createPageLinks({ page, index, pages, conditionsList, links, lists, sections, taskList })
     })
 
     let edgeCounter = 0
@@ -94,9 +95,53 @@ export const visualiseJourneyController = {
       showComponents: showComponentsBoolean,
       bucket,
       filename,
-      tooltipData
+      tooltipData,
+      breadcrumbs: generateBreadcrumbs(filename, grant, version)
     })
   }
+}
+
+const generateSectionData = ({ sections, nodes, lists, tooltipData, showComponentsBoolean, pages, taskList }) => {
+  let mermaidGraph = ''
+  sections.forEach((section) => {
+    const sectionNodes = nodes.filter((n) => n.section === section.id)
+    if (sectionNodes.length > 0) {
+      mermaidGraph += `  subgraph ${section.id}["${section.title}"]\n`
+      sectionNodes.forEach((node) => {
+        mermaidGraph += renderNode(
+          node,
+          lists,
+          tooltipData,
+          showComponentsBoolean,
+          filterSections(sections, pages, taskList),
+          section.title
+        )
+      })
+      mermaidGraph += '  end\n'
+    }
+  })
+
+  return mermaidGraph
+}
+
+const generateBreadcrumbs = (filename, grant, version) => {
+  return [
+    {
+      text: 'Home',
+      href: '/'
+    },
+    {
+      text: grant,
+      href: `/grant?grant=${grant}`
+    },
+    {
+      text: version,
+      href: `/version?grant=${grant}&version=${version}`
+    },
+    {
+      text: `Visualise Journey - ${filename}`
+    }
+  ]
 }
 
 const mapConditions = (conditionsList, pages) => {
@@ -135,7 +180,12 @@ const mapPagesToNodes = (pages) => {
   }))
 }
 
-const createPageLinks = (page, index, pages, conditionsList, links, lists) => {
+const createPageLinks = ({ page, index, pages, conditionsList, links, lists, sections, taskList }) => {
+  // For a tasklist, if the config is set to returnAfterSection, we should link back to the task list page after last in section page
+  if (page.controller === 'TaskListPageController') {
+    addTaskListLinks(page, pages, links, sections)
+    return
+  }
   let foundNextPage = false
 
   // Check the NEXT page in the list to see if it's conditional
@@ -143,7 +193,16 @@ const createPageLinks = (page, index, pages, conditionsList, links, lists) => {
   let nextPage = pages[nextPageIndex]
 
   while (!foundNextPage && nextPage) {
-    if (nextPage.condition) {
+    if (nextPage.section && nextPage.section !== page.section) {
+      if (taskList.returnAfterSection) {
+        links.push({
+          source: page.id,
+          target: taskList.controllerId,
+          type: 'default'
+        })
+        foundNextPage = true
+      }
+    } else if (nextPage.condition) {
       // To the nextPage if the condition is true and the condition belongs to current page component
       const condition = conditionsList.find((c) => c.id === nextPage.condition)
       if (condition.onPageId === page.id) {
@@ -179,6 +238,41 @@ const createConditionalLabelAndLink = (page, condition, nextPageId, links, lists
   })
 }
 
+const filterSections = (sections, pages, taskList) => {
+  return (
+    sections
+      .filter((section) => pages.some((page) => page.section === section.id))
+      .map((section, index) => ({
+        ...section,
+        initialStatus: index === 0 ? taskList.statuses?.notStarted.text : taskList.statuses?.cannotStart.text,
+        initialClasses: index === 0 ? taskList.statuses?.notStarted.classes : taskList.statuses?.cannotStart.classes
+      })) ?? []
+  )
+}
+
+const addStartAndEndNodes = (firstNodeId, endNodeId) => {
+  return `    id1[Start]\n
+              id2[End]\n
+              id1 --> ${firstNodeId}\n
+              ${endNodeId} --> id2\n
+    style id1 fill:#f9f,stroke:#333,stroke-width:4px\n
+    style id2 fill:#f9f,stroke:#333,stroke-width:4px\n
+    `
+}
+
+const addTaskListLinks = (page, pages, links, sections) => {
+  // link to the first page in a section, for any sections that have pages
+  const firstPagesInSection = sections.map((section) => pages.find((p) => p.section === section.id)).filter((p) => !!p)
+  for (const [index, firstPage] of firstPagesInSection.entries()) {
+    links.push({
+      source: page.id,
+      target: firstPage.id,
+      type: 'conditional',
+      label: `Task #${index + 1}`
+    })
+  }
+}
+
 const addYesNoListData = (lists) => {
   lists.push({
     id: 'yes-no',
@@ -189,13 +283,13 @@ const addYesNoListData = (lists) => {
   })
 }
 
-const renderNode = (node, lists, tooltipData, showComponents, sectionTitle) => {
+const renderNode = (node, lists, tooltipData, showComponents, sections, sectionTitle) => {
   const title = node.terminal ? `🚩 ${node.title}` : node.title
   const shapeStart = node.terminal ? '((' : '['
   const shapeEnd = node.terminal ? '))' : ']'
   const componentDetails = showComponents ? `<ul>${componentsAsListItems(node.components)}</ul>` : ''
 
-  tooltipData[node.id] = createTooltipData(node, sectionTitle, lists)
+  tooltipData[node.id] = createTooltipData(node, sections, sectionTitle, lists)
   return `    ${node.id}${shapeStart}"${title}<br/><small>${node.path}</small>${componentDetails}"${shapeEnd}\n`
 }
 

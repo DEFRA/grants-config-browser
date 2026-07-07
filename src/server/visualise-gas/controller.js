@@ -3,7 +3,7 @@ import { statusCodes } from '../common/constants/status-codes.js'
 
 export const visualiseGasController = {
   async handler(request, h) {
-    const { bucket, filename } = request.query || {}
+    const { bucket, filename, grant, version } = request.query || {}
 
     let config
     try {
@@ -89,9 +89,30 @@ export const visualiseGasController = {
       mermaidGraph,
       bucket,
       filename,
-      tooltipData
+      tooltipData,
+      breadcrumbs: createBreadCrumbs(filename, grant, version)
     })
   }
+}
+
+const createBreadCrumbs = (filename, grant, version) => {
+  return [
+    {
+      text: 'Home',
+      href: '/'
+    },
+    {
+      text: grant,
+      href: `/grant?grant=${grant}`
+    },
+    {
+      text: version,
+      href: `/version?grant=${grant}&version=${version}`
+    },
+    {
+      text: `Visualise GAS config - ${filename}`
+    }
+  ]
 }
 
 const createTooltipData = (nodeId, tooltipData, phase, stage, status) => {
