@@ -17,6 +17,8 @@
 
   .tippy-content {
     padding: 5px 9px;
+    max-height: 90vh;
+    overflow-y: auto;
   }
 
   .tippy-arrow {
@@ -31,10 +33,31 @@
     border-style: solid;
   }
 
-  &[data-placement^="top-end"] > .tippy-arrow::after {
-    border-top-color: rgba(0, 8, 16, 0.2);
-    border-width: 7px 7px 0;
-    top: 17px;
-    left: 1px;
+  &[data-placement^="top"] > .tippy-arrow::after {
+    border-top-color: rgba(0, 8, 16, 0.15);
+    border-width: 8px 8px 0;
+    bottom: -8px;
+    left: 0;
+  }
+
+  &[data-placement^="bottom"] > .tippy-arrow::after {
+    border-bottom-color: rgba(0, 8, 16, 0.15);
+    border-width: 0 8px 8px;
+    top: -8px;
+    left: 0;
+  }
+
+  &[data-placement^="left"] > .tippy-arrow::after {
+    border-left-color: rgba(0, 8, 16, 0.15);
+    border-width: 8px 0 8px 8px;
+    right: -8px;
+    top: 0;
+  }
+
+  &[data-placement^="right"] > .tippy-arrow::after {
+    border-right-color: rgba(0, 8, 16, 0.15);
+    border-width: 8px 8px 8px 0;
+    left: -8px;
+    top: 0;
   }
 }
