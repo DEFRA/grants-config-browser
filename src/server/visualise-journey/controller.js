@@ -3,6 +3,16 @@ import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { createTooltipData } from './tooltip.js'
 
+const loadConfig = async (filename, bucket) => {
+  let fileContent
+  if (bucket && filename) {
+    fileContent = await getS3FileContent(bucket, filename)
+  } else {
+    throw new Error('No bucket or filename provided')
+  }
+  return yaml.load(fileContent)
+}
+
 export const visualiseJourneyController = {
   async handler(request, h) {
     const { bucket, filename, grant, version, showComponents } = request.query || {}
@@ -12,13 +22,7 @@ export const visualiseJourneyController = {
 
     let config
     try {
-      let fileContent
-      if (bucket && filename) {
-        fileContent = await getS3FileContent(bucket, filename)
-      } else {
-        throw new Error('No bucket or filename provided')
-      }
-      config = yaml.load(fileContent)
+      config = await loadConfig(filename, bucket)
     } catch (e) {
       return h.response(`Error loading YAML: ${e.message}`).code(statusCodes.internalServerError)
     }
@@ -71,7 +75,7 @@ export const visualiseJourneyController = {
       const edgeId = 'edge' + edgeCounter
       edgeCounter++
       if (link.type === 'conditional') {
-        mermaidGraph += `  ${link.source} ${edgeId}@-- "${link.label}" --> ${link.target}\n${edgeId}@{ animate: true }\n`
+        mermaidGraph += `  ${link.source} ${edgeId}@-- "${link.label}" --${link.lengthen ?? ''}> ${link.target}\n${edgeId}@{ animate: true }\n`
       } else {
         mermaidGraph += `  ${link.source} ${edgeId}@-.-> ${link.target}\n${edgeId}@{ animate: true }\n`
       }
@@ -96,6 +100,8 @@ export const visualiseJourneyController = {
       bucket,
       filename,
       tooltipData,
+      grant,
+      version,
       breadcrumbs: generateBreadcrumbs(filename, grant, version)
     })
   }
@@ -268,7 +274,8 @@ const addTaskListLinks = (page, pages, links, sections) => {
       source: page.id,
       target: firstPage.id,
       type: 'conditional',
-      label: `Task #${index + 1}`
+      // lengthen: '-'.repeat(index), //Still considering this. Forces some longer links
+      label: `Task #${index + 1}\n${sections.find((s) => s.id === firstPage.section).title}`
     })
   }
 }
