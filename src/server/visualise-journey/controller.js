@@ -55,16 +55,7 @@ export const visualiseJourneyController = {
     mermaidGraph += generateSectionData({ sections, nodes, lists, tooltipData, showComponentsBoolean, pages, taskList })
 
     // Add unassigned nodes
-    const unassignedNodes = nodes.filter((n) => !n.section)
-    unassignedNodes.forEach((node) => {
-      mermaidGraph += renderNode(
-        node,
-        lists,
-        tooltipData,
-        showComponentsBoolean,
-        filterSections(sections, pages, taskList)
-      )
-    })
+    mermaidGraph += renderUnassignedNodes(nodes, lists, tooltipData, showComponentsBoolean, sections, pages, taskList)
 
     mermaidGraph += addStartAndEndNodes(nodes[0].id, nodes[nodes.length - 1].id)
 
@@ -134,6 +125,21 @@ const generateSectionData = ({ sections, nodes, lists, tooltipData, showComponen
     }
   })
 
+  return mermaidGraph
+}
+
+const renderUnassignedNodes = (nodes, lists, tooltipData, showComponentsBoolean, sections, pages, taskList) => {
+  let mermaidGraph = ''
+  const unassignedNodes = nodes.filter((n) => !n.section)
+  unassignedNodes.forEach((node) => {
+    mermaidGraph += renderNode(
+      node,
+      lists,
+      tooltipData,
+      showComponentsBoolean,
+      filterSections(sections, pages, taskList)
+    )
+  })
   return mermaidGraph
 }
 
@@ -289,20 +295,22 @@ const addTaskListLinks = (page, pages, links, sections) => {
 }
 
 const addYesNoListData = (lists) => {
-  lists.push({
-    id: 'yes-no',
-    items: [
-      { text: 'Yes', value: 'yes' },
-      { text: 'No', value: 'no' }
-    ]
-  })
-  lists.push({
-    id: 'details-yes-no',
-    items: [
-      { text: 'Yes', value: 'yes' },
-      { text: 'No, update my details on the Farm and Land Service', value: 'no' }
-    ]
-  })
+  lists.push(
+    {
+      id: 'yes-no',
+      items: [
+        { text: 'Yes', value: 'yes' },
+        { text: 'No', value: 'no' }
+      ]
+    },
+    {
+      id: 'details-yes-no',
+      items: [
+        { text: 'Yes', value: 'yes' },
+        { text: 'No, update my details on the Farm and Land Service', value: 'no' }
+      ]
+    }
+  )
 }
 
 const renderNode = (node, lists, tooltipData, showComponents, sections, sectionTitle) => {
