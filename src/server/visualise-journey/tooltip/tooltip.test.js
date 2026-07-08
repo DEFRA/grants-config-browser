@@ -11,6 +11,10 @@ vi.mock('./specific-content/check-details-controller.js', () => ({
   getCheckDetailsContent: vi.fn().mockReturnValue('mock-check-details-content')
 }))
 
+vi.mock('./specific-content/confirmation-controller.js', () => ({
+  getConfirmationContent: vi.fn().mockReturnValue('mock-confirmation-content')
+}))
+
 describe('createTooltipData', () => {
   const mockLists = [
     { id: 'list1', items: [{ text: 'Item 1', value: 'i1', description: 'Desc 1' }] },
@@ -254,6 +258,7 @@ describe('createTooltipData', () => {
     }
 
     test('CheckDetailsController', 'mock-check-details-content')
+    test('ConfirmationPageController', 'mock-confirmation-content')
     test('TaskListPageController', 'govuk-task-list')
     test('CheckResponsesPageController', 'check of answers supplied')
     test('DeclarationPageController', 'declaration page')

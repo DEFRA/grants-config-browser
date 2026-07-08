@@ -1,5 +1,6 @@
 import { getRadioFieldContent } from './specific-content/radio-field-content.js'
 import { getCheckDetailsContent } from './specific-content/check-details-controller.js'
+import { getConfirmationContent } from './specific-content/confirmation-controller.js'
 
 const TEXTFIELD_COMPONENT_TYPES = new Set([
   'TextField',
@@ -34,6 +35,10 @@ export const createTooltipData = (node, sections, sectionTitle, lists) => {
     ttd += getControllerSpecificMessage(node, sections, lists)
   } else if (!node.terminal) {
     ttd += getContinueButton(node)
+  }
+
+  if (node.view) {
+    ttd += `<p><strong>View for content on this page is provided by:</strong> ${node.view}.<strong> This is not part of the configuration</strong></p>`
   }
   return ttd
 }
@@ -164,6 +169,8 @@ const getControllerSpecificMessage = (node, sections, lists) => {
       return controllerSpecificMessage + '<p>CheckResponsesPageController provides a check of answers supplied</p>'
     case 'PaymentPageController':
       return controllerSpecificMessage + node.config?.paymentExplanation
+    case 'ConfirmationPageController':
+      return getConfirmationContent(node)
     case 'DeclarationPageController':
       return (
         controllerSpecificMessage +

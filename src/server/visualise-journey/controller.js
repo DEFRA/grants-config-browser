@@ -29,17 +29,12 @@ export const visualiseJourneyController = {
 
     const sections = config.sections || []
     const lists = config.lists || []
-    const pages = config.pages || []
+    let pages = config.pages || []
     const conditionsList = config.conditions || []
     const taskList = config.metadata?.tasklist || {}
-    const detailsPage = config.metadata?.detailsPage
     taskList.controllerId = pages.find((page) => page.controller === 'TaskListPageController')?.id
-    if (detailsPage) {
-      const dp = pages.find((page) => page.controller === 'CheckDetailsController')
-      if (dp) {
-        dp.details = detailsPage
-      }
-    }
+
+    pages = customisePagesWithMetaData(pages, config.metadata)
 
     addYesNoListData(lists)
     mapConditions(conditionsList, pages)
@@ -103,6 +98,27 @@ export const visualiseJourneyController = {
       breadcrumbs: generateBreadcrumbs(filename, grant, version)
     })
   }
+}
+
+const customisePagesWithMetaData = (pages, metadata) => {
+  const detailsPage = metadata?.detailsPage
+  const confirmationContent = metadata?.confirmationContent
+
+  return pages.map((page) => {
+    if (detailsPage && page.controller === 'CheckDetailsController') {
+      return {
+        ...page,
+        details: detailsPage
+      }
+    } else if (confirmationContent && page.controller === 'ConfirmationPageController') {
+      return {
+        ...page,
+        confirmationContent
+      }
+    } else {
+      return page
+    }
+  })
 }
 
 const generateSectionData = ({ sections, nodes, lists, tooltipData, showComponentsBoolean, pages, taskList }) => {
@@ -186,6 +202,8 @@ const mapPagesToNodes = (pages) => {
     next: page.next,
     config: page.config || {},
     details: page.details,
+    confirmationContent: page.confirmationContent,
+    view: page.view,
     components: (page.components || []).map((c) => ({
       type: c.type,
       title: c.title || 'Component',
