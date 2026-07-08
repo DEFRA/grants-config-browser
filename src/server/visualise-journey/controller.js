@@ -3,6 +3,16 @@ import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { createTooltipData } from './tooltip.js'
 
+const loadConfig = async (filename, bucket) => {
+  let fileContent
+  if (bucket && filename) {
+    fileContent = await getS3FileContent(bucket, filename)
+  } else {
+    throw new Error('No bucket or filename provided')
+  }
+  return yaml.load(fileContent)
+}
+
 export const visualiseJourneyController = {
   async handler(request, h) {
     const { bucket, filename, grant, version, showComponents } = request.query || {}
@@ -12,13 +22,7 @@ export const visualiseJourneyController = {
 
     let config
     try {
-      let fileContent
-      if (bucket && filename) {
-        fileContent = await getS3FileContent(bucket, filename)
-      } else {
-        throw new Error('No bucket or filename provided')
-      }
-      config = yaml.load(fileContent)
+      config = await loadConfig(filename, bucket)
     } catch (e) {
       return h.response(`Error loading YAML: ${e.message}`).code(statusCodes.internalServerError)
     }
