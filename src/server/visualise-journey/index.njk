@@ -9,7 +9,7 @@
       <button id="reset-zoom" class="govuk-button govuk-button--secondary" data-module="govuk-button">
         Reset Zoom
       </button>
-      <a href="/visualise-journey?bucket={{ bucket }}&filename={{ filename }}&showComponents={{ 'false' if showComponents else 'true' }}" id="show-components" class="govuk-button govuk-button--secondary" data-module="govuk-button">
+      <a href="/visualise-journey?bucket={{ bucket }}&filename={{ filename }}&showComponents={{ 'false' if showComponents else 'true' }}&grant={{ grant }}&version={{ version }}" id="show-components" class="govuk-button govuk-button--secondary" data-module="govuk-button">
                   {% if showComponents %}
                     Hide components
                   {% else %}

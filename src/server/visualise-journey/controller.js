@@ -71,7 +71,7 @@ export const visualiseJourneyController = {
       const edgeId = 'edge' + edgeCounter
       edgeCounter++
       if (link.type === 'conditional') {
-        mermaidGraph += `  ${link.source} ${edgeId}@-- "${link.label}" --> ${link.target}\n${edgeId}@{ animate: true }\n`
+        mermaidGraph += `  ${link.source} ${edgeId}@-- "${link.label}" --${link.lengthen ?? ''}> ${link.target}\n${edgeId}@{ animate: true }\n`
       } else {
         mermaidGraph += `  ${link.source} ${edgeId}@-.-> ${link.target}\n${edgeId}@{ animate: true }\n`
       }
@@ -96,6 +96,8 @@ export const visualiseJourneyController = {
       bucket,
       filename,
       tooltipData,
+      grant,
+      version,
       breadcrumbs: generateBreadcrumbs(filename, grant, version)
     })
   }
@@ -268,7 +270,8 @@ const addTaskListLinks = (page, pages, links, sections) => {
       source: page.id,
       target: firstPage.id,
       type: 'conditional',
-      label: `Task #${index + 1}`
+      // lengthen: '-'.repeat(index), //Still considering this. Forces some longer links
+      label: `Task #${index + 1}\n${sections.find((s) => s.id === firstPage.section).title}`
     })
   }
 }

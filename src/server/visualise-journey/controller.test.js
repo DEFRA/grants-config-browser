@@ -222,8 +222,8 @@ describe('visualiseJourneyController', () => {
     await visualiseJourneyController.handler(request, h)
 
     const mermaidGraph = h.view.mock.calls[0][1].mermaidGraph
-    expect(mermaidGraph).toContain('tl edge0@-- "Task #1" --> p1')
-    expect(mermaidGraph).toContain('tl edge1@-- "Task #2" --> p2')
+    expect(mermaidGraph).toContain('tl edge0@-- "Task #1\nSection 1" --> p1')
+    expect(mermaidGraph).toContain('tl edge1@-- "Task #2\nSection 2" --> p2')
   })
 
   it('should handle returnAfterSection metadata', async () => {
