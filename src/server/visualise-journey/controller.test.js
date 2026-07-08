@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { visualiseJourneyController } from './controller.js'
 import yaml from 'js-yaml'
 import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
-import { createTooltipData } from './tooltip.js'
+import { createTooltipData } from './tooltip/tooltip.js'
 
 vi.mock('js-yaml')
 vi.mock('../common/helpers/s3/s3-interactions.js')
-vi.mock('./tooltip.js')
+vi.mock('./tooltip/tooltip.js')
 
 describe('visualiseJourneyController', () => {
   beforeEach(() => {

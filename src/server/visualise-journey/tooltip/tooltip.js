@@ -1,3 +1,6 @@
+import { getRadioFieldContent } from './specific-content/radio-field-content.js'
+import { getCheckDetailsContent } from './specific-content/check-details-controller.js'
+
 const TEXTFIELD_COMPONENT_TYPES = new Set([
   'TextField',
   'NumberField',
@@ -28,7 +31,7 @@ export const createTooltipData = (node, sections, sectionTitle, lists) => {
   }
 
   if (!node.components?.length) {
-    ttd += getControllerSpecificMessage(node, sections)
+    ttd += getControllerSpecificMessage(node, sections, lists)
   } else if (!node.terminal) {
     ttd += getContinueButton(node)
   }
@@ -71,21 +74,6 @@ const getSelectFieldContent = (component, lists) => {
                       <select class="govuk-select" id="selectField" name="selectField">
                         ${createSelectOptions(lists, component.list)}
                       </select>
-                  </div>`
-}
-
-const getRadioFieldContent = (node, component, lists) => {
-  const possibleHintPrefix = component.hint ? '<h2 class="govuk-hint">' + component.hint : ''
-  return `<div class="govuk-form-group">
-                    <fieldset class="govuk-fieldset">
-                      <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">
-                          ${node.components.length === 1 ? possibleHintPrefix : '<h2 class="govuk-fieldset__heading">' + component.title}
-                        </h2>
-                      </legend>
-                      <div class="govuk-radios" data-module="govuk-radios">
-                        ${createRadioOptions(lists, component.type === 'YesNoField' ? 'yes-no' : component.list)}
-                      </div>
-                    </fieldset>
                   </div>`
 }
 
@@ -164,15 +152,12 @@ const getContinueButton = (node) => {
                 </button>`
 }
 
-const getControllerSpecificMessage = (node, sections) => {
+const getControllerSpecificMessage = (node, sections, lists) => {
   const controllerSpecificMessage =
     node.controller === 'TaskListPageController' ? '' : `<p><strong>No configurable components</strong></p>`
   switch (node.controller) {
     case 'CheckDetailsController':
-      return (
-        controllerSpecificMessage +
-        '<p>CheckDetailsController provides person/business details and selector to indicate if correct or not</p>'
-      )
+      return getCheckDetailsContent(node, lists)
     case 'TaskListPageController':
       return generateTaskList(sections)
     case 'CheckResponsesPageController':
@@ -207,34 +192,6 @@ const generateTaskList = (sections) => {
       .join('')}
   </ul>
   `
-}
-
-const createRadioOptions = (lists, id) => {
-  const list = lists.find((l) => l.id === id)
-  if (!list) {
-    return `
-        <div class="govuk-radios__item">
-          <input class="govuk-radios__input" id="external" name="${id}" type="radio" value="external">
-          <label class="govuk-label govuk-radios__label" for="external">
-            Options defined externally
-          </label>
-        </div>
-      `
-  }
-
-  return list.items
-    .map(
-      (item) => `
-        <div class="govuk-radios__item">
-          <input class="govuk-radios__input" id="${item.value}" name="${id}" type="radio" value="${item.value}">
-          <label class="govuk-label govuk-radios__label" for="${item.value}">
-            ${item.text}
-          </label>
-          ${item.description ? `<div id="govuk-hint govuk-radios__hint" class="govuk-hint govuk-radios__hint">${item.description}</div>` : ''}
-        </div>
-      `
-    )
-    .join('')
 }
 
 const createCbOptions = (lists, id) => {

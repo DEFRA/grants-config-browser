@@ -1,7 +1,7 @@
 import yaml from 'js-yaml'
 import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
 import { statusCodes } from '../common/constants/status-codes.js'
-import { createTooltipData } from './tooltip.js'
+import { createTooltipData } from './tooltip/tooltip.js'
 
 const loadConfig = async (filename, bucket) => {
   let fileContent
@@ -32,7 +32,14 @@ export const visualiseJourneyController = {
     const pages = config.pages || []
     const conditionsList = config.conditions || []
     const taskList = config.metadata?.tasklist || {}
+    const detailsPage = config.metadata?.detailsPage
     taskList.controllerId = pages.find((page) => page.controller === 'TaskListPageController')?.id
+    if (detailsPage) {
+      const dp = pages.find((page) => page.controller === 'CheckDetailsController')
+      if (dp) {
+        dp.details = detailsPage
+      }
+    }
 
     addYesNoListData(lists)
     mapConditions(conditionsList, pages)
@@ -172,6 +179,7 @@ const mapPagesToNodes = (pages) => {
     terminal: page.terminal || page.controller?.includes('Terminal') || false,
     next: page.next,
     config: page.config || {},
+    details: page.details,
     components: (page.components || []).map((c) => ({
       type: c.type,
       title: c.title || 'Component',
@@ -286,6 +294,13 @@ const addYesNoListData = (lists) => {
     items: [
       { text: 'Yes', value: 'yes' },
       { text: 'No', value: 'no' }
+    ]
+  })
+  lists.push({
+    id: 'details-yes-no',
+    items: [
+      { text: 'Yes', value: 'yes' },
+      { text: 'No, update my details on the Farm and Land Service', value: 'no' }
     ]
   })
 }

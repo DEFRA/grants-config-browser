@@ -1,5 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import { createTooltipData } from './tooltip.js'
+import * as radioFieldContent from './specific-content/radio-field-content.js'
+import { vi } from 'vitest'
+
+vi.mock('./specific-content/radio-field-content.js', () => ({
+  getRadioFieldContent: vi.fn().mockReturnValue('mock-radio-content')
+}))
+
+vi.mock('./specific-content/check-details-controller.js', () => ({
+  getCheckDetailsContent: vi.fn().mockReturnValue('mock-check-details-content')
+}))
 
 describe('createTooltipData', () => {
   const mockLists = [
@@ -36,33 +46,17 @@ describe('createTooltipData', () => {
     expect(result).not.toContain('Name:')
   })
 
-  it('should handle YesNoField and RadiosField', () => {
-    const nodeSingleWithHint = {
-      title: 'P1',
-      components: [{ type: 'YesNoField', name: 'yn1', hint: 'YN Hint' }]
-    }
-    const resultSingleWithHint = createTooltipData(nodeSingleWithHint, [], null, mockLists)
-    expect(resultSingleWithHint).toContain('YN Hint')
-
-    const nodeSingleNoHint = {
-      title: 'P1',
-      components: [{ type: 'YesNoField', name: 'yn1' }]
-    }
-    const resultSingleNoHint = createTooltipData(nodeSingleNoHint, [], null, mockLists)
-    expect(resultSingleNoHint).not.toContain('govuk-hint')
-
-    const nodeMultiple = {
+  it('should delegate to getRadioFieldContent for RadiosField and YesNoField', () => {
+    const node = {
       title: 'P1',
       components: [
-        { type: 'YesNoField', name: 'yn1', title: 'YN Title' },
-        { type: 'RadiosField', name: 'r1', title: 'Radios Title', list: 'list1' }
+        { type: 'YesNoField', name: 'yn1' },
+        { type: 'RadiosField', name: 'r1', list: 'list1' }
       ]
     }
-    const resultMultiple = createTooltipData(nodeMultiple, [], null, mockLists)
-    expect(resultMultiple).toContain('YN Title')
-    expect(resultMultiple).toContain('Radios Title')
-    expect(resultMultiple).toContain('Item 1')
-    expect(resultMultiple).toContain('Desc 1')
+    const result = createTooltipData(node, [], null, mockLists)
+    expect(result).toContain('mock-radio-content')
+    expect(radioFieldContent.getRadioFieldContent).toHaveBeenCalled()
   })
 
   it('should handle List component', () => {
@@ -221,7 +215,6 @@ describe('createTooltipData', () => {
     const node = {
       title: 'P1',
       components: [
-        { type: 'RadiosField', list: 'missing' },
         { type: 'CheckboxesField', list: 'missing' },
         { type: 'SelectField', list: 'missing' }
       ]
@@ -233,8 +226,7 @@ describe('createTooltipData', () => {
   it('should handle node with no components', () => {
     const node = { title: 'P1', components: [], controller: 'CheckDetailsController' }
     const result = createTooltipData(node, [], null, [])
-    expect(result).toContain('No configurable components')
-    expect(result).toContain('CheckDetailsController provides person/business details')
+    expect(result).toContain('mock-check-details-content')
   })
 
   it('should show Save and continue button for non-terminal pages', () => {
@@ -261,7 +253,7 @@ describe('createTooltipData', () => {
       expect(createTooltipData(node, [], null, [])).toContain(expected)
     }
 
-    test('CheckDetailsController', 'person/business details')
+    test('CheckDetailsController', 'mock-check-details-content')
     test('TaskListPageController', 'govuk-task-list')
     test('CheckResponsesPageController', 'check of answers supplied')
     test('DeclarationPageController', 'declaration page')
