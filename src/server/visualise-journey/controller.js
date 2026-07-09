@@ -1,7 +1,7 @@
 import yaml from 'js-yaml'
 import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
 import { statusCodes } from '../common/constants/status-codes.js'
-import { createTooltipData } from './tooltip.js'
+import { createTooltipData } from './tooltip/tooltip.js'
 
 const loadConfig = async (filename, bucket) => {
   let fileContent
@@ -18,7 +18,7 @@ export const visualiseJourneyController = {
     const { bucket, filename, grant, version, showComponents } = request.query || {}
     const showComponentsBoolean = showComponents === 'true'
 
-    const tooltipData = {}
+    const tooltipData = { options: {} }
 
     let config
     try {
@@ -29,10 +29,13 @@ export const visualiseJourneyController = {
 
     const sections = config.sections || []
     const lists = config.lists || []
-    const pages = config.pages || []
+    let pages = config.pages || []
     const conditionsList = config.conditions || []
     const taskList = config.metadata?.tasklist || {}
+    tooltipData.options.submitButtonText = config.metadata?.submitButtonText || 'Save and continue'
     taskList.controllerId = pages.find((page) => page.controller === 'TaskListPageController')?.id
+
+    pages = customisePagesWithMetaData(pages, config.metadata)
 
     addYesNoListData(lists)
     mapConditions(conditionsList, pages)
@@ -48,16 +51,7 @@ export const visualiseJourneyController = {
     mermaidGraph += generateSectionData({ sections, nodes, lists, tooltipData, showComponentsBoolean, pages, taskList })
 
     // Add unassigned nodes
-    const unassignedNodes = nodes.filter((n) => !n.section)
-    unassignedNodes.forEach((node) => {
-      mermaidGraph += renderNode(
-        node,
-        lists,
-        tooltipData,
-        showComponentsBoolean,
-        filterSections(sections, pages, taskList)
-      )
-    })
+    mermaidGraph += renderUnassignedNodes(nodes, lists, tooltipData, showComponentsBoolean, sections, pages, taskList)
 
     mermaidGraph += addStartAndEndNodes(nodes[0].id, nodes[nodes.length - 1].id)
 
@@ -107,6 +101,27 @@ export const visualiseJourneyController = {
   }
 }
 
+const customisePagesWithMetaData = (pages, metadata) => {
+  const detailsPage = metadata?.detailsPage
+  const confirmationContent = metadata?.confirmationContent
+
+  return pages.map((page) => {
+    if (detailsPage && page.controller === 'CheckDetailsController') {
+      return {
+        ...page,
+        details: detailsPage
+      }
+    } else if (confirmationContent && page.controller === 'ConfirmationPageController') {
+      return {
+        ...page,
+        confirmationContent
+      }
+    } else {
+      return page
+    }
+  })
+}
+
 const generateSectionData = ({ sections, nodes, lists, tooltipData, showComponentsBoolean, pages, taskList }) => {
   let mermaidGraph = ''
   sections.forEach((section) => {
@@ -127,6 +142,21 @@ const generateSectionData = ({ sections, nodes, lists, tooltipData, showComponen
     }
   })
 
+  return mermaidGraph
+}
+
+const renderUnassignedNodes = (nodes, lists, tooltipData, showComponentsBoolean, sections, pages, taskList) => {
+  let mermaidGraph = ''
+  const unassignedNodes = nodes.filter((n) => !n.section)
+  unassignedNodes.forEach((node) => {
+    mermaidGraph += renderNode(
+      node,
+      lists,
+      tooltipData,
+      showComponentsBoolean,
+      filterSections(sections, pages, taskList)
+    )
+  })
   return mermaidGraph
 }
 
@@ -172,6 +202,9 @@ const mapPagesToNodes = (pages) => {
     terminal: page.terminal || page.controller?.includes('Terminal') || false,
     next: page.next,
     config: page.config || {},
+    details: page.details,
+    confirmationContent: page.confirmationContent,
+    view: page.view,
     components: (page.components || []).map((c) => ({
       type: c.type,
       title: c.title || 'Component',
@@ -281,13 +314,22 @@ const addTaskListLinks = (page, pages, links, sections) => {
 }
 
 const addYesNoListData = (lists) => {
-  lists.push({
-    id: 'yes-no',
-    items: [
-      { text: 'Yes', value: 'yes' },
-      { text: 'No', value: 'no' }
-    ]
-  })
+  lists.push(
+    {
+      id: 'yes-no',
+      items: [
+        { text: 'Yes', value: 'yes' },
+        { text: 'No', value: 'no' }
+      ]
+    },
+    {
+      id: 'details-yes-no',
+      items: [
+        { text: 'Yes', value: 'yes' },
+        { text: 'No, update my details on the Farm and Land Service', value: 'no' }
+      ]
+    }
+  )
 }
 
 const renderNode = (node, lists, tooltipData, showComponents, sections, sectionTitle) => {
@@ -296,7 +338,7 @@ const renderNode = (node, lists, tooltipData, showComponents, sections, sectionT
   const shapeEnd = node.terminal ? '))' : ']'
   const componentDetails = showComponents ? `<ul>${componentsAsListItems(node.components)}</ul>` : ''
 
-  tooltipData[node.id] = createTooltipData(node, sections, sectionTitle, lists)
+  tooltipData[node.id] = createTooltipData(node, sections, sectionTitle, lists, tooltipData.options)
   return `    ${node.id}${shapeStart}"${title}<br/><small>${node.path}</small>${componentDetails}"${shapeEnd}\n`
 }
 

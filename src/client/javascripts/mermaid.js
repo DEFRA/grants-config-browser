@@ -119,7 +119,7 @@ async function run() {
     },
     allowHTML: true,
     interactive: true,
-    placement: 'top-end',
+    placement: 'left',
     theme: 'white-bg',
     maxWidth: 800,
     appendTo: () => document.body
