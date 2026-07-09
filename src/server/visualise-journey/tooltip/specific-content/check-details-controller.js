@@ -1,12 +1,12 @@
 import { getRadioFieldContent } from './radio-field-content.js'
 
-export const getCheckDetailsContent = (node, lists) => {
+export const getCheckDetailsContent = (node, lists, options) => {
   let content = ''
   content += generateSummaryLists(node.details?.displaySections ?? [])
   content += getRadioFieldContent(node, { title: 'Are these details correct?', list: 'details-yes-no' }, lists)
   content += `<p><small><strong>Name:</strong></small> <small>${node.details?.confirmationFieldName}</small></p>`
   content += `<button type="submit" class="govuk-button" data-module="govuk-button" data-govuk-button-init="">
-                  Continue
+                  ${options.submitButtonText}
                 </button>`
   return content
 }

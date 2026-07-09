@@ -18,7 +18,7 @@ export const visualiseJourneyController = {
     const { bucket, filename, grant, version, showComponents } = request.query || {}
     const showComponentsBoolean = showComponents === 'true'
 
-    const tooltipData = {}
+    const tooltipData = { options: {} }
 
     let config
     try {
@@ -32,6 +32,7 @@ export const visualiseJourneyController = {
     let pages = config.pages || []
     const conditionsList = config.conditions || []
     const taskList = config.metadata?.tasklist || {}
+    tooltipData.options.submitButtonText = config.metadata?.submitButtonText || 'Save and continue'
     taskList.controllerId = pages.find((page) => page.controller === 'TaskListPageController')?.id
 
     pages = customisePagesWithMetaData(pages, config.metadata)
@@ -337,7 +338,7 @@ const renderNode = (node, lists, tooltipData, showComponents, sections, sectionT
   const shapeEnd = node.terminal ? '))' : ']'
   const componentDetails = showComponents ? `<ul>${componentsAsListItems(node.components)}</ul>` : ''
 
-  tooltipData[node.id] = createTooltipData(node, sections, sectionTitle, lists)
+  tooltipData[node.id] = createTooltipData(node, sections, sectionTitle, lists, tooltipData.options)
   return `    ${node.id}${shapeStart}"${title}<br/><small>${node.path}</small>${componentDetails}"${shapeEnd}\n`
 }
 

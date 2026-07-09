@@ -22,11 +22,11 @@ describe('check-details-controller-content', () => {
         ],
         confirmationFieldName: 'confirmField'
       },
-      components: [] // getRadioFieldContent uses node.components.length
+      components: []
     }
     const mockLists = []
 
-    const result = getCheckDetailsContent(node, mockLists)
+    const result = getCheckDetailsContent(node, mockLists, { submitButtonText: 'Continue' })
 
     expect(result).toContain('Section 1')
     expect(result).toContain('Field 1')
@@ -46,8 +46,8 @@ describe('check-details-controller-content', () => {
       details: {},
       components: []
     }
-    const result = getCheckDetailsContent(node, [])
+    const result = getCheckDetailsContent(node, [], { submitButtonText: 'Save and continue' })
     expect(result).toContain('mock-radio-content')
-    expect(result).toContain('Continue')
+    expect(result).toContain('Save and continue')
   })
 })

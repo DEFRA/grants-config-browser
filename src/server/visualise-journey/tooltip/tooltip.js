@@ -16,7 +16,7 @@ const DATE_FIELD_TYPES = new Set(['DatePartsField', 'MonthYearField'])
 const RADIOBUTTON_FIELD_TYPES = new Set(['YesNoField', 'RadiosField'])
 const NON_INPUT_FIELD_TYPES = new Set(['Html', 'Details', 'Markdown', 'InsetText'])
 
-export const createTooltipData = (node, sections, sectionTitle, lists) => {
+export const createTooltipData = (node, sections, sectionTitle, lists, options) => {
   let ttd = ''
   if (sectionTitle) {
     ttd = `<span class="govuk-caption-l">${sectionTitle}</span>`
@@ -32,9 +32,9 @@ export const createTooltipData = (node, sections, sectionTitle, lists) => {
   }
 
   if (!node.components?.length) {
-    ttd += getControllerSpecificMessage(node, sections, lists)
+    ttd += getControllerSpecificMessage(node, sections, lists, options)
   } else if (!node.terminal) {
-    ttd += getContinueButton(node)
+    ttd += getContinueButton(node, options)
   }
 
   if (node.view) {
@@ -151,18 +151,18 @@ const getDateFieldInput = (element) => {
           </div>`
 }
 
-const getContinueButton = (node) => {
+const getContinueButton = (node, options) => {
   return `<button type="submit" class="govuk-button" data-module="govuk-button" data-govuk-button-init="">
-                  ${node.controller === 'StartPageController' ? 'Start Now >' : 'Save and continue'}
+                  ${node.controller === 'StartPageController' ? 'Start Now >' : options.submitButtonText}
                 </button>`
 }
 
-const getControllerSpecificMessage = (node, sections, lists) => {
+const getControllerSpecificMessage = (node, sections, lists, options) => {
   const controllerSpecificMessage =
     node.controller === 'TaskListPageController' ? '' : `<p><strong>No configurable components</strong></p>`
   switch (node.controller) {
     case 'CheckDetailsController':
-      return getCheckDetailsContent(node, lists)
+      return getCheckDetailsContent(node, lists, options)
     case 'TaskListPageController':
       return generateTaskList(sections)
     case 'CheckResponsesPageController':
