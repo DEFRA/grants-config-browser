@@ -16,7 +16,7 @@ export async function requestFromApi(endpoint, request, otherHeaders = {}, metho
 
     const response = await fetch(url.href, {
       method,
-      headers: { ...createApiHeadersForConfigBroker(), ...otherHeaders },
+      headers: { ...createApiHeadersForConfigBroker(request), ...otherHeaders },
       ...(possibleBody && { body: possibleBody })
     })
 

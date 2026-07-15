@@ -22,6 +22,7 @@ import {
 import { authOidcPlugin } from './auth/auth-plugin.js'
 import { setupCaches } from './common/helpers/session-cache/setup-caches.js'
 import { sessionCookie } from './auth/session-cookie.js'
+import { awsClients } from './common/helpers/aws/aws-clients.js'
 
 export async function createServer() {
   const server = hapi.server({
@@ -76,7 +77,8 @@ export async function createServer() {
     nunjucksConfig,
     Scooter,
     contentSecurityPolicy,
-    router
+    router,
+    awsClients
   ])
 
   registerAsyncDocsRoute(server)
