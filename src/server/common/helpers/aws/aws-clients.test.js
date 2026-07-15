@@ -52,9 +52,7 @@ describe('awsClients plugin', () => {
         stopHandler = handler
       }
     })
-
     awsClients.plugin.register(server)
-
     expect(server.events.on).toHaveBeenCalledWith('stop', expect.any(Function))
     expect(stopHandler).toBeDefined()
 

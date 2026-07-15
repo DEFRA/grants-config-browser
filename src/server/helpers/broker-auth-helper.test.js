@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { config } from '../../config/config.js'
 import { createAuthenticatedHeaders, createApiHeadersForConfigBroker } from './broker-auth-helper.js'
 import { generateToken } from '../common/helpers/sts/grants-config-broker-token.js'
@@ -31,6 +30,7 @@ describe('Broker Auth Helper', () => {
   describe('createAuthenticatedHeaders', () => {
     it('should add Authorization header with token from generateToken', async () => {
       const baseHeaders = { 'X-Custom': 'value' }
+
       const headers = await createAuthenticatedHeaders(mockRequest, baseHeaders)
 
       expect(generateToken).toHaveBeenCalledWith(mockRequest.sts)
@@ -51,6 +51,7 @@ describe('Broker Auth Helper', () => {
 
     it('should not mutate original base headers object', async () => {
       const baseHeaders = { 'Content-Type': CONTENT_TYPE_JSON }
+
       const headers = await createAuthenticatedHeaders(mockRequest, baseHeaders)
 
       expect(baseHeaders).toEqual({ 'Content-Type': CONTENT_TYPE_JSON })
