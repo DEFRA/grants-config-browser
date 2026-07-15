@@ -41,7 +41,7 @@ describe('awsClients plugin', () => {
     expect(server.decorate).toHaveBeenCalledWith('server', 'sts', mockStsInstance)
     expect(server.decorate).toHaveBeenCalledWith('request', 'sts', expect.any(Function), { apply: true })
 
-    const decorateRequestFn = server.decorate.mock.calls.find(call => call[0] === 'request')[2]
+    const decorateRequestFn = server.decorate.mock.calls.find((call) => call[0] === 'request')[2]
     expect(decorateRequestFn()).toBe(mockStsInstance)
   })
 
