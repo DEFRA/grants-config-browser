@@ -9,6 +9,7 @@ export async function requestFromApi(endpoint, request, otherHeaders = {}, metho
 
   const url = new URL(`/api/${endpoint}`, GRANTS_CONFIG_BROKER_ENDPOINT)
   try {
+    const configBrokerApiHeaders = await createApiHeadersForConfigBroker(request)
     let possibleBody
     if (['POST', 'PUT', 'PATCH'].includes(method.toUpperCase()) && payload) {
       possibleBody = JSON.stringify(payload)
@@ -16,7 +17,7 @@ export async function requestFromApi(endpoint, request, otherHeaders = {}, metho
 
     const response = await fetch(url.href, {
       method,
-      headers: { ...createApiHeadersForConfigBroker(), ...otherHeaders },
+      headers: { ...configBrokerApiHeaders, ...otherHeaders },
       ...(possibleBody && { body: possibleBody })
     })
 

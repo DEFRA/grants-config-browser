@@ -106,20 +106,6 @@ export const config = convict({
     env: 'ENABLE_SECURE_CONTEXT'
   },
   auth: {
-    token: {
-      doc: 'Bearer token for service-to-service authentication',
-      format: String,
-      default: '',
-      env: 'GRANTS_CONFIG_BROKER_AUTH_TOKEN',
-      sensitive: true
-    },
-    encryptionKey: {
-      doc: 'Encryption key for decrypting bearer token',
-      format: String,
-      default: '',
-      env: 'GRANTS_CONFIG_BROKER_ENCRYPTION_KEY',
-      sensitive: true
-    },
     federatedCredentials: {
       enableMocking: {
         doc: 'Enable mocking of federated credentials',
@@ -202,6 +188,26 @@ export const config = convict({
       format: String,
       default: 'http://localhost:3001',
       env: 'GRANTS_CONFIG_BROKER_API_ENDPOINT'
+    },
+    serviceAuth: {
+      enabled: {
+        doc: 'Enable service-to-service JWT on outbound backend requests',
+        format: Boolean,
+        default: isProduction,
+        env: 'BACKEND_SERVICE_AUTH_ENABLED'
+      },
+      audience: {
+        doc: 'JWT audience sent in the token request',
+        format: String,
+        default: 'grants-config-broker',
+        env: 'BACKEND_SERVICE_AUTH_AUDIENCE'
+      },
+      tokenDuration: {
+        doc: 'Token lifetime in seconds (max 900)',
+        format: Number,
+        default: 60,
+        env: 'BACKEND_SERVICE_AUTH_TOKEN_DURATION'
+      }
     }
   },
   session: {
