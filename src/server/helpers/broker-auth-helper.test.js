@@ -61,7 +61,8 @@ describe('Broker Auth Helper', () => {
 
   describe('createApiHeadersForConfigBroker', () => {
     it('should return headers with Content-Type and Authorization when serviceAuthEnabled is true', async () => {
-      vi.mocked(config.get).mockReturnValue(true)
+      vi.mocked(config.get).mockReturnValueOnce(false) // legacy disabled
+      vi.mocked(config.get).mockReturnValueOnce(true) // serviceAuthEnabled
 
       const headers = await createApiHeadersForConfigBroker(mockRequest)
 
@@ -73,7 +74,8 @@ describe('Broker Auth Helper', () => {
     })
 
     it('should return only Content-Type header when serviceAuthEnabled is false', async () => {
-      vi.mocked(config.get).mockReturnValue(false)
+      vi.mocked(config.get).mockReturnValueOnce(false) // legacy disabled
+      vi.mocked(config.get).mockReturnValueOnce(false) // serviceAuthEnabled
 
       const headers = await createApiHeadersForConfigBroker(mockRequest)
 
