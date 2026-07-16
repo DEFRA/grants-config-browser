@@ -208,6 +208,28 @@ export const config = convict({
         default: 60,
         env: 'BACKEND_SERVICE_AUTH_TOKEN_DURATION'
       }
+    },
+    legacyAuth: {
+      enabled: {
+        doc: 'Enable legacy auth on outbound backend requests',
+        format: Boolean,
+        default: true,
+        env: 'BACKEND_LEGACY_AUTH_ENABLED'
+      },
+      token: {
+        doc: 'Bearer token for service-to-service authentication',
+        format: String,
+        default: '',
+        env: 'GRANTS_CONFIG_BROKER_AUTH_TOKEN',
+        sensitive: true
+      },
+      encryptionKey: {
+        doc: 'Encryption key for decrypting bearer token',
+        format: String,
+        default: '',
+        env: 'GRANTS_CONFIG_BROKER_ENCRYPTION_KEY',
+        sensitive: true
+      }
     }
   },
   session: {
