@@ -28,7 +28,9 @@ export async function createApiHeadersForConfigBroker(request) {
   const baseHeaders = { 'Content-Type': CONTENT_TYPE_JSON }
 
   if (config.get('backend.legacyAuth.enabled')) {
-    return createLegacyAuthenticatedHeaders(GRANTS_CONFIG_BROKER_AUTH_TOKEN, ENCRYPTION_KEY, baseHeaders)
+    const token = config.get('backend.legacyAuth.token')
+    const encryptionKey = config.get('backend.legacyAuth.encryptionKey')
+    return createLegacyAuthenticatedHeaders(token, encryptionKey, baseHeaders)
   }
   if (!config.get('backend.serviceAuth.enabled')) {
     return baseHeaders
@@ -46,10 +48,8 @@ const ENCODING = {
   UTF8: 'utf8',
   BASE64: 'base64'
 }
-const GRANTS_CONFIG_BROKER_AUTH_TOKEN = config.get('backend.legacyAuth.token')
-const ENCRYPTION_KEY = config.get('backend.legacyAuth.encryptionKey')
 
-const createLegacyAuthenticatedHeaders = (token, encryptionKey, baseHeaders) => {
+export const createLegacyAuthenticatedHeaders = (token, encryptionKey, baseHeaders) => {
   const headers = { ...baseHeaders }
 
   if (token) {
