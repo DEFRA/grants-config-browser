@@ -31,6 +31,11 @@ export function buildNavigation(request, isAuthenticated = false, user = null) {
         text: 'Notifications',
         href: '/notifications',
         current: request?.path === '/notifications'
+      },
+      {
+        text: 'Features',
+        href: '/features',
+        current: request?.path === '/features'
       }
     ],
     slots: {

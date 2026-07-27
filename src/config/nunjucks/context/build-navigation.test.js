@@ -22,6 +22,11 @@ describe('#buildNavigation', () => {
           current: false,
           href: '/notifications',
           text: 'Notifications'
+        },
+        {
+          current: false,
+          href: '/features',
+          text: 'Features'
         }
       ],
       slots: {
@@ -56,6 +61,11 @@ describe('#buildNavigation', () => {
           current: false,
           href: '/notifications',
           text: 'Notifications'
+        },
+        {
+          current: false,
+          href: '/features',
+          text: 'Features'
         }
       ],
       slots: {
