@@ -102,7 +102,10 @@ export const modifyFeaturesForDisplay = (features) => {
 }
 
 function valueToString(value) {
-  if (value === undefined) return ''
+  if (value === undefined) {
+    return ''
+  }
+
   if (Array.isArray(value)) {
     return value.map(String).join(',')
   }
