@@ -94,18 +94,10 @@ export const modifyFeaturesForDisplay = (features) => {
 
     // value altered for display beyond 'maxLength'
     const valueAsString = valueToString(feature.value)
-
     const displayValue =
       valueAsString.length > maxLength ? valueAsString.substring(0, maxLengthWithoutEllipsis) + ellipsis : valueAsString
 
-    console.log(valueAsString)
-    console.log(displayValue)
-
-    return {
-      ...feature,
-      displayName,
-      displayValue
-    }
+    return { ...feature, displayName, displayValue }
   })
 }
 
