@@ -140,7 +140,7 @@ function valueToString(value) {
 
 const detailsDisplayValue = (value) => {
   if (Array.isArray(value)) {
-    const items = value.map((v) => '<li>' + v + '</li>').join('')
+    const items = value.map((v) => `<li>${v}</li>`).join('')
     return `<ul class="govuk-list govuk-list--bullet">${items}</ul>`
   }
   return value
