@@ -11,7 +11,15 @@ export const featuresController = {
     return h.view('features/index', {
       pageTitle: `Features`,
       heading: `Features`,
-      breadcrumbs: [],
+      breadcrumbs: [
+        {
+          text: 'Home',
+          href: '/'
+        },
+        {
+          text: 'Features'
+        }
+      ],
       headers: buildTableHeaders(),
       featureTableRows: buildTableRows(features)
     })
@@ -23,7 +31,7 @@ export const buildTableHeaders = () => {
     {
       text: 'Feature',
       attributes: {
-        'aria-sort': 'none'
+        'aria-sort': 'ascending'
       },
       classes: 'col-25'
     },
@@ -44,7 +52,7 @@ export const buildTableHeaders = () => {
     {
       text: 'Last Updated',
       attributes: {
-        'aria-sort': 'descending'
+        'aria-sort': 'none'
       },
       classes: 'col-19'
     }
@@ -57,7 +65,29 @@ export const buildTableRows = (features) => {
   return features.map((feature) => {
     return [
       {
-        html: `<a href="/feature-control/detail?name=${feature.name}">${feature.displayName}</a>`,
+        html: `
+          <details class="govuk-details govuk-!-margin-top-1 govuk-!-margin-bottom-0">
+            <summary class="govuk-details__summary">
+              <a href="/feature-control/detail?name=${feature.name}">${feature.displayName}</a>
+            </summary>
+            <div class="govuk-details__text">
+              <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-0">
+                <div class="govuk-summary-list__row">
+                  <dt class="govuk-summary-list__key">Description</dt>
+                  <dd class="govuk-summary-list__value">${feature.description}</dd>
+                </div>
+                <div class="govuk-summary-list__row">
+                  <dt class="govuk-summary-list__key">Scopes</dt>
+                  <dd class="govuk-summary-list__value">${feature.scopes}</dd>
+                </div>
+                <div class="govuk-summary-list__row">
+                  <dt class="govuk-summary-list__key">Value</dt>
+                  <dd class="govuk-summary-list__value">${detailsDisplayValue(feature.value)}</dd>
+                </div>
+              </dl>
+            </div>
+          </details>
+        `,
         classes: centringClass
       },
       {
@@ -102,12 +132,16 @@ export const modifyFeaturesForDisplay = (features) => {
 }
 
 function valueToString(value) {
-  if (value === undefined) {
-    return ''
-  }
-
   if (Array.isArray(value)) {
     return value.map(String).join(',')
   }
   return String(value)
+}
+
+const detailsDisplayValue = (value) => {
+  if (Array.isArray(value)) {
+    const items = value.map((v) => `<li>${v}</li>`).join('')
+    return `<ul class="govuk-list govuk-list--bullet">${items}</ul>`
+  }
+  return value
 }
