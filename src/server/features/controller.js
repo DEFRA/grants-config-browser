@@ -11,7 +11,15 @@ export const featuresController = {
     return h.view('features/index', {
       pageTitle: `Features`,
       heading: `Features`,
-      breadcrumbs: [],
+      breadcrumbs: [
+        {
+          text: 'Home',
+          href: '/'
+        },
+        {
+          text: 'Features'
+        }
+      ],
       headers: buildTableHeaders(),
       featureTableRows: buildTableRows(features)
     })
@@ -23,7 +31,7 @@ export const buildTableHeaders = () => {
     {
       text: 'Feature',
       attributes: {
-        'aria-sort': 'none'
+        'aria-sort': 'ascending'
       },
       classes: 'col-25'
     },
@@ -44,7 +52,7 @@ export const buildTableHeaders = () => {
     {
       text: 'Last Updated',
       attributes: {
-        'aria-sort': 'descending'
+        'aria-sort': 'none'
       },
       classes: 'col-19'
     }
@@ -102,10 +110,6 @@ export const modifyFeaturesForDisplay = (features) => {
 }
 
 function valueToString(value) {
-  if (value === undefined) {
-    return ''
-  }
-
   if (Array.isArray(value)) {
     return value.map(String).join(',')
   }

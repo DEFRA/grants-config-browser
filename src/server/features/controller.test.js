@@ -60,9 +60,23 @@ describe('#featuresController', () => {
 
     expect($('h1').text()).toContain('Features')
 
+    // Check breadcrumbs
+    const breadcrumbs = $('.govuk-breadcrumbs__list-item')
+    expect(breadcrumbs).toHaveLength(2)
+    expect(breadcrumbs.eq(0).text().trim()).toBe('Home')
+    expect(breadcrumbs.eq(0).find('a').attr('href')).toBe('/')
+    expect(breadcrumbs.eq(1).text().trim()).toBe('Features')
+
+    // Check the default sort
+    const featureHeader = $('thead th').eq(0)
+    expect(featureHeader.text().trim()).toBe('Feature')
+    expect(featureHeader.attr('aria-sort')).toBe('ascending')
+
+    // Check the expected number of rows
     const rows = $('tbody tr')
     expect(rows).toHaveLength(2)
 
+    // Check row one contains expected data
     const firstRow = rows.eq(0)
     expect(firstRow.find('td').eq(0).text()).toContain('Feature One')
     expect(firstRow.find('td').eq(1).text()).toBe('FEATURE_ONE')
