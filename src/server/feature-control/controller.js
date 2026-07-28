@@ -1,6 +1,7 @@
 import { requestFromApi } from '../helpers/request-from-api.js'
 import { formatDateExplicit, formatDateTime, formatDateTimeExplicit } from '../helpers/date-display.js'
 import Joi from 'joi'
+import { statusCodes } from '../common/constants/status-codes.js'
 
 const getFeatureControlSchema = Joi.object({
   name: Joi.string().required()
@@ -27,7 +28,7 @@ const formatValue = (value, type, isHtml = false) => {
   if (type === 'list-string' || type === 'list-number') {
     if (Array.isArray(value)) {
       if (isHtml) {
-        return `<ul class="govuk-list govuk-list--bullet">${value.map((v) => `<li>${v}</li>`).join('')}</ul>`
+        return `<ul class="govuk-list govuk-list--bullet">${value.map(mapValueToListItem).join('')}</ul>`
       }
       return value.join(', ')
     }
@@ -39,18 +40,20 @@ const formatValue = (value, type, isHtml = false) => {
   return value?.toString() ?? ''
 }
 
+const mapValueToListItem = (value) => `<li>${value}</li>`
+
 const formatScopes = (scopes) => {
   if (!scopes || !Array.isArray(scopes)) {
     return ''
   }
-  return `<ul class="govuk-list govuk-list--bullet">${scopes.map((v) => `<li>${v}</li>`).join('')}</ul>`
+  return `<ul class="govuk-list govuk-list--bullet">${scopes.map(mapValueToListItem).join('')}</ul>`
 }
 
 const formatRoles = (roles) => {
   if (!roles || !Array.isArray(roles)) {
     return 'No role required'
   }
-  return `<ul class="govuk-list govuk-list--bullet">${roles.map((v) => `<li>${v}</li>`).join('')}</ul>`
+  return `<ul class="govuk-list govuk-list--bullet">${roles.map(mapValueToListItem).join('')}</ul>`
 }
 
 const formatType = (type) => {
@@ -101,7 +104,7 @@ export const featureControlController = {
     const featureControl = result?.response
 
     if (!featureControl) {
-      return h.response('Feature control not found').code(404)
+      return h.response('Feature control not found').code(statusCodes.notFound)
     }
 
     // Note this will be coming from a new field in the API, but for now we will generate
