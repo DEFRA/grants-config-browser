@@ -1,5 +1,7 @@
-import { formatRelative } from 'date-fns'
+import { formatISO, formatRelative, formatRFC7231 } from 'date-fns'
 import { enGB } from 'date-fns/locale'
 import _ from 'lodash'
 export const formatDateTime = (stringDate) =>
   _.upperFirst(formatRelative(new Date(stringDate), new Date(), { locale: enGB }))
+export const formatDateExplicit = (stringDate) => formatISO(new Date(stringDate), { representation: 'date' })
+export const formatDateTimeExplicit = (stringDate) => formatRFC7231(new Date(stringDate))

@@ -27,6 +27,7 @@ import {
 import { signOutController } from './auth/logout.js'
 import { visualiseJourney } from './visualise-journey/index.js'
 import { visualiseGas } from './visualise-gas/index.js'
+import { featureControl } from './feature-control/index.js'
 import { features } from './features/index.js'
 
 export const router = {
@@ -49,6 +50,7 @@ export const router = {
         api,
         visualiseJourney,
         visualiseGas,
+        featureControl,
         features
       ])
 
