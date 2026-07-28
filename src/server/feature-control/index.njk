@@ -1,0 +1,102 @@
+{% extends 'layouts/page.njk' %}
+{% from 'govuk/components/summary-list/macro.njk' import govukSummaryList %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+{% block content %}
+  {{ appHeading({
+    text: heading,
+    caption: technicalName
+  }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if featureControl.description %}
+        <p class="govuk-body">{{ featureControl.description }}</p>
+      {% endif %}
+
+
+      {{ govukInsetText({
+        html: "<h2 class='govuk-heading-s govuk-!-margin-bottom-1'>Current value</h2><p class='govuk-body govuk-!-font-size-24 govuk-!-font-weight-bold'>" + formattedValue + "</p>"
+      }) }}
+
+      <h2 class="govuk-heading-m">Details</h2>
+
+      {{ govukSummaryList({
+        rows: [
+          {
+            key: {
+              text: "Type"
+            },
+            value: {
+              text: formattedType
+            }
+          },
+          {
+            key: {
+              text: "Scopes"
+            },
+            value: {
+              html: formattedScopes
+            }
+          },
+          {
+            key: {
+              text: "Owner"
+            },
+            value: {
+              text: featureControl.owner
+            }
+          },
+          {
+            key: {
+              text: "Created"
+            },
+            value: {
+              text: created
+            }
+          },
+          {
+            key: {
+              text: "Last Updated"
+            },
+            value: {
+              text: updated
+            }
+          },
+          {
+            key: {
+              text: "Expires"
+            },
+            value: {
+              text: expires
+            }
+          },
+          {
+            key: {
+              text: "Roles required to change (any of)"
+            },
+            value: {
+              html: formattedRoles
+            }
+          }
+        ]
+      }) }}
+
+
+    </div>
+  </div>
+
+  <div class="govuk-grid-row govuk-!-margin-top-6">
+    <div class="govuk-grid-column-full">
+      <h2 class="govuk-heading-m">History</h2>
+      {% if historyRows.length %}
+        {{ govukTable({
+          head: historyHeaders,
+          rows: historyRows
+        }) }}
+      {% else %}
+        <p class="govuk-body">No history available for this feature control.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

@@ -15,29 +15,34 @@ export function buildNavigation(request, isAuthenticated = false, user = null) {
   const userElement = user
     ? `<li class="${NAV_ITEM_CLASS} ${NAV_ITEM_RIGHT_CLASS}">${user}</li><li class="${NAV_ITEM_CLASS}">`
     : `<li class="${NAV_ITEM_CLASS} ${NAV_ITEM_RIGHT_CLASS}">`
+  const navigation = [
+    {
+      text: 'Home',
+      href: '/',
+      current: request?.path === '/'
+    },
+    {
+      text: 'About',
+      href: '/about',
+      current: request?.path === '/about'
+    },
+    {
+      text: 'Notifications',
+      href: '/notifications',
+      current: request?.path === '/notifications'
+    }
+  ]
+
+  if (isAuthenticated) {
+    navigation.push({
+      text: 'Features',
+      href: '/features',
+      current: request?.path === '/features'
+    })
+  }
+
   return {
-    navigation: [
-      {
-        text: 'Home',
-        href: '/',
-        current: request?.path === '/'
-      },
-      {
-        text: 'About',
-        href: '/about',
-        current: request?.path === '/about'
-      },
-      {
-        text: 'Notifications',
-        href: '/notifications',
-        current: request?.path === '/notifications'
-      },
-      {
-        text: 'Features',
-        href: '/features',
-        current: request?.path === '/features'
-      }
-    ],
+    navigation,
     slots: {
       navigationEnd: `${userElement}<a class="${NAV_LINK_CLASS}" href="${signOption.href}">${signOption.text}</a></li>`
     }
