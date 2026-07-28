@@ -131,7 +131,7 @@ describe('#featureControlController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect($('.govuk-inset-text').find('ul li').length).toBe(2)
+    expect($('.govuk-inset-text').find('ul li')).toHaveLength(2)
     expect($('.govuk-inset-text').find('li').eq(0).text().trim()).toBe('a')
     expect($('.govuk-inset-text').find('li').eq(1).text().trim()).toBe('b')
     expect($('.govuk-table__cell').eq(0).text().trim()).toBe('01/01/2023')
@@ -243,7 +243,7 @@ describe('#featureControlController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect($('.govuk-inset-text').find('li').length).toBe(3)
+    expect($('.govuk-inset-text').find('li')).toHaveLength(3)
     expect($('.govuk-inset-text').find('li').eq(0).text().trim()).toBe('1')
   })
 
