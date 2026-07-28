@@ -85,8 +85,7 @@ describe('#featuresController', () => {
     expect(firstRow.find('td').eq(0).text()).toContain('Feature One')
     expect(firstRow.find('td').eq(1).text()).toBe('FEATURE_ONE')
     expect(firstRow.find('td').eq(2).text()).toBe('true')
-
-    // Check expanded details for feature one
+    // Check row one expanded details
     const details = firstRow.find('td').eq(0).find('details')
     const summaryRows = details.find('.govuk-summary-list__row')
     const descriptionRow = summaryRows.filter(
