@@ -18,13 +18,28 @@ describe('#featureControlController', () => {
     await server.stop({ timeout: 0 })
   })
 
+  const credentials = { isAuthenticated: true, displayName: 'User A' }
+
+  test('Should return 401 if not authenticated', async () => {
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: '/feature-control/detail?name=TEST_BOOLEAN'
+    })
+
+    expect(statusCode).toBe(statusCodes.unauthorized)
+  })
+
   test('Should redirect to home page if invalid query parameters supplied', async () => {
     const {
       headers: { location },
       statusCode
     } = await server.inject({
       method: 'GET',
-      url: '/feature-control/detail'
+      url: '/feature-control/detail',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
     })
 
     expect(statusCode).toBe(statusCodes.moved)
@@ -36,7 +51,11 @@ describe('#featureControlController', () => {
 
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: '/feature-control/detail?name=unknown'
+      url: '/feature-control/detail?name=unknown',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
     })
 
     expect(statusCode).toBe(404)
@@ -62,15 +81,23 @@ describe('#featureControlController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/feature-control/detail?name=TEST_BOOLEAN'
+      url: '/feature-control/detail?name=TEST_BOOLEAN',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
     expect($('h1').text()).toContain('Test Boolean')
-    expect($('.govuk-summary-list__value').eq(1).text().trim()).toBe('boolean')
-    expect($('.govuk-summary-list__value').eq(2).text().trim()).toBe('True')
-    expect($('.govuk-table__cell').eq(0).text().trim()).toBe('True')
+    expect($('.govuk-caption-m').text()).toBe('TEST_BOOLEAN')
+    expect($('.govuk-inset-text').text()).toContain('Current value')
+    expect($('.govuk-inset-text').text()).toContain('True')
+    expect($('.govuk-summary-list__value').eq(0).text().trim()).toBe('Toggle')
+    expect($('.govuk-summary-list__value').eq(1).text().trim()).toBe('scope1')
+    expect($('.govuk-table__cell').eq(0).text().trim()).toBe('01/01/2023')
+    expect($('.govuk-table__cell').eq(2).text().trim()).toBe('True')
 
     // Check breadcrumbs
     const breadcrumbs = $('.govuk-breadcrumbs__list-item')
@@ -95,15 +122,20 @@ describe('#featureControlController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/feature-control/detail?name=test-list'
+      url: '/feature-control/detail?name=test-list',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect($('.govuk-summary-list__value').eq(2).find('ul li').length).toBe(2)
-    expect($('.govuk-summary-list__value').eq(2).find('li').eq(0).text().trim()).toBe('a')
-    expect($('.govuk-summary-list__value').eq(2).find('li').eq(1).text().trim()).toBe('b')
-    expect($('.govuk-table__cell').eq(0).text().trim()).toBe('a, b')
+    expect($('.govuk-inset-text').find('ul li').length).toBe(2)
+    expect($('.govuk-inset-text').find('li').eq(0).text().trim()).toBe('a')
+    expect($('.govuk-inset-text').find('li').eq(1).text().trim()).toBe('b')
+    expect($('.govuk-table__cell').eq(0).text().trim()).toBe('01/01/2023')
+    expect($('.govuk-table__cell').eq(2).text().trim()).toBe('a, b')
   })
 
   test('Should render page for number type', async () => {
@@ -122,12 +154,16 @@ describe('#featureControlController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/feature-control/detail?name=test-number'
+      url: '/feature-control/detail?name=test-number',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect($('.govuk-summary-list__value').eq(2).text().trim()).toBe('42')
+    expect($('.govuk-inset-text').text()).toContain('42')
   })
 
   test('Should handle list type with non-array value', async () => {
@@ -145,12 +181,15 @@ describe('#featureControlController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/feature-control/detail?name=test-list-error'
+      url: '/feature-control/detail?name=test-list-error',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
     })
-
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect($('.govuk-summary-list__value').eq(2).text().trim()).toBe('')
+    expect($('.govuk-inset-text').text().replace('Current value', '').trim()).toBe('')
   })
 
   test('Should render page for boolean type with false value', async () => {
@@ -168,12 +207,16 @@ describe('#featureControlController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/feature-control/detail?name=test-false'
+      url: '/feature-control/detail?name=test-false',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect($('.govuk-summary-list__value').eq(2).text().trim()).toBe('False')
+    expect($('.govuk-inset-text').text()).toContain('False')
   })
 
   test('Should render page for list-number type', async () => {
@@ -191,13 +234,17 @@ describe('#featureControlController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/feature-control/detail?name=test-list-number'
+      url: '/feature-control/detail?name=test-list-number',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect($('.govuk-summary-list__value').eq(2).find('li').length).toBe(3)
-    expect($('.govuk-summary-list__value').eq(2).find('li').eq(0).text().trim()).toBe('1')
+    expect($('.govuk-inset-text').find('li').length).toBe(3)
+    expect($('.govuk-inset-text').find('li').eq(0).text().trim()).toBe('1')
   })
 
   test('Should handle missing history, scopes and roles', async () => {
@@ -218,16 +265,21 @@ describe('#featureControlController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/feature-control/detail?name=minimal-feature'
+      url: '/feature-control/detail?name=minimal-feature',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect($('.govuk-table__cell').eq(1).text().trim()).toBe('') // Missing history dateTime
-    expect($('.govuk-summary-list__value').eq(3).text().trim()).toBe('') // Scopes
-    expect($('.govuk-summary-list__value').eq(6).text().trim()).toBe('') // Created (missing date)
-    expect($('.govuk-summary-list__value').eq(7).text().trim()).toBe('') // Updated (missing date)
-    expect($('.govuk-summary-list__value').eq(8).text().trim()).toBe('No role required') // Roles
+    expect($('.govuk-table__cell').eq(0).text().trim()).toBe('') // Missing history dateTime
+    expect($('.govuk-table__cell').eq(1).text().trim()).toBe('User A')
+    expect($('.govuk-summary-list__value').eq(1).text().trim()).toBe('') // Scopes
+    expect($('.govuk-summary-list__value').eq(4).text().trim()).toBe('') // Created (missing date)
+    expect($('.govuk-summary-list__value').eq(5).text().trim()).toBe('') // Updated (missing date)
+    expect($('.govuk-summary-list__value').eq(6).text().trim()).toBe('No role required') // Roles
   })
 
   test('Should handle null value in formatValue', async () => {
@@ -245,11 +297,14 @@ describe('#featureControlController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/feature-control/detail?name=null-value'
+      url: '/feature-control/detail?name=null-value',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
     })
-
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect($('.govuk-summary-list__value').eq(2).text().trim()).toBe('')
+    expect($('.govuk-inset-text').text().replace('Current value', '').trim()).toBe('')
   })
 })

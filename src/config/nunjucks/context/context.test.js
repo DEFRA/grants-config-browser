@@ -64,11 +64,6 @@ describe('context and cache', () => {
               current: false,
               text: 'Notifications',
               href: '/notifications'
-            },
-            {
-              current: false,
-              href: '/features',
-              text: 'Features'
             }
           ],
           serviceName: 'grants-config-browser',

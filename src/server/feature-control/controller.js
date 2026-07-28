@@ -9,16 +9,16 @@ const getFeatureControlSchema = Joi.object({
 const buildHistoryTableHeaders = () => {
   return [
     {
+      text: 'Date'
+    },
+    {
+      text: 'Changed by'
+    },
+    {
       text: 'Value'
     },
     {
-      text: 'Updated at'
-    },
-    {
       text: 'Note'
-    },
-    {
-      text: 'Updated by'
     }
   ]
 }
@@ -50,26 +50,44 @@ const formatRoles = (roles) => {
   if (!roles || !Array.isArray(roles)) {
     return 'No role required'
   }
-  return `One of:<ul class="govuk-list govuk-list--bullet">${roles.map((v) => `<li>${v}</li>`).join('')}</ul>`
+  return `<ul class="govuk-list govuk-list--bullet">${roles.map((v) => `<li>${v}</li>`).join('')}</ul>`
+}
+
+const formatType = (type) => {
+  if (type === 'boolean') {
+    return 'Toggle'
+  }
+  if (type === 'number') {
+    return 'Number'
+  }
+  if (type === 'list-string') {
+    return 'Text list'
+  }
+  if (type === 'list-number') {
+    return 'Number list'
+  }
+  return 'Text'
 }
 
 const createHistoryRows = (history, type) => {
-  return (history || []).map((entry) => {
-    return [
-      {
-        text: formatValue(entry.value, type)
-      },
-      {
-        text: entry.dateTime ? formatDateTime(entry.dateTime) : ''
-      },
-      {
-        text: entry.note
-      },
-      {
-        text: entry.setBy
-      }
-    ]
-  })
+  return (history || [])
+    .sort((x, y) => (y.dateTime || '').localeCompare(x.dateTime || ''))
+    .map((entry) => {
+      return [
+        {
+          text: entry.dateTime ? formatDateTime(entry.dateTime) : ''
+        },
+        {
+          text: entry.setBy
+        },
+        {
+          text: formatValue(entry.value, type)
+        },
+        {
+          text: entry.note
+        }
+      ]
+    })
 }
 
 export const featureControlController = {
@@ -98,10 +116,12 @@ export const featureControlController = {
     return h.view('feature-control/index', {
       pageTitle: `Feature control details - ${displayName}`,
       heading: displayName,
+      technicalName: name,
       featureControl,
       formattedValue: formatValue(featureControl.value, featureControl.type, true),
       formattedScopes: formatScopes(featureControl.scopes),
       formattedRoles: formatRoles(featureControl.roleRequired),
+      formattedType: formatType(featureControl.type),
       expires: featureControl.expiryDate ? formatDateExplicit(featureControl.expiryDate) : '',
       created: featureControl.created
         ? `${formatDateTimeExplicit(featureControl.created)} by ${featureControl.createdBy}`

@@ -2,6 +2,7 @@ import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { requestFromApi } from '../helpers/request-from-api.js'
 import { load } from 'cheerio'
+import { describe, test, expect, vi, beforeAll, afterAll } from 'vitest'
 
 vi.mock('../helpers/request-from-api.js')
 
@@ -15,6 +16,17 @@ describe('#featuresController', () => {
 
   afterAll(async () => {
     await server.stop({ timeout: 0 })
+  })
+
+  const credentials = { isAuthenticated: true, displayName: 'User A' }
+
+  test('Should return 401 if not authenticated', async () => {
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: '/features'
+    })
+
+    expect(statusCode).toBe(statusCodes.unauthorized)
   })
 
   test('Should provide expected response with features list', async () => {
@@ -36,7 +48,11 @@ describe('#featuresController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/features'
+      url: '/features',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -72,7 +88,11 @@ describe('#featuresController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: '/features'
+      url: '/features',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
     })
 
     const $ = load(result)
@@ -101,7 +121,11 @@ describe('#featuresController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: '/features'
+      url: '/features',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
     })
 
     const $ = load(result)
@@ -116,7 +140,11 @@ describe('#featuresController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: '/features'
+      url: '/features',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
     })
 
     const $ = load(result)

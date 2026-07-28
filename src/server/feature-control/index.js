@@ -8,11 +8,6 @@ export const featureControl = {
         {
           method: 'GET',
           path: '/feature-control/detail',
-          options: {
-            auth: {
-              mode: 'try'
-            }
-          },
           ...featureControlController
         }
       ])
