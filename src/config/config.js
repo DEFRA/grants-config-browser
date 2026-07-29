@@ -195,18 +195,6 @@ export const config = convict({
         format: Boolean,
         default: isProduction,
         env: 'BACKEND_SERVICE_AUTH_ENABLED'
-      },
-      audience: {
-        doc: 'JWT audience sent in the token request',
-        format: String,
-        default: 'grants-config-broker',
-        env: 'BACKEND_SERVICE_AUTH_AUDIENCE'
-      },
-      tokenDuration: {
-        doc: 'Token lifetime in seconds (max 900)',
-        format: Number,
-        default: 60,
-        env: 'BACKEND_SERVICE_AUTH_TOKEN_DURATION'
       }
     },
     legacyAuth: {
