@@ -22,7 +22,7 @@ import {
 import { authOidcPlugin } from './auth/auth-plugin.js'
 import { setupCaches } from './common/helpers/session-cache/setup-caches.js'
 import { sessionCookie } from './auth/session-cookie.js'
-import { awsClients } from './common/helpers/aws/aws-clients.js'
+import { stsClientPlugin } from '@defra/grants-config-utils/sts-client-plugin'
 
 export async function createServer() {
   const server = hapi.server({
@@ -78,7 +78,7 @@ export async function createServer() {
     Scooter,
     contentSecurityPolicy,
     router,
-    awsClients
+    stsClientPlugin
   ])
 
   registerAsyncDocsRoute(server)

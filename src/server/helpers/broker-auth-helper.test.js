@@ -1,10 +1,6 @@
 import { config } from '../../config/config.js'
-import {
-  createAuthenticatedHeaders,
-  createApiHeadersForConfigBroker,
-  createLegacyAuthenticatedHeaders
-} from './broker-auth-helper.js'
-import { generateToken } from '../common/helpers/sts/grants-config-broker-token.js'
+import { createApiHeadersForConfigBroker, createLegacyAuthenticatedHeaders } from './broker-auth-helper.js'
+import { createAuthenticatedHeaders } from '@defra/grants-config-utils/broker'
 
 vi.mock('../../config/config.js', () => ({
   config: {
@@ -12,8 +8,8 @@ vi.mock('../../config/config.js', () => ({
   }
 }))
 
-vi.mock('../common/helpers/sts/grants-config-broker-token.js', () => ({
-  generateToken: vi.fn()
+vi.mock('@defra/grants-config-utils/broker', () => ({
+  createAuthenticatedHeaders: vi.fn()
 }))
 
 describe('Broker Auth Helper', () => {
@@ -28,38 +24,9 @@ describe('Broker Auth Helper', () => {
         send: vi.fn()
       }
     }
-    vi.mocked(generateToken).mockResolvedValue(MOCK_TOKEN)
-  })
-
-  describe('createAuthenticatedHeaders', () => {
-    it('should add Authorization header with token from generateToken', async () => {
-      const baseHeaders = { 'X-Custom': 'value' }
-
-      const headers = await createAuthenticatedHeaders(mockRequest, baseHeaders)
-
-      expect(generateToken).toHaveBeenCalledWith(mockRequest.sts)
-      expect(headers).toEqual({
-        'X-Custom': 'value',
-        Authorization: `Bearer ${MOCK_TOKEN}`
-      })
-    })
-
-    it('should work without base headers', async () => {
-      const headers = await createAuthenticatedHeaders(mockRequest)
-
-      expect(generateToken).toHaveBeenCalledWith(mockRequest.sts)
-      expect(headers).toEqual({
-        Authorization: `Bearer ${MOCK_TOKEN}`
-      })
-    })
-
-    it('should not mutate original base headers object', async () => {
-      const baseHeaders = { 'Content-Type': CONTENT_TYPE_JSON }
-
-      const headers = await createAuthenticatedHeaders(mockRequest, baseHeaders)
-
-      expect(baseHeaders).toEqual({ 'Content-Type': CONTENT_TYPE_JSON })
-      expect(headers.Authorization).toBe(`Bearer ${MOCK_TOKEN}`)
+    vi.mocked(createAuthenticatedHeaders).mockResolvedValue({
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${MOCK_TOKEN}`
     })
   })
 
@@ -106,7 +73,7 @@ describe('Broker Auth Helper', () => {
 
       const headers = await createApiHeadersForConfigBroker(mockRequest)
 
-      expect(generateToken).toHaveBeenCalledWith(mockRequest.sts)
+      expect(createAuthenticatedHeaders).toHaveBeenCalledWith(mockRequest, { 'Content-Type': 'application/json' })
       expect(headers).toEqual({
         'Content-Type': CONTENT_TYPE_JSON,
         Authorization: `Bearer ${MOCK_TOKEN}`
@@ -119,7 +86,7 @@ describe('Broker Auth Helper', () => {
 
       const headers = await createApiHeadersForConfigBroker(mockRequest)
 
-      expect(generateToken).not.toHaveBeenCalled()
+      expect(createAuthenticatedHeaders).not.toHaveBeenCalled()
       expect(headers).toEqual({
         'Content-Type': CONTENT_TYPE_JSON
       })
@@ -137,7 +104,7 @@ describe('Broker Auth Helper', () => {
 
       expect(headers.Authorization).toBeDefined()
       expect(headers.Authorization).toMatch(/^Bearer /)
-      expect(generateToken).not.toHaveBeenCalled()
+      expect(createAuthenticatedHeaders).not.toHaveBeenCalled()
     })
   })
 })
