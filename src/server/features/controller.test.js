@@ -34,6 +34,7 @@ describe('#featuresController', () => {
       items: [
         {
           name: 'FEATURE_ONE',
+          displayName: 'Feature One',
           value: true,
           description: 'Description for feature one',
           scopes: 'Scope A',
@@ -41,6 +42,7 @@ describe('#featuresController', () => {
         },
         {
           name: 'FEATURE_TWO',
+          displayName: 'Feature Two',
           value: 'some-value',
           description: 'Description for feature two',
           scopes: 'Scope B',
@@ -103,11 +105,13 @@ describe('#featuresController', () => {
       items: [
         {
           name: 'LONG_FEATURE',
+          displayName: 'Long Feature',
           value: 'this_is_a_very_long_value_that_should_be_truncated',
           lastUpdated: '2024-01-03T12:00:00Z'
         },
         {
           name: 'ANOTHER_FEATURE',
+          displayName: 'Another Feature',
           value: 'val',
           lastUpdated: '2024-01-01T12:00:00Z'
         }
@@ -136,11 +140,13 @@ describe('#featuresController', () => {
       items: [
         {
           name: 'ARRAY_FEATURE',
+          displayName: 'Array Feature',
           value: ['val1', 'val2'],
           lastUpdated: '2024-01-01T12:00:00Z'
         },
         {
           name: 'ANOTHER_FEATURE',
+          displayName: 'Another Feature',
           value: 'val',
           lastUpdated: '2024-01-01T12:00:00Z'
         }

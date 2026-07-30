@@ -115,19 +115,12 @@ export const modifyFeaturesForDisplay = (features) => {
   const maxLengthWithoutEllipsis = maxLength - ellipsis.length
 
   return features.map((feature) => {
-    // TODO remove once added to definition
-    const displayName = feature.name
-      .toLowerCase()
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
-
     // value altered for display beyond 'maxLength'
     const valueAsString = valueToString(feature.value)
     const displayValue =
       valueAsString.length > maxLength ? valueAsString.substring(0, maxLengthWithoutEllipsis) + ellipsis : valueAsString
 
-    return { ...feature, displayName, displayValue }
+    return { ...feature, displayValue }
   })
 }
 
