@@ -297,6 +297,12 @@ export const config = convict({
         format: String,
         default: '#',
         env: 'CONFIG_VERSION_QUEUE_URL'
+      },
+      featuresQueueUrl: {
+        doc: 'URL of the SQS queue to receive new features updates from',
+        format: String,
+        default: '#',
+        env: 'FEATURES_QUEUE_URL'
       }
     }
   },
