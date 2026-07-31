@@ -382,8 +382,8 @@ describe('#featureControlController', () => {
       const $ = load(result)
       expect($('[data-testid="app-heading-title"]').text()).toBe('Update Test Boolean')
       expect($('.govuk-caption-m').text()).toBe('TEST_BOOLEAN')
-      expect($('input[name="value"][value="true"]').prop('checked')).toBe(true)
-      expect($('input[name="value"][value="false"]').prop('checked')).toBe(false)
+      expect($('input[name="value"][value="true"]').is(':checked')).toBe(true)
+      expect($('input[name="value"][value="false"]').is(':checked')).toBe(false)
     })
   })
 
@@ -486,7 +486,7 @@ describe('#featureControlController', () => {
       const $ = load(result)
       expect($('.govuk-error-summary').text()).toContain('Enter a note to explain why this change is being made')
       expect($('#note-error').text()).toContain('Enter a note to explain why this change is being made')
-      expect($('input[name="value"][value="false"]').prop('checked')).toBe(true)
+      expect($('input[name="value"][value="false"]').is(':checked')).toBe(true)
     })
 
     test('Should show error if value is same as current', async () => {

@@ -93,7 +93,7 @@ const createHistoryRows = (history, type) => {
     })
 }
 
-const renderUpdatePage = (request, h, featureControl, errors = null, note = '', submittedValue = null) => {
+const renderUpdatePage = (h, featureControl, errors = null, note = '', submittedValue = null) => {
   const { name, displayName } = featureControl
 
   return h.view('feature-control/update', {
@@ -124,6 +124,8 @@ const renderUpdatePage = (request, h, featureControl, errors = null, note = '', 
   })
 }
 
+const featureControlNotFound = 'Feature control not found'
+
 export const featureControlController = {
   detail: {
     async handler(request, h) {
@@ -136,7 +138,7 @@ export const featureControlController = {
       const featureControl = result?.response
 
       if (!featureControl) {
-        return h.response('Feature control not found').code(statusCodes.notFound)
+        return h.response(featureControlNotFound).code(statusCodes.notFound)
       }
 
       const historyRows = createHistoryRows(featureControl.history, featureControl.type)
@@ -186,7 +188,7 @@ export const featureControlController = {
       const featureControl = result?.response
 
       if (!featureControl) {
-        return h.response('Feature control not found').code(statusCodes.notFound)
+        return h.response(featureControlNotFound).code(statusCodes.notFound)
       }
 
       return renderUpdatePage(request, h, featureControl)
@@ -201,7 +203,7 @@ export const featureControlController = {
       const featureControl = resultDetail?.response
 
       if (!featureControl) {
-        return h.response('Feature control not found').code(statusCodes.notFound)
+        return h.response(featureControlNotFound).code(statusCodes.notFound)
       }
 
       const errors = {
