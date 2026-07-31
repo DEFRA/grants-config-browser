@@ -13,20 +13,22 @@ describe('featureControl plugin', () => {
   it('should register routes correctly', () => {
     featureControl.plugin.register(server)
 
-    expect(server.route).toHaveBeenCalledWith(expect.arrayContaining([
-      expect.objectContaining({
-        method: 'GET',
-        path: '/feature-control/detail'
-      }),
-      expect.objectContaining({
-        method: 'GET',
-        path: '/feature-control/update'
-      }),
-      expect.objectContaining({
-        method: 'POST',
-        path: '/feature-control/update'
-      })
-    ]))
+    expect(server.route).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          method: 'GET',
+          path: '/feature-control/detail'
+        }),
+        expect.objectContaining({
+          method: 'GET',
+          path: '/feature-control/update'
+        }),
+        expect.objectContaining({
+          method: 'POST',
+          path: '/feature-control/update'
+        })
+      ])
+    )
   })
 
   it('should have the correct plugin name', () => {

@@ -440,13 +440,12 @@ describe('#featureControlController', () => {
 
       expect(statusCode).toBe(statusCodes.moved)
       expect(location).toBe('/feature-control/detail?name=TEST_BOOLEAN')
-      expect(requestFromApi).toHaveBeenLastCalledWith(
-        'feature-control/value',
-        expect.anything(),
-        {},
-        'PUT',
-        { name: 'TEST_BOOLEAN', value: false, user: 'User A', note: 'Changing value' }
-      )
+      expect(requestFromApi).toHaveBeenLastCalledWith('feature-control/value', expect.anything(), {}, 'PUT', {
+        name: 'TEST_BOOLEAN',
+        value: false,
+        user: 'User A',
+        note: 'Changing value'
+      })
     })
 
     test('Should redirect to update page on API failure', async () => {
