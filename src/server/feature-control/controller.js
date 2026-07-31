@@ -93,60 +93,148 @@ const createHistoryRows = (history, type) => {
     })
 }
 
+const renderUpdatePage = (request, h, featureControl, errors = null, note = '', submittedValue = null) => {
+  const { name, displayName } = featureControl
+
+  return h.view('feature-control/update', {
+    pageTitle: (errors ? 'Error: ' : '') + `Update feature control - ${displayName}`,
+    heading: `Update ${displayName}`,
+    technicalName: name,
+    featureControl,
+    errors,
+    note,
+    submittedValue,
+    breadcrumbs: [
+      {
+        text: 'Home',
+        href: '/'
+      },
+      {
+        text: 'Features',
+        href: '/features'
+      },
+      {
+        text: displayName,
+        href: `/feature-control/detail?name=${name}`
+      },
+      {
+        text: 'Update'
+      }
+    ]
+  })
+}
+
 export const featureControlController = {
-  async handler(request, h) {
-    const { name } = request.query
-    if (getFeatureControlSchema.validate(request.query).error) {
-      return h.redirect('/')
+  detail: {
+    async handler(request, h) {
+      const { name } = request.query
+      if (getFeatureControlSchema.validate(request.query).error) {
+        return h.redirect('/features')
+      }
+
+      const result = await requestFromApi(`feature-control/${name}/detailed`, request)
+      const featureControl = result?.response
+
+      if (!featureControl) {
+        return h.response('Feature control not found').code(statusCodes.notFound)
+      }
+
+      const historyRows = createHistoryRows(featureControl.history, featureControl.type)
+
+      return h.view('feature-control/index', {
+        pageTitle: `Feature control details - ${featureControl.displayName}`,
+        heading: featureControl.displayName,
+        technicalName: name,
+        featureControl,
+        formattedValue: formatValue(featureControl.value, featureControl.type, true),
+        formattedScopes: formatScopes(featureControl.scopes),
+        formattedRoles: formatRoles(featureControl.roleRequired),
+        formattedType: formatType(featureControl.type),
+        expires: featureControl.expiryDate ? formatDateExplicit(featureControl.expiryDate) : '',
+        created: featureControl.created
+          ? `${formatDateTimeExplicit(featureControl.created)} by ${featureControl.createdBy}`
+          : '',
+        updated: featureControl.lastUpdated
+          ? `${formatDateTimeExplicit(featureControl.lastUpdated)} by ${featureControl.lastUpdatedBy}`
+          : '',
+        historyRows,
+        historyHeaders: buildHistoryTableHeaders(),
+        breadcrumbs: [
+          {
+            text: 'Home',
+            href: '/'
+          },
+          {
+            text: 'Features',
+            href: '/features'
+          },
+          {
+            text: featureControl.displayName
+          }
+        ]
+      })
     }
+  },
+  update: {
+    async handler(request, h) {
+      const { name } = request.query
+      if (getFeatureControlSchema.validate(request.query).error) {
+        return h.redirect('/features')
+      }
 
-    const result = await requestFromApi(`feature-control/${name}/detailed`, request)
-    const featureControl = result?.response
+      const result = await requestFromApi(`feature-control/${name}/detailed`, request)
+      const featureControl = result?.response
 
-    if (!featureControl) {
-      return h.response('Feature control not found').code(statusCodes.notFound)
+      if (!featureControl) {
+        return h.response('Feature control not found').code(statusCodes.notFound)
+      }
+
+      return renderUpdatePage(request, h, featureControl)
     }
+  },
+  processUpdate: {
+    async handler(request, h) {
+      const { name, value: rawValue, note } = request.payload
+      const user = request.auth.credentials.displayName
 
-    // Note this will be coming from a new field in the API, but for now we will generate
-    const displayName = name
-      .toLowerCase()
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
+      const resultDetail = await requestFromApi(`feature-control/${name}/detailed`, request)
+      const featureControl = resultDetail?.response
 
-    const historyRows = createHistoryRows(featureControl.history, featureControl.type)
+      if (!featureControl) {
+        return h.response('Feature control not found').code(statusCodes.notFound)
+      }
 
-    return h.view('feature-control/index', {
-      pageTitle: `Feature control details - ${displayName}`,
-      heading: displayName,
-      technicalName: name,
-      featureControl,
-      formattedValue: formatValue(featureControl.value, featureControl.type, true),
-      formattedScopes: formatScopes(featureControl.scopes),
-      formattedRoles: formatRoles(featureControl.roleRequired),
-      formattedType: formatType(featureControl.type),
-      expires: featureControl.expiryDate ? formatDateExplicit(featureControl.expiryDate) : '',
-      created: featureControl.created
-        ? `${formatDateTimeExplicit(featureControl.created)} by ${featureControl.createdBy}`
-        : '',
-      updated: featureControl.lastUpdated
-        ? `${formatDateTimeExplicit(featureControl.lastUpdated)} by ${featureControl.lastUpdatedBy}`
-        : '',
-      historyRows,
-      historyHeaders: buildHistoryTableHeaders(),
-      breadcrumbs: [
-        {
-          text: 'Home',
-          href: '/'
-        },
-        {
-          text: 'Features',
-          href: '/features'
-        },
-        {
-          text: displayName
-        }
-      ]
-    })
+      const errors = {
+        summary: []
+      }
+
+      if (!note || note.trim() === '') {
+        errors.summary.push({ text: 'Enter a note to explain why this change is being made', href: '#note' })
+        errors.note = { text: 'Enter a note to explain why this change is being made' }
+      }
+
+      let value = rawValue
+      if (featureControl.type === 'boolean') {
+        value = rawValue === 'true'
+      }
+
+      if (value === featureControl.value) {
+        errors.summary.push({ text: 'The value must be different from the current value', href: '#value' })
+        errors.value = { text: 'The value must be different from the current value' }
+      }
+
+      if (errors.summary.length > 0) {
+        return renderUpdatePage(request, h, featureControl, errors, note, rawValue)
+      }
+
+      const payload = { name, value, user, note }
+
+      const result = await requestFromApi(`feature-control/value`, request, {}, 'PUT', payload)
+
+      if (result?.status !== statusCodes.accepted) {
+        return h.redirect(`/feature-control/update?name=${name}`)
+      }
+      return h.redirect(`/feature-control/detail?name=${name}`)
+    }
   }
 }
