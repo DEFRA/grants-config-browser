@@ -191,7 +191,7 @@ export const featureControlController = {
         return h.response(featureControlNotFound).code(statusCodes.notFound)
       }
 
-      return renderUpdatePage(request, h, featureControl)
+      return renderUpdatePage(h, featureControl)
     }
   },
   processUpdate: {
@@ -226,7 +226,7 @@ export const featureControlController = {
       }
 
       if (errors.summary.length > 0) {
-        return renderUpdatePage(request, h, featureControl, errors, note, rawValue)
+        return renderUpdatePage(h, featureControl, errors, note, rawValue)
       }
 
       const payload = { name, value, user, note }
