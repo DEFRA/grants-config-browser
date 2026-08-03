@@ -587,5 +587,91 @@ describe('#featureControlController', () => {
       expect($('[data-testid="app-heading-title"]').text()).toBe('Update Test String')
       expect($('textarea[name="value"]').val()).toBe('old value')
     })
+
+    test('Should render update page for number type', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'TEST_NUMBER',
+          displayName: 'Test Number',
+          type: 'number',
+          value: 123,
+          description: 'A test number'
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/update?name=TEST_NUMBER',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('[data-testid="app-heading-title"]').text()).toBe('Update Test Number')
+      expect($('textarea[name="value"]').val()).toBe('123')
+    })
+
+    test('Should show Update button for number type when authenticated', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'test-number',
+          displayName: 'Test Number',
+          type: 'number',
+          value: 456
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=test-number',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      const updateButton = $('a.govuk-button')
+      expect(updateButton.text().trim()).toBe('Update')
+      expect(updateButton.attr('href')).toBe('/feature-control/update?name=test-number')
+    })
+
+    test('Should successfully update number type', async () => {
+      requestFromApi.mockResolvedValueOnce({
+        response: {
+          name: 'TEST_NUMBER',
+          displayName: 'Test Number',
+          type: 'number',
+          value: 100
+        }
+      })
+      requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
+
+      const {
+        headers: { location },
+        statusCode
+      } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'TEST_NUMBER', value: '200', note: 'Updating number' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(location).toBe('/feature-control/detail?name=TEST_NUMBER')
+      expect(requestFromApi).toHaveBeenLastCalledWith('feature-control/value', expect.anything(), {}, 'PUT', {
+        name: 'TEST_NUMBER',
+        value: 200,
+        user: 'User A',
+        note: 'Updating number'
+      })
+    })
   })
 })

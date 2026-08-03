@@ -48,7 +48,7 @@
               }
             ]
           }) }}
-        {% elif featureControl.type === 'string' %}
+        {% elif featureControl.type === 'string' or featureControl.type === 'number' %}
           {{ govukTextarea({
             name: "value",
             id: "value",
@@ -60,7 +60,7 @@
             }
           }) }}
         {% else %}
-          <p class="govuk-body">Update for {{ featureControl.type }} type is not yet supported. Only boolean and string updates are allowed for now.</p>
+          <p class="govuk-body">Update for {{ featureControl.type }} type is not yet supported. Only boolean, string and number updates are allowed for now.</p>
         {% endif %}
 
         {{ govukTextarea({
