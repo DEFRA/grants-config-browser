@@ -22,7 +22,7 @@ export async function requestFromApi(endpoint, request, otherHeaders = {}, metho
     })
 
     if (!response.ok) {
-      request.logger.error({})
+      throw new Error(`API request to ${url.href} failed with status ${response.status}`)
     }
 
     const text = await response.text()

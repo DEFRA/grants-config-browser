@@ -23,6 +23,11 @@ import { authOidcPlugin } from './auth/auth-plugin.js'
 import { setupCaches } from './common/helpers/session-cache/setup-caches.js'
 import { sessionCookie } from './auth/session-cookie.js'
 import { stsClientPlugin } from '@defra/grants-config-utils/sts-client-plugin'
+import {
+  configureAndStartFeaturesMessaging,
+  stopFeaturesMessageSubscriber
+} from './messaging/inbound/features-fifo-message-queue-subscriber.js'
+import { retrieveAndSetInitialAuthOption } from './helpers/auth-switch.js'
 
 export async function createServer() {
   const server = hapi.server({
@@ -86,11 +91,14 @@ export async function createServer() {
   server.ext('onPreResponse', catchAll)
 
   server.events.on('start', async () => {
-    await configureAndStartMessaging()
+    configureAndStartMessaging()
+    configureAndStartFeaturesMessaging()
+    await retrieveAndSetInitialAuthOption(server)
   })
 
   server.events.on('stop', async () => {
     await stopMessageSubscriber()
+    await stopFeaturesMessageSubscriber()
   })
 
   return server

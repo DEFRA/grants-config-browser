@@ -95,6 +95,8 @@ export class SqsSubscriber {
         const attr = message.MessageAttributes[key]
         if (attr.DataType === 'String' || attr.DataType === 'Number') {
           attributes[key] = attr.StringValue
+        } else if (attr.DataType === 'String.Array') {
+          attributes[key] = JSON.parse(attr.StringValue)
         } else {
           attributes[key] = attr.BinaryValue
         }
