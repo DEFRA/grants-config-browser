@@ -234,7 +234,8 @@ export const featureControlController = {
       const result = await requestFromApi(`feature-control/value`, request, {}, 'PUT', payload)
 
       if (result?.status !== statusCodes.accepted) {
-        return h.redirect(`/feature-control/update?name=${name}`)
+        errors.summary.push({ text: 'There was a problem communicating with the API. Please try again later.' })
+        return renderUpdatePage(h, featureControl, errors, note, rawValue)
       }
       return h.redirect(`/feature-control/detail?name=${name}`)
     }

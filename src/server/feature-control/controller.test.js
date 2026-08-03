@@ -448,14 +448,11 @@ describe('#featureControlController', () => {
       })
     })
 
-    test('Should redirect to update page on API failure', async () => {
+    test('Should show error on API failure', async () => {
       requestFromApi.mockResolvedValueOnce({ response: featureControl })
       requestFromApi.mockResolvedValueOnce({ status: statusCodes.internalServerError })
 
-      const {
-        headers: { location },
-        statusCode
-      } = await server.inject({
+      const { result, statusCode } = await server.inject({
         method: 'POST',
         url: '/feature-control/update',
         payload: { name: 'TEST_BOOLEAN', value: 'false', note: 'Changing value' },
@@ -465,8 +462,9 @@ describe('#featureControlController', () => {
         }
       })
 
-      expect(statusCode).toBe(statusCodes.moved)
-      expect(location).toBe('/feature-control/update?name=TEST_BOOLEAN')
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain('There was a problem communicating with the API. Please try again later.')
     })
 
     test('Should show error if note is missing', async () => {
