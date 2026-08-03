@@ -6,7 +6,9 @@ function mockRequest(options) {
 
 describe('#buildNavigation', () => {
   test('Should provide expected navigation details', () => {
-    expect(buildNavigation(mockRequest({ path: '/non-existent-path' }))).toEqual({
+    expect(
+      buildNavigation(mockRequest({ path: '/non-existent-path', url: { pathname: '/non-existent-path' } }))
+    ).toEqual({
       navigation: [
         {
           current: false,
@@ -22,6 +24,11 @@ describe('#buildNavigation', () => {
           current: false,
           href: '/notifications',
           text: 'Notifications'
+        },
+        {
+          current: false,
+          href: '/features',
+          text: 'Features'
         }
       ],
       slots: {
@@ -33,14 +40,14 @@ describe('#buildNavigation', () => {
   test('Should provide expected sign-out details', () => {
     const {
       slots: { navigationEnd }
-    } = buildNavigation(mockRequest({ path: '/anything' }), true, 'User A')
+    } = buildNavigation(mockRequest({ path: '/anything', url: { pathname: '/anything' } }), true, 'User A')
     expect(navigationEnd).toEqual(
-      '<li class="govuk-service-navigation__item app-service-navigation__item--right">User A</li><li class="govuk-service-navigation__item"><a class="govuk-service-navigation__link" href="/logout">Sign out</a></li>'
+      '<li class="govuk-service-navigation__item app-service-navigation__item--right">User A</li><li class="govuk-service-navigation__item"><a class="govuk-service-navigation__link" href="/logout?redirect=%2Fanything">Sign out</a></li>'
     )
   })
 
   test('Should provide expected highlighted navigation details', () => {
-    expect(buildNavigation(mockRequest({ path: '/' }))).toEqual({
+    expect(buildNavigation(mockRequest({ path: '/', url: { pathname: '/' } }))).toEqual({
       navigation: [
         {
           current: true,
@@ -56,6 +63,11 @@ describe('#buildNavigation', () => {
           current: false,
           href: '/notifications',
           text: 'Notifications'
+        },
+        {
+          current: false,
+          href: '/features',
+          text: 'Features'
         }
       ],
       slots: {
@@ -66,7 +78,7 @@ describe('#buildNavigation', () => {
   })
 
   test('Should provide expected navigation details when authenticated', () => {
-    expect(buildNavigation(mockRequest({ path: '/features' }), true)).toEqual({
+    expect(buildNavigation(mockRequest({ path: '/features', url: { pathname: '/features' } }), true)).toEqual({
       navigation: [
         {
           current: false,
@@ -91,7 +103,7 @@ describe('#buildNavigation', () => {
       ],
       slots: {
         navigationEnd:
-          '<li class="govuk-service-navigation__item app-service-navigation__item--right"><a class="govuk-service-navigation__link" href="/logout">Sign out</a></li>'
+          '<li class="govuk-service-navigation__item app-service-navigation__item--right"><a class="govuk-service-navigation__link" href="/logout?redirect=%2Ffeatures">Sign out</a></li>'
       }
     })
   })

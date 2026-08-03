@@ -68,4 +68,37 @@ describe('#signOutController', () => {
       })
     )
   })
+
+  test('Should use redirect query parameter if provided', async () => {
+    const endSessionEndpoint = 'https://example.com/logout'
+
+    // Mock fetch for OIDC discovery
+    global.fetch = vi.fn().mockResolvedValue({
+      json: vi.fn().mockResolvedValue({
+        end_session_endpoint: endSessionEndpoint
+      })
+    })
+
+    const credentials = {
+      loginHint: 'test-user'
+    }
+
+    const redirectParam = '/some-page'
+
+    const { statusCode, headers } = await server.inject({
+      method: 'GET',
+      url: `/logout?redirect=${redirectParam}`,
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    const expectedLogoutUrl = encodeURI(
+      `${endSessionEndpoint}?logout_hint=${credentials.loginHint}&post_logout_redirect_uri=${redirectParam}`
+    )
+
+    expect(statusCode).toBe(statusCodes.moved)
+    expect(headers.location).toBe(expectedLogoutUrl)
+  })
 })

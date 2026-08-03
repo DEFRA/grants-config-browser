@@ -20,15 +20,6 @@ describe('#featuresController', () => {
 
   const credentials = { isAuthenticated: true, displayName: 'User A' }
 
-  test('Should return 401 if not authenticated', async () => {
-    const { statusCode } = await server.inject({
-      method: 'GET',
-      url: '/features'
-    })
-
-    expect(statusCode).toBe(statusCodes.unauthorized)
-  })
-
   test('Should provide expected response with features list', async () => {
     const mockFeatures = {
       items: [

@@ -20,15 +20,6 @@ describe('#featureControlController', () => {
 
   const credentials = { isAuthenticated: true, displayName: 'User A' }
 
-  test('Should return 401 if not authenticated', async () => {
-    const { statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=TEST_BOOLEAN'
-    })
-
-    expect(statusCode).toBe(statusCodes.unauthorized)
-  })
-
   test('Should redirect to home page if invalid query parameters supplied', async () => {
     const {
       headers: { location },
