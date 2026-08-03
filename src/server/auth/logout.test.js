@@ -95,7 +95,7 @@ describe('#signOutController', () => {
     })
 
     const expectedLogoutUrl = encodeURI(
-      `${endSessionEndpoint}?logout_hint=${credentials.loginHint}&post_logout_redirect_uri=${redirectParam}`
+      `${endSessionEndpoint}?logout_hint=${credentials.loginHint}&post_logout_redirect_uri=http://localhost:3000${redirectParam}`
     )
 
     expect(statusCode).toBe(statusCodes.moved)

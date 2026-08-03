@@ -27,9 +27,13 @@ export const signOutController = {
     const logoutBaseUrl = endSession
     const { redirect } = request.query
     const referrer = redirect || request.info.referrer
+    const externalBaseUrl = config.get('auth.oidc.externalBaseUrl')
+    const absoluteReferrer = referrer.startsWith('http') ? referrer : `${externalBaseUrl}${referrer}`
     const loginHint = userSession?.loginHint
 
-    const logoutUrl = encodeURI(`${logoutBaseUrl}?logout_hint=${loginHint}&post_logout_redirect_uri=${referrer}`)
+    const logoutUrl = encodeURI(
+      `${logoutBaseUrl}?logout_hint=${loginHint}&post_logout_redirect_uri=${absoluteReferrer}`
+    )
 
     removeAuthenticatedUser(request)
 
