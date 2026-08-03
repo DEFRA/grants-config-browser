@@ -234,7 +234,7 @@ describe('#featureControlController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect($('a.govuk-button').length).toBe(0)
+    expect($('a.govuk-button')).toHaveLength(0)
   })
 
   test('Should render page for boolean type with false value', async () => {
