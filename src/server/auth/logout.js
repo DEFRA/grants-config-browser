@@ -25,7 +25,8 @@ export const signOutController = {
     }).then((res) => res.json())
 
     const logoutBaseUrl = endSession
-    const referrer = request.info.referrer
+    const { redirect } = request.query
+    const referrer = redirect || request.info.referrer
     const loginHint = userSession?.loginHint
 
     const logoutUrl = encodeURI(`${logoutBaseUrl}?logout_hint=${loginHint}&post_logout_redirect_uri=${referrer}`)

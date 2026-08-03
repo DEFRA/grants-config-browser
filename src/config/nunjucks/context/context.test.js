@@ -64,6 +64,11 @@ describe('context and cache', () => {
               current: false,
               text: 'Notifications',
               href: '/notifications'
+            },
+            {
+              current: false,
+              text: 'Features',
+              href: '/features'
             }
           ],
           serviceName: 'grants-config-browser',
@@ -168,7 +173,7 @@ describe('context and cache', () => {
           serviceUrl: '/',
           slots: {
             navigationEnd:
-              '<li class="govuk-service-navigation__item app-service-navigation__item--right">User A</li><li class="govuk-service-navigation__item"><a class="govuk-service-navigation__link" href="/logout">Sign out</a></li>'
+              '<li class="govuk-service-navigation__item app-service-navigation__item--right">User A</li><li class="govuk-service-navigation__item"><a class="govuk-service-navigation__link" href="/logout?redirect=%2F">Sign out</a></li>'
           }
         })
       })

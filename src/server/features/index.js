@@ -8,6 +8,11 @@ export const features = {
         {
           method: 'GET',
           path: '/features',
+          options: {
+            auth: {
+              mode: 'try'
+            }
+          },
           ...featuresController
         }
       ])

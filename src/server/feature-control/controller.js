@@ -129,6 +129,8 @@ const featureControlNotFound = 'Feature control not found'
 export const featureControlController = {
   detail: {
     async handler(request, h) {
+      const isAuthenticated = request?.auth?.credentials?.isAuthenticated ?? false
+
       const { name } = request.query
       if (getFeatureControlSchema.validate(request.query).error) {
         return h.redirect('/features')
@@ -173,7 +175,8 @@ export const featureControlController = {
           {
             text: featureControl.displayName
           }
-        ]
+        ],
+        isAuthenticated
       })
     }
   },

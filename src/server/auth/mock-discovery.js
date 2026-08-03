@@ -165,6 +165,7 @@ export const mockEndSessionHandler = {
   },
   handler: (request, h) => {
     request.logger.info(`[MockEndSession] Request Query: ${JSON.stringify(request.query)}`)
-    return h.redirect('/')
+    const { post_logout_redirect_uri: postLogoutRedirectUri } = request.query
+    return h.redirect(postLogoutRedirectUri || '/')
   }
 }

@@ -83,7 +83,7 @@
       }) }}
 
       <div class="govuk-button-group">
-        {% if featureControl.type === 'boolean' %}
+        {% if isAuthenticated and featureControl.type === 'boolean' %}
           <a href="/feature-control/update?name={{ technicalName }}" class="govuk-button" data-module="govuk-button">
             Update
           </a>

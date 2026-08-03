@@ -1,11 +1,20 @@
 const NAV_ITEM_CLASS = 'govuk-service-navigation__item'
 const NAV_ITEM_RIGHT_CLASS = 'app-service-navigation__item--right'
 const NAV_LINK_CLASS = 'govuk-service-navigation__link'
+
+const REDIRECT_OVERRIDES = {
+  '/feature-control/update': '/feature-control/detail'
+}
+
 export function buildNavigation(request, isAuthenticated = false, user = null) {
+  const currentPath = request?.path
+  const redirectPath = REDIRECT_OVERRIDES[currentPath] || currentPath
+  const redirectUrl = encodeURIComponent(redirectPath + (request?.url?.search || ''))
+
   const signOption = isAuthenticated
     ? {
         text: 'Sign out',
-        href: '/logout'
+        href: `/logout?redirect=${redirectUrl}`
       }
     : {
         text: 'Sign in',
@@ -30,16 +39,16 @@ export function buildNavigation(request, isAuthenticated = false, user = null) {
       text: 'Notifications',
       href: '/notifications',
       current: request?.path === '/notifications'
-    }
-  ]
-
-  if (isAuthenticated) {
-    navigation.push({
+    },
+    {
       text: 'Features',
       href: '/features',
-      current: request?.path === '/features'
-    })
-  }
+      current:
+        request?.path === '/features' ||
+        request?.path === '/feature-control/detail' ||
+        request?.path === '/feature-control/update'
+    }
+  ]
 
   return {
     navigation,
