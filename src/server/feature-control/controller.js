@@ -104,6 +104,7 @@ export const featureControlController = {
         return renderUpdatePage(h, featureControl, errors, note, rawValue)
       }
 
+      // success, redirect to the detail page
       return h.redirect(`/feature-control/detail?name=${name}`)
     }
   }
@@ -122,24 +123,6 @@ const getFeatureControl = async (name, request, h) => {
   }
 
   return { featureControl }
-}
-
-const validateUpdate = (value, currentValue, note) => {
-  const errors = { summary: [] }
-
-  if (value === currentValue) {
-    const errorMessage = 'The value must be different from the current value'
-    errors.summary.push({ text: errorMessage, href: '#value' })
-    errors.value = { text: errorMessage }
-  }
-
-  if (!note?.trim()) {
-    const errorMessage = 'Enter a note to explain why this change is being made'
-    errors.summary.push({ text: errorMessage, href: '#note' })
-    errors.note = { text: errorMessage }
-  }
-
-  return errors
 }
 
 const buildHistoryTableHeaders = () => [{ text: 'Date' }, { text: 'Changed by' }, { text: 'Value' }, { text: 'Note' }]
@@ -183,6 +166,24 @@ const renderUpdatePage = (h, featureControl, errors = null, note = '', submitted
       }
     ]
   })
+}
+
+const validateUpdate = (value, currentValue, note) => {
+  const errors = { summary: [] }
+
+  if (value === currentValue) {
+    const errorMessage = 'The value must be different from the current value'
+    errors.summary.push({ text: errorMessage, href: '#value' })
+    errors.value = { text: errorMessage }
+  }
+
+  if (!note?.trim()) {
+    const errorMessage = 'Enter a note to explain why this change is being made'
+    errors.summary.push({ text: errorMessage, href: '#note' })
+    errors.note = { text: errorMessage }
+  }
+
+  return errors
 }
 
 const featureControlNotFound = 'Feature control not found'
