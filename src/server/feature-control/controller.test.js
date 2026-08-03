@@ -6,6 +6,22 @@ import { describe, test, expect, vi, beforeAll, afterAll } from 'vitest'
 
 vi.mock('../helpers/request-from-api.js')
 
+const featureControl = {
+  name: 'TEST_BOOLEAN',
+  displayName: 'Test Boolean',
+  type: 'boolean',
+  value: true,
+  description: 'A test boolean',
+  created: '2023-01-01T12:00:00Z',
+  createdBy: 'User A',
+  lastUpdated: '2023-01-02T12:00:00Z',
+  lastUpdatedBy: 'User B',
+  expiryDate: '2024-01-01T12:00:00Z',
+  scopes: ['scope1'],
+  roleRequired: ['admin'],
+  history: [{ value: true, dateTime: '2023-01-01T12:00:00Z', setBy: 'User A', note: 'Initial' }]
+}
+
 describe('#featureControlController', () => {
   let server
 
@@ -53,23 +69,7 @@ describe('#featureControlController', () => {
   })
 
   test('Should render page for boolean type', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'TEST_BOOLEAN',
-        displayName: 'Test Boolean',
-        type: 'boolean',
-        value: true,
-        description: 'A test boolean',
-        created: '2023-01-01T12:00:00Z',
-        createdBy: 'User A',
-        lastUpdated: '2023-01-02T12:00:00Z',
-        lastUpdatedBy: 'User B',
-        expiryDate: '2024-01-01T12:00:00Z',
-        scopes: ['scope1'],
-        roleRequired: ['admin'],
-        history: [{ value: true, dateTime: '2023-01-01T12:00:00Z', setBy: 'User A', note: 'Initial' }]
-      }
-    })
+    requestFromApi.mockResolvedValue({ response: featureControl })
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -379,13 +379,6 @@ describe('#featureControlController', () => {
   })
 
   describe('processUpdate', () => {
-    const featureControl = {
-      name: 'TEST_BOOLEAN',
-      displayName: 'Test Boolean',
-      type: 'boolean',
-      value: true
-    }
-
     test('Should return 401 if not authenticated', async () => {
       const { statusCode } = await server.inject({
         method: 'POST',
