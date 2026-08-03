@@ -187,6 +187,56 @@ describe('#featureControlController', () => {
     expect($('.govuk-inset-text').text().replace('Current value', '').trim()).toBe('')
   })
 
+  test('Should show Update button for string type when authenticated', async () => {
+    requestFromApi.mockResolvedValue({
+      response: {
+        name: 'test-string',
+        displayName: 'Test String',
+        type: 'string',
+        value: 'some value',
+        created: '2023-01-01T12:00:00Z',
+        createdBy: 'User A',
+        lastUpdated: '2023-01-02T12:00:00Z',
+        lastUpdatedBy: 'User B'
+      }
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/feature-control/detail?name=test-string',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = load(result)
+    const updateButton = $('a.govuk-button')
+    expect(updateButton.text().trim()).toBe('Update')
+    expect(updateButton.attr('href')).toBe('/feature-control/update?name=test-string')
+  })
+
+  test('Should NOT show Update button for string type when NOT authenticated', async () => {
+    requestFromApi.mockResolvedValue({
+      response: {
+        name: 'test-string',
+        displayName: 'Test String',
+        type: 'string',
+        value: 'some value'
+      }
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/feature-control/detail?name=test-string'
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = load(result)
+    expect($('a.govuk-button').length).toBe(0)
+  })
+
   test('Should render page for boolean type with false value', async () => {
     requestFromApi.mockResolvedValue({
       response: {
@@ -510,6 +560,32 @@ describe('#featureControlController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
       expect($('.govuk-error-summary').text()).toContain('The value must be different from the current value')
+    })
+
+    test('Should render update page for string type', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'TEST_STRING',
+          displayName: 'Test String',
+          type: 'string',
+          value: 'old value',
+          description: 'A test string'
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/update?name=TEST_STRING',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('[data-testid="app-heading-title"]').text()).toBe('Update Test String')
+      expect($('textarea[name="value"]').val()).toBe('old value')
     })
   })
 })
