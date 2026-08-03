@@ -8,7 +8,17 @@ export const featureControl = {
         {
           method: 'GET',
           path: '/feature-control/detail',
-          ...featureControlController
+          ...featureControlController.detail
+        },
+        {
+          method: 'GET',
+          path: '/feature-control/update',
+          ...featureControlController.update
+        },
+        {
+          method: 'POST',
+          path: '/feature-control/update',
+          ...featureControlController.processUpdate
         }
       ])
     }

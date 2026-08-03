@@ -24,7 +24,12 @@ export async function requestFromApi(endpoint, request, otherHeaders = {}, metho
     if (!response.ok) {
       throw new Error(`API request to ${url.href} failed with status ${response.status}`)
     }
-    return { response: await response.json(), status: response.status }
+
+    const text = await response.text()
+    return {
+      response: text ? JSON.parse(text) : null,
+      status: response.status
+    }
   } catch (err) {
     request.logger.error(err, 'Error fetching data from API:')
     return null

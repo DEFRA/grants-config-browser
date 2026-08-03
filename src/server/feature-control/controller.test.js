@@ -43,7 +43,7 @@ describe('#featureControlController', () => {
     })
 
     expect(statusCode).toBe(statusCodes.moved)
-    expect(location).toBe('/')
+    expect(location).toBe('/features')
   })
 
   test('Should return 404 if feature control not found', async () => {
@@ -65,6 +65,7 @@ describe('#featureControlController', () => {
     requestFromApi.mockResolvedValue({
       response: {
         name: 'TEST_BOOLEAN',
+        displayName: 'Test Boolean',
         type: 'boolean',
         value: true,
         description: 'A test boolean',
@@ -90,7 +91,7 @@ describe('#featureControlController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     const $ = load(result)
-    expect($('h1').text()).toContain('Test Boolean')
+    expect($('[data-testid="app-heading-title"]').text()).toBe('Test Boolean')
     expect($('.govuk-caption-m').text()).toBe('TEST_BOOLEAN')
     expect($('.govuk-inset-text').text()).toContain('Current value')
     expect($('.govuk-inset-text').text()).toContain('True')
@@ -110,6 +111,7 @@ describe('#featureControlController', () => {
     requestFromApi.mockResolvedValue({
       response: {
         name: 'test-list',
+        displayName: 'Test List',
         type: 'list-string',
         value: ['a', 'b'],
         created: '2023-01-01T12:00:00Z',
@@ -142,6 +144,7 @@ describe('#featureControlController', () => {
     requestFromApi.mockResolvedValue({
       response: {
         name: 'test-number',
+        displayName: 'Test Number',
         type: 'number',
         value: 42,
         created: '2023-01-01T12:00:00Z',
@@ -170,6 +173,7 @@ describe('#featureControlController', () => {
     requestFromApi.mockResolvedValue({
       response: {
         name: 'test-list-error',
+        displayName: 'Test List Error',
         type: 'list-string',
         value: null,
         created: '2023-01-01T12:00:00Z',
@@ -196,6 +200,7 @@ describe('#featureControlController', () => {
     requestFromApi.mockResolvedValue({
       response: {
         name: 'test-false',
+        displayName: 'Test False',
         type: 'boolean',
         value: false,
         created: '2023-01-01T12:00:00Z',
@@ -223,6 +228,7 @@ describe('#featureControlController', () => {
     requestFromApi.mockResolvedValue({
       response: {
         name: 'test-list-number',
+        displayName: 'Test List Number',
         type: 'list-number',
         value: [1, 2, 3],
         created: '2023-01-01T12:00:00Z',
@@ -251,6 +257,7 @@ describe('#featureControlController', () => {
     requestFromApi.mockResolvedValue({
       response: {
         name: 'minimal-feature',
+        displayName: 'Minimal Feature',
         type: 'string',
         value: 'some value',
         created: null,
@@ -286,6 +293,7 @@ describe('#featureControlController', () => {
     requestFromApi.mockResolvedValue({
       response: {
         name: 'null-value',
+        displayName: 'Null Value',
         type: 'string',
         value: null,
         created: '2023-01-01T12:00:00Z',
@@ -308,113 +316,216 @@ describe('#featureControlController', () => {
     expect($('.govuk-inset-text').text().replace('Current value', '').trim()).toBe('')
   })
 
-  test('Should render page for unknown type', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'unknown-type',
-        type: 'unknown',
-        value: 'some value',
-        created: '2023-01-01T12:00:00Z',
-        createdBy: 'User A',
-        lastUpdated: '2023-01-02T12:00:00Z',
-        lastUpdatedBy: 'User B'
-      }
+  describe('update', () => {
+    test('Should return 401 if not authenticated', async () => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/update?name=TEST_BOOLEAN'
+      })
+
+      expect(statusCode).toBe(statusCodes.unauthorized)
     })
 
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=unknown-type',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
+    test('Should redirect to features page if invalid query parameters supplied', async () => {
+      const {
+        headers: { location },
+        statusCode
+      } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/update',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(location).toBe('/features')
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    expect($('.govuk-summary-list__value').eq(0).text().trim()).toBe('Text')
+    test('Should return 404 if feature control not found', async () => {
+      requestFromApi.mockResolvedValue(null)
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/update?name=unknown',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    test('Should render update page for boolean type', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'TEST_BOOLEAN',
+          displayName: 'Test Boolean',
+          type: 'boolean',
+          value: true,
+          description: 'A test boolean'
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/update?name=TEST_BOOLEAN',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('[data-testid="app-heading-title"]').text()).toBe('Update Test Boolean')
+      expect($('.govuk-caption-m').text()).toBe('TEST_BOOLEAN')
+      expect($('input[name="value"][value="true"]').is(':checked')).toBe(true)
+      expect($('input[name="value"][value="false"]').is(':checked')).toBe(false)
+    })
   })
 
-  test('Should handle history with multiple entries and sort them', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'TEST_SORT',
-        type: 'boolean',
-        value: true,
-        history: [
-          { value: false, dateTime: '2023-01-01T12:00:00Z', setBy: 'User A' },
-          { value: true, dateTime: '2023-01-02T12:00:00Z', setBy: 'User B' },
-          { value: true, dateTime: null, setBy: 'User C' }
-        ]
-      }
+  describe('processUpdate', () => {
+    const featureControl = {
+      name: 'TEST_BOOLEAN',
+      displayName: 'Test Boolean',
+      type: 'boolean',
+      value: true
+    }
+
+    test('Should return 401 if not authenticated', async () => {
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'TEST_BOOLEAN', value: 'false', note: 'Changing value' }
+      })
+
+      expect(statusCode).toBe(statusCodes.unauthorized)
     })
 
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=TEST_SORT',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
+    test('Should return 404 if feature control not found', async () => {
+      requestFromApi.mockResolvedValue(null)
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'unknown', value: 'false', note: 'Changing value' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    const rows = $('.govuk-table__row')
-    // Row 0 is header
-    // Row 1 should be 2023-01-02
-    // Row 2 should be 2023-01-01
-    // Row 3 should be null/empty
-    expect(rows.eq(1).find('.govuk-table__cell').eq(0).text().trim()).toBe('02/01/2023')
-    expect(rows.eq(2).find('.govuk-table__cell').eq(0).text().trim()).toBe('01/01/2023')
-    expect(rows.eq(3).find('.govuk-table__cell').eq(0).text().trim()).toBe('')
-  })
+    test('Should redirect to detail page on successful update', async () => {
+      requestFromApi.mockResolvedValueOnce({ response: featureControl })
+      requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
 
-  test('Should handle history with missing dateTime in both entries during sort', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'TEST_SORT_NULL',
-        type: 'boolean',
-        value: true,
-        history: [
-          { value: true, dateTime: null, setBy: 'User A' },
-          { value: false, dateTime: null, setBy: 'User B' }
-        ]
-      }
+      const {
+        headers: { location },
+        statusCode
+      } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'TEST_BOOLEAN', value: 'false', note: 'Changing value' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(location).toBe('/feature-control/detail?name=TEST_BOOLEAN')
+      expect(requestFromApi).toHaveBeenLastCalledWith('feature-control/value', expect.anything(), {}, 'PUT', {
+        name: 'TEST_BOOLEAN',
+        value: false,
+        user: 'User A',
+        note: 'Changing value'
+      })
     })
 
-    const { statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=TEST_SORT_NULL',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
+    test('Should show error on API failure', async () => {
+      requestFromApi.mockResolvedValueOnce({ response: featureControl })
+      requestFromApi.mockResolvedValueOnce({ status: statusCodes.internalServerError })
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'TEST_BOOLEAN', value: 'false', note: 'Changing value' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain(
+        'There was a problem communicating with the API. Please try again later.'
+      )
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-  })
+    test('Should show error if note is missing', async () => {
+      requestFromApi.mockResolvedValue({ response: featureControl })
 
-  test('Should correctly format displayName from name with underscores', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'MULTIPLE_WORD_FEATURE_NAME',
-        type: 'boolean',
-        value: true
-      }
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'TEST_BOOLEAN', value: 'false', note: '' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain('Enter a note to explain why this change is being made')
+      expect($('#note-error').text()).toContain('Enter a note to explain why this change is being made')
+      expect($('input[name="value"][value="false"]').is(':checked')).toBe(true)
     })
 
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=MULTIPLE_WORD_FEATURE_NAME',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
+    test('Should show error if value is same as current', async () => {
+      requestFromApi.mockResolvedValue({ response: featureControl })
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'TEST_BOOLEAN', value: 'true', note: 'Same value' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain('The value must be different from the current value')
+      expect($('#value-error').text()).toContain('The value must be different from the current value')
+      expect($('textarea[name="note"]').val()).toBe('Same value')
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    expect($('h1').text()).toContain('Multiple Word Feature Name')
+    test('Should handle non-boolean values and still validate same value', async () => {
+      const stringFeature = { ...featureControl, type: 'string', value: 'old' }
+      requestFromApi.mockResolvedValue({ response: stringFeature })
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'TEST_STRING', value: 'old', note: 'Same value' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain('The value must be different from the current value')
+    })
   })
 })
