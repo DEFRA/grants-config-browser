@@ -464,7 +464,9 @@ describe('#featureControlController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
-      expect($('.govuk-error-summary').text()).toContain('There was a problem communicating with the API. Please try again later.')
+      expect($('.govuk-error-summary').text()).toContain(
+        'There was a problem communicating with the API. Please try again later.'
+      )
     })
 
     test('Should show error if note is missing', async () => {
