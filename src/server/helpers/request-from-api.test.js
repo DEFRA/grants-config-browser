@@ -110,7 +110,7 @@ describe('requestFromApi', () => {
 
     const error = new Error('API request to https://api.example.com/api/test-endpoint failed with status 400')
     expect(mockRequest.logger.error).toHaveBeenCalledWith(error, 'Error fetching data from API:')
-    expect(result).toEqual(null)
+    expect(result).toBeNull()
   })
 
   it('should log an error and return undefined if fetch throws', async () => {

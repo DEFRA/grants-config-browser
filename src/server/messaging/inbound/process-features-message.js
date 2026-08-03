@@ -1,6 +1,6 @@
 import { AUTH_CONTROL_NAME } from '../../common/constants/constants.js'
 import { switchAuth } from '../../helpers/auth-switch.js'
-export const processFeaturesMessage = async (message, logger, attributes, sentTimestamp) => {
+export const processFeaturesMessage = async (message, logger, attributes, _sentTimestamp) => {
   try {
     const { name, scopes, updatedBy, valueType } = attributes
 
