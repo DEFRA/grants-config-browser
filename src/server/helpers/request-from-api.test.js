@@ -45,7 +45,7 @@ describe('requestFromApi', () => {
     global.fetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => mockResponseData
+      text: async () => JSON.stringify(mockResponseData)
     })
 
     const result = await requestFromApi(mockEndpoint, mockRequest, { 'x-test': 'value' })
@@ -64,7 +64,7 @@ describe('requestFromApi', () => {
     global.fetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => ({})
+      text: async () => JSON.stringify({})
     })
 
     await requestFromApi(mockEndpoint, mockRequest, { 'x-custom': 'header' })
@@ -85,7 +85,7 @@ describe('requestFromApi', () => {
     global.fetch.mockResolvedValueOnce({
       ok: true,
       status: 201,
-      json: async () => mockResponseData
+      text: async () => JSON.stringify(mockResponseData)
     })
 
     const result = await requestFromApi(mockEndpoint, mockRequest, {}, 'POST', payload)
@@ -103,7 +103,7 @@ describe('requestFromApi', () => {
     global.fetch.mockResolvedValueOnce({
       ok: false,
       status: 400,
-      json: async () => mockResponseData
+      text: async () => JSON.stringify(mockResponseData)
     })
 
     const result = await requestFromApi(mockEndpoint, mockRequest)
@@ -128,7 +128,7 @@ describe('requestFromApi', () => {
     global.fetch.mockResolvedValueOnce({
       ok: true,
       status: 200,
-      json: async () => mockResponseData
+      text: async () => JSON.stringify(mockResponseData)
     })
 
     await requestFromApi(mockEndpoint, mockRequest, {}, 'PUT', payload)
@@ -140,5 +140,17 @@ describe('requestFromApi', () => {
         body: JSON.stringify(payload)
       })
     )
+  })
+
+  it('should handle PUT request returning 202 with no body', async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      status: 202,
+      text: async () => ''
+    })
+
+    const result = await requestFromApi(mockEndpoint, mockRequest, {}, 'PUT', { any: 'payload' })
+
+    expect(result).toEqual({ response: null, status: 202 })
   })
 })
