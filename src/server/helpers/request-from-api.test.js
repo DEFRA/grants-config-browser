@@ -98,7 +98,7 @@ describe('requestFromApi', () => {
     expect(result).toEqual({ response: mockResponseData, status: 201 })
   })
 
-  it('should log an error if the response is not ok', async () => {
+  it('should log an error and return null if the response is not ok', async () => {
     const mockResponseData = { error: 'Bad Request' }
     global.fetch.mockResolvedValueOnce({
       ok: false,
@@ -108,8 +108,9 @@ describe('requestFromApi', () => {
 
     const result = await requestFromApi(mockEndpoint, mockRequest)
 
-    expect(mockRequest.logger.error).toHaveBeenCalledWith({})
-    expect(result).toEqual({ response: mockResponseData, status: 400 })
+    const error = new Error('API request to https://api.example.com/api/test-endpoint failed with status 400')
+    expect(mockRequest.logger.error).toHaveBeenCalledWith(error, 'Error fetching data from API:')
+    expect(result).toEqual(null)
   })
 
   it('should log an error and return undefined if fetch throws', async () => {

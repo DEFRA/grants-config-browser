@@ -27,6 +27,7 @@ import {
   configureAndStartFeaturesMessaging,
   stopFeaturesMessageSubscriber
 } from './messaging/inbound/features-fifo-message-queue-subscriber.js'
+import { retrieveAndSetInitialAuthOption } from './helpers/auth-switch.js'
 
 export async function createServer() {
   const server = hapi.server({
@@ -92,6 +93,7 @@ export async function createServer() {
   server.events.on('start', async () => {
     configureAndStartMessaging()
     configureAndStartFeaturesMessaging()
+    await retrieveAndSetInitialAuthOption(server)
   })
 
   server.events.on('stop', async () => {

@@ -307,4 +307,114 @@ describe('#featureControlController', () => {
     const $ = load(result)
     expect($('.govuk-inset-text').text().replace('Current value', '').trim()).toBe('')
   })
+
+  test('Should render page for unknown type', async () => {
+    requestFromApi.mockResolvedValue({
+      response: {
+        name: 'unknown-type',
+        type: 'unknown',
+        value: 'some value',
+        created: '2023-01-01T12:00:00Z',
+        createdBy: 'User A',
+        lastUpdated: '2023-01-02T12:00:00Z',
+        lastUpdatedBy: 'User B'
+      }
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/feature-control/detail?name=unknown-type',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = load(result)
+    expect($('.govuk-summary-list__value').eq(0).text().trim()).toBe('Text')
+  })
+
+  test('Should handle history with multiple entries and sort them', async () => {
+    requestFromApi.mockResolvedValue({
+      response: {
+        name: 'TEST_SORT',
+        type: 'boolean',
+        value: true,
+        history: [
+          { value: false, dateTime: '2023-01-01T12:00:00Z', setBy: 'User A' },
+          { value: true, dateTime: '2023-01-02T12:00:00Z', setBy: 'User B' },
+          { value: true, dateTime: null, setBy: 'User C' }
+        ]
+      }
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/feature-control/detail?name=TEST_SORT',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = load(result)
+    const rows = $('.govuk-table__row')
+    // Row 0 is header
+    // Row 1 should be 2023-01-02
+    // Row 2 should be 2023-01-01
+    // Row 3 should be null/empty
+    expect(rows.eq(1).find('.govuk-table__cell').eq(0).text().trim()).toBe('02/01/2023')
+    expect(rows.eq(2).find('.govuk-table__cell').eq(0).text().trim()).toBe('01/01/2023')
+    expect(rows.eq(3).find('.govuk-table__cell').eq(0).text().trim()).toBe('')
+  })
+
+  test('Should handle history with missing dateTime in both entries during sort', async () => {
+    requestFromApi.mockResolvedValue({
+      response: {
+        name: 'TEST_SORT_NULL',
+        type: 'boolean',
+        value: true,
+        history: [
+          { value: true, dateTime: null, setBy: 'User A' },
+          { value: false, dateTime: null, setBy: 'User B' }
+        ]
+      }
+    })
+
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: '/feature-control/detail?name=TEST_SORT_NULL',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+  })
+
+  test('Should correctly format displayName from name with underscores', async () => {
+    requestFromApi.mockResolvedValue({
+      response: {
+        name: 'MULTIPLE_WORD_FEATURE_NAME',
+        type: 'boolean',
+        value: true
+      }
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/feature-control/detail?name=MULTIPLE_WORD_FEATURE_NAME',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = load(result)
+    expect($('h1').text()).toContain('Multiple Word Feature Name')
+  })
 })
