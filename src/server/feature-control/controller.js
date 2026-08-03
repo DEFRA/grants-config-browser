@@ -3,95 +3,139 @@ import { formatDateExplicit, formatDateTime, formatDateTimeExplicit } from '../h
 import Joi from 'joi'
 import { statusCodes } from '../common/constants/status-codes.js'
 
+export const featureControlController = {
+  detail: {
+    async handler(request, h) {
+      const isAuthenticated = request?.auth?.credentials?.isAuthenticated ?? false
+
+      if (getFeatureControlSchema.validate(request.query).error) {
+        return h.redirect('/features')
+      }
+
+      const { name } = request.query
+
+      const { featureControl, errorResponse } = await getFeatureControl(name, request, h)
+      if (errorResponse) {
+        return errorResponse
+      }
+
+      const {
+        displayName,
+        value,
+        type,
+        scopes,
+        roleRequired,
+        expiryDate,
+        created,
+        createdBy,
+        lastUpdated,
+        lastUpdatedBy,
+        history
+      } = featureControl
+
+      const historyRows = createHistoryRows(history, type)
+
+      return h.view('feature-control/index', {
+        pageTitle: `Feature control details - ${displayName}`,
+        heading: displayName,
+        technicalName: name,
+        featureControl,
+        formattedValue: formatValue(value, type, true),
+        formattedScopes: formatScopes(scopes),
+        formattedRoles: formatRoles(roleRequired),
+        formattedType: formatType(type),
+        expires: expiryDate ? formatDateExplicit(expiryDate) : '',
+        created: created ? `${formatDateTimeExplicit(created)} by ${createdBy}` : '',
+        updated: lastUpdated ? `${formatDateTimeExplicit(lastUpdated)} by ${lastUpdatedBy}` : '',
+        historyRows,
+        historyHeaders: buildHistoryTableHeaders(),
+        breadcrumbs: [
+          {
+            text: 'Home',
+            href: '/'
+          },
+          {
+            text: 'Features',
+            href: '/features'
+          },
+          {
+            text: displayName
+          }
+        ],
+        isAuthenticated
+      })
+    }
+  },
+  update: {
+    async handler(request, h) {
+      if (getFeatureControlSchema.validate(request.query).error) {
+        return h.redirect('/features')
+      }
+
+      const { featureControl, errorResponse } = await getFeatureControl(request.query.name, request, h)
+      if (errorResponse) {
+        return errorResponse
+      }
+
+      return renderUpdatePage(h, featureControl)
+    }
+  },
+  processUpdate: {
+    async handler(request, h) {
+      const { name, value: rawValue, note } = request.payload
+
+      const { featureControl, errorResponse } = await getFeatureControl(name, request, h)
+      if (errorResponse) {
+        return errorResponse
+      }
+
+      const user = request.auth.credentials.displayName
+      const value = convertValueForType(rawValue, featureControl.type)
+
+      const errors = validateUpdate(value, featureControl.value, note)
+      if (errors.summary.length > 0) {
+        return renderUpdatePage(h, featureControl, errors, note, rawValue)
+      }
+
+      const result = await requestFromApi(`feature-control/value`, request, {}, 'PUT', { name, value, user, note })
+
+      if (result?.status !== statusCodes.accepted) {
+        errors.summary.push({ text: 'There was a problem communicating with the API. Please try again later.' })
+        return renderUpdatePage(h, featureControl, errors, note, rawValue)
+      }
+
+      // success, redirect to the detail page
+      return h.redirect(`/feature-control/detail?name=${name}`)
+    }
+  }
+}
+
 const getFeatureControlSchema = Joi.object({
   name: Joi.string().required()
 })
 
-const buildHistoryTableHeaders = () => {
-  return [
-    {
-      text: 'Date'
-    },
-    {
-      text: 'Changed by'
-    },
-    {
-      text: 'Value'
-    },
-    {
-      text: 'Note'
-    }
-  ]
+const getFeatureControl = async (name, request, h) => {
+  const result = await requestFromApi(`feature-control/${name}/detailed`, request)
+  const featureControl = result?.response
+
+  if (!featureControl) {
+    return { errorResponse: h.response(featureControlNotFound).code(statusCodes.notFound) }
+  }
+
+  return { featureControl }
 }
 
-const formatValue = (value, type, isHtml = false) => {
-  if (type === 'list-string' || type === 'list-number') {
-    if (Array.isArray(value)) {
-      if (isHtml) {
-        return `<ul class="govuk-list govuk-list--bullet">${value.map(mapValueToListItem).join('')}</ul>`
-      }
-      return value.join(', ')
-    }
-    return value?.toString() ?? ''
-  }
-  if (type === 'boolean') {
-    return value ? 'True' : 'False'
-  }
-  return value?.toString() ?? ''
-}
+const buildHistoryTableHeaders = () => [{ text: 'Date' }, { text: 'Changed by' }, { text: 'Value' }, { text: 'Note' }]
 
-const mapValueToListItem = (value) => `<li>${value}</li>`
-
-const formatScopes = (scopes) => {
-  if (!scopes || !Array.isArray(scopes)) {
-    return ''
-  }
-  return `<ul class="govuk-list govuk-list--bullet">${scopes.map(mapValueToListItem).join('')}</ul>`
-}
-
-const formatRoles = (roles) => {
-  if (!roles || !Array.isArray(roles)) {
-    return 'No role required'
-  }
-  return `<ul class="govuk-list govuk-list--bullet">${roles.map(mapValueToListItem).join('')}</ul>`
-}
-
-const formatType = (type) => {
-  if (type === 'boolean') {
-    return 'Toggle'
-  }
-  if (type === 'number') {
-    return 'Number'
-  }
-  if (type === 'list-string') {
-    return 'Text list'
-  }
-  if (type === 'list-number') {
-    return 'Number list'
-  }
-  return 'Text'
-}
-
-const createHistoryRows = (history, type) => {
-  return (history || [])
+const createHistoryRows = (history, type) =>
+  (history || [])
     .sort((x, y) => (y.dateTime || '').localeCompare(x.dateTime || ''))
-    .map((entry) => {
-      return [
-        {
-          text: entry.dateTime ? formatDateTime(entry.dateTime) : ''
-        },
-        {
-          text: entry.setBy
-        },
-        {
-          text: formatValue(entry.value, type)
-        },
-        {
-          text: entry.note
-        }
-      ]
-    })
-}
+    .map((entry) => [
+      { text: entry.dateTime ? formatDateTime(entry.dateTime) : '' },
+      { text: entry.setBy },
+      { text: formatValue(entry.value, type) },
+      { text: entry.note }
+    ])
 
 const renderUpdatePage = (h, featureControl, errors = null, note = '', submittedValue = null) => {
   const { name, displayName } = featureControl
@@ -124,123 +168,71 @@ const renderUpdatePage = (h, featureControl, errors = null, note = '', submitted
   })
 }
 
+const validateUpdate = (value, currentValue, note) => {
+  const errors = { summary: [] }
+
+  if (value === currentValue) {
+    const errorMessage = 'The value must be different from the current value'
+    errors.summary.push({ text: errorMessage, href: '#value' })
+    errors.value = { text: errorMessage }
+  }
+
+  if (!note?.trim()) {
+    const errorMessage = 'Enter a note to explain why this change is being made'
+    errors.summary.push({ text: errorMessage, href: '#note' })
+    errors.note = { text: errorMessage }
+  }
+
+  return errors
+}
+
 const featureControlNotFound = 'Feature control not found'
 
-export const featureControlController = {
-  detail: {
-    async handler(request, h) {
-      const isAuthenticated = request?.auth?.credentials?.isAuthenticated ?? false
+const TYPE_LABELS = {
+  boolean: 'Toggle',
+  number: 'Number',
+  'list-string': 'Text list',
+  'list-number': 'Number list'
+}
 
-      const { name } = request.query
-      if (getFeatureControlSchema.validate(request.query).error) {
-        return h.redirect('/features')
-      }
+const DEFAULT_TYPE_LABEL = 'Text'
 
-      const result = await requestFromApi(`feature-control/${name}/detailed`, request)
-      const featureControl = result?.response
+const mapValueToListItem = (value) => `<li>${value}</li>`
+const wrapInList = (items) => `<ul class="govuk-list govuk-list--bullet">${items.map(mapValueToListItem).join('')}</ul>`
 
-      if (!featureControl) {
-        return h.response(featureControlNotFound).code(statusCodes.notFound)
-      }
-
-      const historyRows = createHistoryRows(featureControl.history, featureControl.type)
-
-      return h.view('feature-control/index', {
-        pageTitle: `Feature control details - ${featureControl.displayName}`,
-        heading: featureControl.displayName,
-        technicalName: name,
-        featureControl,
-        formattedValue: formatValue(featureControl.value, featureControl.type, true),
-        formattedScopes: formatScopes(featureControl.scopes),
-        formattedRoles: formatRoles(featureControl.roleRequired),
-        formattedType: formatType(featureControl.type),
-        expires: featureControl.expiryDate ? formatDateExplicit(featureControl.expiryDate) : '',
-        created: featureControl.created
-          ? `${formatDateTimeExplicit(featureControl.created)} by ${featureControl.createdBy}`
-          : '',
-        updated: featureControl.lastUpdated
-          ? `${formatDateTimeExplicit(featureControl.lastUpdated)} by ${featureControl.lastUpdatedBy}`
-          : '',
-        historyRows,
-        historyHeaders: buildHistoryTableHeaders(),
-        breadcrumbs: [
-          {
-            text: 'Home',
-            href: '/'
-          },
-          {
-            text: 'Features',
-            href: '/features'
-          },
-          {
-            text: featureControl.displayName
-          }
-        ],
-        isAuthenticated
-      })
+const formatValue = (value, type, isHtml = false) => {
+  if (type === 'list-string' || type === 'list-number') {
+    if (Array.isArray(value)) {
+      return isHtml ? wrapInList(value) : value.join(', ')
     }
-  },
-  update: {
-    async handler(request, h) {
-      const { name } = request.query
-      if (getFeatureControlSchema.validate(request.query).error) {
-        return h.redirect('/features')
-      }
-
-      const result = await requestFromApi(`feature-control/${name}/detailed`, request)
-      const featureControl = result?.response
-
-      if (!featureControl) {
-        return h.response(featureControlNotFound).code(statusCodes.notFound)
-      }
-
-      return renderUpdatePage(h, featureControl)
-    }
-  },
-  processUpdate: {
-    async handler(request, h) {
-      const { name, value: rawValue, note } = request.payload
-      const user = request.auth.credentials.displayName
-
-      const resultDetail = await requestFromApi(`feature-control/${name}/detailed`, request)
-      const featureControl = resultDetail?.response
-
-      if (!featureControl) {
-        return h.response(featureControlNotFound).code(statusCodes.notFound)
-      }
-
-      const errors = {
-        summary: []
-      }
-
-      if (!note || note.trim() === '') {
-        errors.summary.push({ text: 'Enter a note to explain why this change is being made', href: '#note' })
-        errors.note = { text: 'Enter a note to explain why this change is being made' }
-      }
-
-      let value = rawValue
-      if (featureControl.type === 'boolean') {
-        value = rawValue === 'true'
-      }
-
-      if (value === featureControl.value) {
-        errors.summary.push({ text: 'The value must be different from the current value', href: '#value' })
-        errors.value = { text: 'The value must be different from the current value' }
-      }
-
-      if (errors.summary.length > 0) {
-        return renderUpdatePage(h, featureControl, errors, note, rawValue)
-      }
-
-      const payload = { name, value, user, note }
-
-      const result = await requestFromApi(`feature-control/value`, request, {}, 'PUT', payload)
-
-      if (result?.status !== statusCodes.accepted) {
-        errors.summary.push({ text: 'There was a problem communicating with the API. Please try again later.' })
-        return renderUpdatePage(h, featureControl, errors, note, rawValue)
-      }
-      return h.redirect(`/feature-control/detail?name=${name}`)
-    }
+    return value?.toString() ?? ''
   }
+
+  if (type === 'boolean') {
+    return value ? 'True' : 'False'
+  }
+
+  return value?.toString() ?? ''
+}
+
+const formatScopes = (scopes) => (Array.isArray(scopes) && scopes.length > 0 ? wrapInList(scopes) : '')
+
+const formatRoles = (roles) => (Array.isArray(roles) && roles.length > 0 ? wrapInList(roles) : 'No role required')
+
+const formatType = (type) => TYPE_LABELS[type] || DEFAULT_TYPE_LABEL
+
+const convertValueForType = (rawValue, type) => {
+  if (type === 'boolean') {
+    return rawValue === 'true'
+  }
+  if (type === 'number') {
+    return Number(rawValue)
+  }
+  if (type === 'list-string') {
+    return rawValue.split(',').map((v) => v.trim())
+  }
+  if (type === 'list-number') {
+    return rawValue.split(',').map((v) => Number(v.trim()))
+  }
+  return rawValue // must be string
 }

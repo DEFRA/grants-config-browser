@@ -48,8 +48,19 @@
               }
             ]
           }) }}
+        {% elif featureControl.type === 'string' or featureControl.type === 'number' %}
+          {{ govukTextarea({
+            name: "value",
+            id: "value",
+            value: submittedValue if submittedValue !== null else featureControl.value,
+            errorMessage: errors.value if errors.value,
+            label: {
+              text: "Value",
+              classes: "govuk-label--m"
+            }
+          }) }}
         {% else %}
-          <p class="govuk-body">Update for {{ featureControl.type }} type is not yet supported. Only boolean updates are allowed for now.</p>
+          <p class="govuk-body">Update for {{ featureControl.type }} type is not yet supported. Only boolean, string and number updates are allowed for now.</p>
         {% endif %}
 
         {{ govukTextarea({
