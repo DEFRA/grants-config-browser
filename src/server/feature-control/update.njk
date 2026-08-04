@@ -48,11 +48,11 @@
               }
             ]
           }) }}
-        {% elif featureControl.type === 'string' or featureControl.type === 'number' or featureControl.type === 'list-string' %}
+        {% elif featureControl.type === 'string' or featureControl.type === 'number' or featureControl.type === 'list-string' or featureControl.type === 'list-number' %}
           {{ govukTextarea({
             name: "value",
             id: "value",
-            value: submittedValue if submittedValue !== null else (featureControl.value.join(', ') if featureControl.type === 'list-string' and featureControl.value else featureControl.value),
+            value: submittedValue if submittedValue !== null else (featureControl.value.join(', ') if (featureControl.type === 'list-string' or featureControl.type === 'list-number') and featureControl.value else featureControl.value),
             errorMessage: errors.value if errors.value,
             label: {
               text: "Value",
@@ -60,10 +60,10 @@
             },
             hint: {
               text: "Enter values separated by commas"
-            } if featureControl.type === 'list-string'
+            } if featureControl.type === 'list-string' or featureControl.type === 'list-number'
           }) }}
         {% else %}
-          <p class="govuk-body">Update for {{ featureControl.type }} type is not yet supported. Only boolean, string, number and list-string updates are allowed for now.</p>
+          <p class="govuk-body">Update for {{ featureControl.type }} type is not yet supported. Only boolean, string, number, list-string and list-number updates are allowed for now.</p>
         {% endif %}
 
         {{ govukTextarea({

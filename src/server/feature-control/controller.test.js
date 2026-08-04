@@ -262,6 +262,31 @@ describe('#featureControlController', () => {
     expect(updateButton.text().trim()).toBe('Update')
   })
 
+  test('Should show Update button for list-number type when authenticated', async () => {
+    requestFromApi.mockResolvedValue({
+      response: {
+        name: 'test-list-number',
+        displayName: 'Test List Number',
+        type: 'list-number',
+        value: [1, 2]
+      }
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/feature-control/detail?name=test-list-number',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = load(result)
+    const updateButton = $('a.govuk-button')
+    expect(updateButton.text().trim()).toBe('Update')
+  })
+
   test('Should render page for boolean type with false value', async () => {
     requestFromApi.mockResolvedValue({
       response: {
@@ -476,6 +501,33 @@ describe('#featureControlController', () => {
       const $ = load(result)
       expect($('[data-testid="app-heading-title"]').text()).toBe('Update Test List')
       expect($('textarea[name="value"]').val()).toBe('a, b')
+      expect($('.govuk-hint').first().text()).toContain('Enter values separated by commas')
+    })
+
+    test('Should render update page for list-number type', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'TEST_LIST_NUMBER',
+          displayName: 'Test List Number',
+          type: 'list-number',
+          value: [1, 2],
+          description: 'A test list number'
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/update?name=TEST_LIST_NUMBER',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('[data-testid="app-heading-title"]').text()).toBe('Update Test List Number')
+      expect($('textarea[name="value"]').val()).toBe('1, 2')
       expect($('.govuk-hint').first().text()).toContain('Enter values separated by commas')
     })
   })
