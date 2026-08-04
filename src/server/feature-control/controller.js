@@ -185,10 +185,7 @@ const getBreadcrumbs = (displayName, name, isUpdatePage = false) => {
   ]
 
   if (isUpdatePage) {
-    breadcrumbs.push(
-      { text: displayName, href: `/feature-control/detail?name=${name}` },
-      { text: 'Update' }
-    )
+    breadcrumbs.push({ text: displayName, href: `/feature-control/detail?name=${name}` }, { text: 'Update' })
   } else {
     breadcrumbs.push({ text: displayName })
   }
