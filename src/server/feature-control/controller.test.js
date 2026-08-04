@@ -36,375 +36,377 @@ describe('#featureControlController', () => {
 
   const credentials = { isAuthenticated: true, displayName: 'User A' }
 
-  test('Should redirect to home page if invalid query parameters supplied', async () => {
-    const {
-      headers: { location },
-      statusCode
-    } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
+  describe('detail', () => {
+    test('Should redirect to home page if invalid query parameters supplied', async () => {
+      const {
+        headers: { location },
+        statusCode
+      } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(location).toBe('/features')
     })
 
-    expect(statusCode).toBe(statusCodes.moved)
-    expect(location).toBe('/features')
-  })
+    test('Should return 404 if feature control not found', async () => {
+      requestFromApi.mockResolvedValue(null)
 
-  test('Should return 404 if feature control not found', async () => {
-    requestFromApi.mockResolvedValue(null)
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=unknown',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
 
-    const { statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=unknown',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
+      expect(statusCode).toBe(404)
     })
 
-    expect(statusCode).toBe(404)
-  })
+    test('Should render page for boolean type', async () => {
+      requestFromApi.mockResolvedValue({ response: featureControl })
 
-  test('Should render page for boolean type', async () => {
-    requestFromApi.mockResolvedValue({ response: featureControl })
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=TEST_BOOLEAN',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
 
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=TEST_BOOLEAN',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('[data-testid="app-heading-title"]').text()).toBe('Test Boolean')
+      expect($('.govuk-caption-m').text()).toBe('TEST_BOOLEAN')
+      expect($('.govuk-inset-text').text()).toContain('Current value')
+      expect($('.govuk-inset-text').text()).toContain('True')
+      expect($('.govuk-summary-list__value').eq(0).text().trim()).toBe('Toggle')
+      expect($('.govuk-summary-list__value').eq(1).text().trim()).toBe('scope1')
+      expect($('.govuk-table__cell').eq(0).text().trim()).toBe('01/01/2023')
+      expect($('.govuk-table__cell').eq(2).text().trim()).toBe('True')
+
+      // Check breadcrumbs
+      const breadcrumbs = $('.govuk-breadcrumbs__list-item')
+      expect(breadcrumbs.eq(0).text().trim()).toBe('Home')
+      expect(breadcrumbs.eq(1).text().trim()).toBe('Features')
+      expect(breadcrumbs.eq(2).text().trim()).toBe('Test Boolean')
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    expect($('[data-testid="app-heading-title"]').text()).toBe('Test Boolean')
-    expect($('.govuk-caption-m').text()).toBe('TEST_BOOLEAN')
-    expect($('.govuk-inset-text').text()).toContain('Current value')
-    expect($('.govuk-inset-text').text()).toContain('True')
-    expect($('.govuk-summary-list__value').eq(0).text().trim()).toBe('Toggle')
-    expect($('.govuk-summary-list__value').eq(1).text().trim()).toBe('scope1')
-    expect($('.govuk-table__cell').eq(0).text().trim()).toBe('01/01/2023')
-    expect($('.govuk-table__cell').eq(2).text().trim()).toBe('True')
+    test('Should render page for list-string type', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'test-list',
+          displayName: 'Test List',
+          type: 'list-string',
+          value: ['a', 'b'],
+          created: '2023-01-01T12:00:00Z',
+          createdBy: 'User A',
+          lastUpdated: '2023-01-02T12:00:00Z',
+          lastUpdatedBy: 'User B',
+          history: [{ value: ['a', 'b'], dateTime: '2023-01-01T12:00:00Z', setBy: 'User A' }]
+        }
+      })
 
-    // Check breadcrumbs
-    const breadcrumbs = $('.govuk-breadcrumbs__list-item')
-    expect(breadcrumbs.eq(0).text().trim()).toBe('Home')
-    expect(breadcrumbs.eq(1).text().trim()).toBe('Features')
-    expect(breadcrumbs.eq(2).text().trim()).toBe('Test Boolean')
-  })
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=test-list',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
 
-  test('Should render page for list-string type', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'test-list',
-        displayName: 'Test List',
-        type: 'list-string',
-        value: ['a', 'b'],
-        created: '2023-01-01T12:00:00Z',
-        createdBy: 'User A',
-        lastUpdated: '2023-01-02T12:00:00Z',
-        lastUpdatedBy: 'User B',
-        history: [{ value: ['a', 'b'], dateTime: '2023-01-01T12:00:00Z', setBy: 'User A' }]
-      }
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-inset-text').find('ul li')).toHaveLength(2)
+      expect($('.govuk-inset-text').find('li').eq(0).text().trim()).toBe('a')
+      expect($('.govuk-inset-text').find('li').eq(1).text().trim()).toBe('b')
+      expect($('.govuk-table__cell').eq(0).text().trim()).toBe('01/01/2023')
+      expect($('.govuk-table__cell').eq(2).text().trim()).toBe('a, b')
     })
 
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=test-list',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
+    test('Should render page for number type', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'test-number',
+          displayName: 'Test Number',
+          type: 'number',
+          value: 42,
+          created: '2023-01-01T12:00:00Z',
+          createdBy: 'User A',
+          lastUpdated: '2023-01-02T12:00:00Z',
+          lastUpdatedBy: 'User B',
+          history: [{ value: 42, dateTime: '2023-01-01T12:00:00Z', setBy: 'User A' }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=test-number',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-inset-text').text()).toContain('42')
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    expect($('.govuk-inset-text').find('ul li')).toHaveLength(2)
-    expect($('.govuk-inset-text').find('li').eq(0).text().trim()).toBe('a')
-    expect($('.govuk-inset-text').find('li').eq(1).text().trim()).toBe('b')
-    expect($('.govuk-table__cell').eq(0).text().trim()).toBe('01/01/2023')
-    expect($('.govuk-table__cell').eq(2).text().trim()).toBe('a, b')
-  })
+    test('Should handle list type with non-array value', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'test-list-error',
+          displayName: 'Test List Error',
+          type: 'list-string',
+          value: null,
+          created: '2023-01-01T12:00:00Z',
+          createdBy: 'User A',
+          lastUpdated: '2023-01-02T12:00:00Z',
+          lastUpdatedBy: 'User B'
+        }
+      })
 
-  test('Should render page for number type', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'test-number',
-        displayName: 'Test Number',
-        type: 'number',
-        value: 42,
-        created: '2023-01-01T12:00:00Z',
-        createdBy: 'User A',
-        lastUpdated: '2023-01-02T12:00:00Z',
-        lastUpdatedBy: 'User B',
-        history: [{ value: 42, dateTime: '2023-01-01T12:00:00Z', setBy: 'User A' }]
-      }
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=test-list-error',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-inset-text').text().replace('Current value', '').trim()).toBe('')
     })
 
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=test-number',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
+    test('Should show Update button for string type when authenticated', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'test-string',
+          displayName: 'Test String',
+          type: 'string',
+          value: 'some value',
+          created: '2023-01-01T12:00:00Z',
+          createdBy: 'User A',
+          lastUpdated: '2023-01-02T12:00:00Z',
+          lastUpdatedBy: 'User B'
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=test-string',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      const updateButton = $('a.govuk-button')
+      expect(updateButton.text().trim()).toBe('Update')
+      expect(updateButton.attr('href')).toBe('/feature-control/update?name=test-string')
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    expect($('.govuk-inset-text').text()).toContain('42')
-  })
+    test('Should NOT show Update button for string type when NOT authenticated', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'test-string',
+          displayName: 'Test String',
+          type: 'string',
+          value: 'some value'
+        }
+      })
 
-  test('Should handle list type with non-array value', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'test-list-error',
-        displayName: 'Test List Error',
-        type: 'list-string',
-        value: null,
-        created: '2023-01-01T12:00:00Z',
-        createdBy: 'User A',
-        lastUpdated: '2023-01-02T12:00:00Z',
-        lastUpdatedBy: 'User B'
-      }
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=test-string'
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('a.govuk-button')).toHaveLength(0)
     })
 
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=test-list-error',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
-    })
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    expect($('.govuk-inset-text').text().replace('Current value', '').trim()).toBe('')
-  })
+    test('Should show Update button for list-string type when authenticated', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'test-list',
+          displayName: 'Test List',
+          type: 'list-string',
+          value: ['a', 'b']
+        }
+      })
 
-  test('Should show Update button for string type when authenticated', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'test-string',
-        displayName: 'Test String',
-        type: 'string',
-        value: 'some value',
-        created: '2023-01-01T12:00:00Z',
-        createdBy: 'User A',
-        lastUpdated: '2023-01-02T12:00:00Z',
-        lastUpdatedBy: 'User B'
-      }
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=test-list',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      const updateButton = $('a.govuk-button')
+      expect(updateButton.text().trim()).toBe('Update')
     })
 
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=test-string',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
+    test('Should show Update button for list-number type when authenticated', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'test-list-number',
+          displayName: 'Test List Number',
+          type: 'list-number',
+          value: [1, 2]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=test-list-number',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      const updateButton = $('a.govuk-button')
+      expect(updateButton.text().trim()).toBe('Update')
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    const updateButton = $('a.govuk-button')
-    expect(updateButton.text().trim()).toBe('Update')
-    expect(updateButton.attr('href')).toBe('/feature-control/update?name=test-string')
-  })
+    test('Should render page for boolean type with false value', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'test-false',
+          displayName: 'Test False',
+          type: 'boolean',
+          value: false,
+          created: '2023-01-01T12:00:00Z',
+          createdBy: 'User A',
+          lastUpdated: '2023-01-02T12:00:00Z',
+          lastUpdatedBy: 'User B'
+        }
+      })
 
-  test('Should NOT show Update button for string type when NOT authenticated', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'test-string',
-        displayName: 'Test String',
-        type: 'string',
-        value: 'some value'
-      }
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=test-false',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-inset-text').text()).toContain('False')
     })
 
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=test-string'
+    test('Should render page for list-number type', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'test-list-number',
+          displayName: 'Test List Number',
+          type: 'list-number',
+          value: [1, 2, 3],
+          created: '2023-01-01T12:00:00Z',
+          createdBy: 'User A',
+          lastUpdated: '2023-01-02T12:00:00Z',
+          lastUpdatedBy: 'User B'
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=test-list-number',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-inset-text').find('li')).toHaveLength(3)
+      expect($('.govuk-inset-text').find('li').eq(0).text().trim()).toBe('1')
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    expect($('a.govuk-button')).toHaveLength(0)
-  })
+    test('Should handle missing history, scopes and roles', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'minimal-feature',
+          displayName: 'Minimal Feature',
+          type: 'string',
+          value: 'some value',
+          created: null,
+          createdBy: 'User A',
+          lastUpdated: null,
+          lastUpdatedBy: 'User B',
+          history: [{ value: 'v1', dateTime: null, setBy: 'User A' }],
+          scopes: null,
+          roleRequired: null
+        }
+      })
 
-  test('Should show Update button for list-string type when authenticated', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'test-list',
-        displayName: 'Test List',
-        type: 'list-string',
-        value: ['a', 'b']
-      }
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=minimal-feature',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-table__cell').eq(0).text().trim()).toBe('') // Missing history dateTime
+      expect($('.govuk-table__cell').eq(1).text().trim()).toBe('User A')
+      expect($('.govuk-summary-list__value').eq(1).text().trim()).toBe('') // Scopes
+      expect($('.govuk-summary-list__value').eq(4).text().trim()).toBe('') // Created (missing date)
+      expect($('.govuk-summary-list__value').eq(5).text().trim()).toBe('') // Updated (missing date)
+      expect($('.govuk-summary-list__value').eq(6).text().trim()).toBe('No role required') // Roles
     })
 
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=test-list',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
+    test('Should handle null value in formatValue', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'null-value',
+          displayName: 'Null Value',
+          type: 'string',
+          value: null,
+          created: '2023-01-01T12:00:00Z',
+          createdBy: 'User A',
+          lastUpdated: '2023-01-02T12:00:00Z',
+          lastUpdatedBy: 'User B'
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=null-value',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-inset-text').text().replace('Current value', '').trim()).toBe('')
     })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    const updateButton = $('a.govuk-button')
-    expect(updateButton.text().trim()).toBe('Update')
-  })
-
-  test('Should show Update button for list-number type when authenticated', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'test-list-number',
-        displayName: 'Test List Number',
-        type: 'list-number',
-        value: [1, 2]
-      }
-    })
-
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=test-list-number',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
-    })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    const updateButton = $('a.govuk-button')
-    expect(updateButton.text().trim()).toBe('Update')
-  })
-
-  test('Should render page for boolean type with false value', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'test-false',
-        displayName: 'Test False',
-        type: 'boolean',
-        value: false,
-        created: '2023-01-01T12:00:00Z',
-        createdBy: 'User A',
-        lastUpdated: '2023-01-02T12:00:00Z',
-        lastUpdatedBy: 'User B'
-      }
-    })
-
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=test-false',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
-    })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    expect($('.govuk-inset-text').text()).toContain('False')
-  })
-
-  test('Should render page for list-number type', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'test-list-number',
-        displayName: 'Test List Number',
-        type: 'list-number',
-        value: [1, 2, 3],
-        created: '2023-01-01T12:00:00Z',
-        createdBy: 'User A',
-        lastUpdated: '2023-01-02T12:00:00Z',
-        lastUpdatedBy: 'User B'
-      }
-    })
-
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=test-list-number',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
-    })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    expect($('.govuk-inset-text').find('li')).toHaveLength(3)
-    expect($('.govuk-inset-text').find('li').eq(0).text().trim()).toBe('1')
-  })
-
-  test('Should handle missing history, scopes and roles', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'minimal-feature',
-        displayName: 'Minimal Feature',
-        type: 'string',
-        value: 'some value',
-        created: null,
-        createdBy: 'User A',
-        lastUpdated: null,
-        lastUpdatedBy: 'User B',
-        history: [{ value: 'v1', dateTime: null, setBy: 'User A' }],
-        scopes: null,
-        roleRequired: null
-      }
-    })
-
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=minimal-feature',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
-    })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    expect($('.govuk-table__cell').eq(0).text().trim()).toBe('') // Missing history dateTime
-    expect($('.govuk-table__cell').eq(1).text().trim()).toBe('User A')
-    expect($('.govuk-summary-list__value').eq(1).text().trim()).toBe('') // Scopes
-    expect($('.govuk-summary-list__value').eq(4).text().trim()).toBe('') // Created (missing date)
-    expect($('.govuk-summary-list__value').eq(5).text().trim()).toBe('') // Updated (missing date)
-    expect($('.govuk-summary-list__value').eq(6).text().trim()).toBe('No role required') // Roles
-  })
-
-  test('Should handle null value in formatValue', async () => {
-    requestFromApi.mockResolvedValue({
-      response: {
-        name: 'null-value',
-        displayName: 'Null Value',
-        type: 'string',
-        value: null,
-        created: '2023-01-01T12:00:00Z',
-        createdBy: 'User A',
-        lastUpdated: '2023-01-02T12:00:00Z',
-        lastUpdatedBy: 'User B'
-      }
-    })
-
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/feature-control/detail?name=null-value',
-      auth: {
-        strategy: 'session',
-        credentials
-      }
-    })
-    expect(statusCode).toBe(statusCodes.ok)
-    const $ = load(result)
-    expect($('.govuk-inset-text').text().replace('Current value', '').trim()).toBe('')
   })
 
   describe('update', () => {
@@ -861,6 +863,118 @@ describe('#featureControlController', () => {
         user: 'User A',
         note: 'Adding number'
       })
+    })
+
+    test('Should handle history entry with missing dateTime', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          ...featureControl,
+          history: [{ value: true, setBy: 'User A', note: 'No date' }]
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=TEST_GAP',
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-table__cell').eq(0).text().trim()).toBe('')
+    })
+
+    test('Should handle list type with non-array value in formatValue', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          ...featureControl,
+          type: 'list-string',
+          value: 'not-an-array',
+          history: []
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=TEST_NON_ARRAY_LIST',
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-inset-text').text()).toContain('not-an-array')
+    })
+
+    test('Should show error for invalid number (empty string)', async () => {
+      requestFromApi.mockResolvedValue({ response: { name: 'NUM', type: 'number', value: 1 } })
+      const { result } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'NUM', value: ' ', note: 'Empty' },
+        auth: { strategy: 'session', credentials }
+      })
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain('Enter a valid number')
+    })
+
+    test('Should show error for invalid list-number (non-numeric item)', async () => {
+      requestFromApi.mockResolvedValue({ response: { name: 'LNUM', type: 'list-number', value: [1] } })
+      const { result } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'LNUM', value: '1, abc, 3', note: 'Invalid item' },
+        auth: { strategy: 'session', credentials }
+      })
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain('Enter a valid list of numbers')
+    })
+
+    test('Should show error if list-number value is same as current (array comparison)', async () => {
+      requestFromApi.mockResolvedValue({
+        response: { name: 'LNUM', type: 'list-number', value: [1, 2] }
+      })
+
+      const { result } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'LNUM', value: '1, 2', note: 'Same' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain('The value must be different from the current value')
+    })
+
+    test('Should NOT show error if list-number value is different length', async () => {
+      requestFromApi.mockResolvedValueOnce({
+        response: { name: 'LNUM', type: 'list-number', value: [1, 2] }
+      })
+      requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'LNUM', value: '1, 2, 3', note: 'Different length' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+    })
+
+    test('Should NOT show error if list-number value has different elements', async () => {
+      requestFromApi.mockResolvedValueOnce({
+        response: { name: 'LNUM', type: 'list-number', value: [1, 2] }
+      })
+      requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'LNUM', value: '1, 3', note: 'Different elements' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
     })
   })
 })
