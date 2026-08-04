@@ -1,7 +1,7 @@
 import { createLogger } from '../../common/helpers/logging/logger.js'
-import { SqsSubscriber } from '../../common/helpers/sqs/sqs-subscriber.js'
 import { config } from '../../../config/config.js'
 import { processFeaturesMessage } from './process-features-message.js'
+import { SqsSubscriber } from '@defra/grants-config-utils/sqs-subscriber'
 
 let inputMessageSubscriber
 

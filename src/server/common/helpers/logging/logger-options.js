@@ -2,7 +2,7 @@ import { ecsFormat } from '@elastic/ecs-pino-format'
 import { getTraceId } from '@defra/hapi-tracing'
 
 import { config } from '../../../../config/config.js'
-import { getTraceParent } from '../sqs/trace-parent.js'
+import { getTraceParent } from '@defra/grants-config-utils/trace-parent'
 
 const logConfig = config.get('log')
 const serviceName = config.get('serviceName')

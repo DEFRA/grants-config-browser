@@ -1,11 +1,11 @@
 import { configureAndStartMessaging, stopMessageSubscriber } from './new-config-message-queue-subscriber.js'
 import { createLogger } from '../../common/helpers/logging/logger.js'
-import { SqsSubscriber } from '../../common/helpers/sqs/sqs-subscriber.js'
 import { processInputMessage } from './process-message.js'
 import { config } from '../../../config/config.js'
+import { SqsSubscriber } from '@defra/grants-config-utils/sqs-subscriber'
 
 vi.mock('../../common/helpers/logging/logger.js')
-vi.mock('../../common/helpers/sqs/sqs-subscriber.js')
+vi.mock('@defra/grants-config-utils/sqs-subscriber')
 vi.mock('./process-message.js')
 
 describe('MessageRequestQueueSubscriber', () => {
