@@ -19,21 +19,8 @@ export const featureControlController = {
         return errorResponse
       }
 
-      const {
-        displayName,
-        value,
-        type,
-        scopes,
-        roleRequired,
-        expiryDate,
-        created,
-        createdBy,
-        lastUpdated,
-        lastUpdatedBy,
-        history
-      } = featureControl
-
-      const historyRows = createHistoryRows(history, type)
+      const { displayName, value, type, scopes, roleRequired, history } = featureControl
+      const auditInfo = formatAuditInfo(featureControl)
 
       return h.view('feature-control/index', {
         pageTitle: `Feature control details - ${displayName}`,
@@ -44,10 +31,8 @@ export const featureControlController = {
         formattedScopes: formatScopes(scopes),
         formattedRoles: formatRoles(roleRequired),
         formattedType: formatType(type),
-        expires: expiryDate ? formatDateExplicit(expiryDate) : '',
-        created: created ? `${formatDateTimeExplicit(created)} by ${createdBy}` : '',
-        updated: lastUpdated ? `${formatDateTimeExplicit(lastUpdated)} by ${lastUpdatedBy}` : '',
-        historyRows,
+        ...auditInfo,
+        historyRows: createHistoryRows(history, type),
         historyHeaders: buildHistoryTableHeaders(),
         breadcrumbs: getBreadcrumbs(displayName, name),
         isAuthenticated
@@ -79,32 +64,18 @@ export const featureControlController = {
       }
 
       if (action === 'add-item' || action?.startsWith('remove-item-')) {
-        let items = []
-        if (Array.isArray(rawValue)) {
-          items = rawValue
-        } else if (rawValue !== undefined) {
-          items = [rawValue]
-        }
-        if (action === 'add-item') {
-          items.push('')
-        } else {
-          const index = parseInt(action.replace('remove-item-', ''), 10)
-          items.splice(index, 1)
-        }
+        const items = handleListAction(action, rawValue)
         return renderUpdatePage(h, featureControl, null, note, items)
       }
 
       const user = request.auth.credentials.displayName
 
       if (
-        (featureControl.type === 'list-string' || featureControl.type === 'list-number') &&
+        (featureControl.type === FEATURE_CONTROL_TYPES.LIST_STRING ||
+          featureControl.type === FEATURE_CONTROL_TYPES.LIST_NUMBER) &&
         !Array.isArray(rawValue)
       ) {
-        if (rawValue !== undefined) {
-          rawValue = [rawValue]
-        } else {
-          rawValue = []
-        }
+        rawValue = rawValue !== undefined ? [rawValue] : []
       }
 
       const errors = validateUpdate(rawValue, featureControl.value, note, featureControl.type)
@@ -171,6 +142,49 @@ const renderUpdatePage = (h, featureControl, errors = null, note = '', submitted
   })
 }
 
+const FEATURE_CONTROL_TYPES = {
+  BOOLEAN: 'boolean',
+  NUMBER: 'number',
+  STRING: 'string',
+  LIST_STRING: 'list-string',
+  LIST_NUMBER: 'list-number'
+}
+
+const TYPE_LABELS = {
+  [FEATURE_CONTROL_TYPES.BOOLEAN]: 'Toggle',
+  [FEATURE_CONTROL_TYPES.NUMBER]: 'Number',
+  [FEATURE_CONTROL_TYPES.LIST_STRING]: 'Text list',
+  [FEATURE_CONTROL_TYPES.LIST_NUMBER]: 'Number list'
+}
+
+const handleListAction = (action, rawValue) => {
+  let items
+  if (Array.isArray(rawValue)) {
+    items = rawValue
+  } else if (rawValue !== undefined) {
+    items = [rawValue]
+  } else {
+    items = []
+  }
+
+  if (action === 'add-item') {
+    items.push('')
+  } else {
+    const index = parseInt(action.replace('remove-item-', ''), 10)
+    items.splice(index, 1)
+  }
+  return items
+}
+
+const formatAuditInfo = (featureControl) => {
+  const { created, createdBy, lastUpdated, lastUpdatedBy, expiryDate } = featureControl
+  return {
+    expires: expiryDate ? formatDateExplicit(expiryDate) : '',
+    created: created ? `${formatDateTimeExplicit(created)} by ${createdBy}` : '',
+    updated: lastUpdated ? `${formatDateTimeExplicit(lastUpdated)} by ${lastUpdatedBy}` : ''
+  }
+}
+
 const addError = (errors, field, message) => {
   errors.summary.push({ text: message, href: `#${field}` })
   errors[field] = { text: message }
@@ -180,29 +194,34 @@ const isValidNumber = (val) => typeof val === 'string' && val.trim() !== '' && !
 
 const isNonEmptyString = (val) => typeof val === 'string' && val.trim() !== ''
 
+const validateListType = (errors, rawValue, type) => {
+  const rawItems = Array.isArray(rawValue) ? rawValue : [rawValue]
+  const filteredItems = rawItems.map((v) => (typeof v === 'string' ? v.trim() : '')).filter((v) => v !== '')
+
+  if (filteredItems.length === 0) {
+    addError(errors, 'value', 'Enter at least one item')
+  } else if (rawItems.some((v) => !isNonEmptyString(v))) {
+    const errorMessage =
+      type === FEATURE_CONTROL_TYPES.LIST_NUMBER ? 'Enter a valid list of numbers' : 'Enter a valid list of items'
+    addError(errors, 'value', errorMessage)
+  } else if (type === FEATURE_CONTROL_TYPES.LIST_NUMBER && rawItems.some((v) => !isValidNumber(v))) {
+    addError(errors, 'value', 'Enter a valid list of numbers')
+  }
+}
+
 const validateUpdate = (rawValue, currentValue, note, type) => {
   const errors = { summary: [] }
 
-  if (type === 'string' && !isNonEmptyString(rawValue)) {
+  if (type === FEATURE_CONTROL_TYPES.STRING && !isNonEmptyString(rawValue)) {
     addError(errors, 'value', 'Enter a valid value')
   }
 
-  if (type === 'number' && !isValidNumber(rawValue)) {
+  if (type === FEATURE_CONTROL_TYPES.NUMBER && !isValidNumber(rawValue)) {
     addError(errors, 'value', 'Enter a valid number')
   }
 
-  if (type === 'list-number' || type === 'list-string') {
-    const rawItems = Array.isArray(rawValue) ? rawValue : [rawValue]
-    const filteredItems = rawItems.map((v) => (typeof v === 'string' ? v.trim() : '')).filter((v) => v !== '')
-
-    if (filteredItems.length === 0) {
-      addError(errors, 'value', 'Enter at least one item')
-    } else if (rawItems.some((v) => !isNonEmptyString(v))) {
-      const errorMessage = type === 'list-number' ? 'Enter a valid list of numbers' : 'Enter a valid list of items'
-      addError(errors, 'value', errorMessage)
-    } else if (type === 'list-number' && rawItems.some((v) => !isValidNumber(v))) {
-      addError(errors, 'value', 'Enter a valid list of numbers')
-    }
+  if (type === FEATURE_CONTROL_TYPES.LIST_NUMBER || type === FEATURE_CONTROL_TYPES.LIST_STRING) {
+    validateListType(errors, rawValue, type)
   }
 
   if (errors.summary.length === 0) {
@@ -234,27 +253,20 @@ const getBreadcrumbs = (displayName, name, isUpdatePage = false) => {
   return breadcrumbs
 }
 
-const TYPE_LABELS = {
-  boolean: 'Toggle',
-  number: 'Number',
-  'list-string': 'Text list',
-  'list-number': 'Number list'
-}
-
 const DEFAULT_TYPE_LABEL = 'Text'
 
 const mapValueToListItem = (value) => `<li>${value}</li>`
 const wrapInList = (items) => `<ul class="govuk-list govuk-list--bullet">${items.map(mapValueToListItem).join('')}</ul>`
 
 const formatValue = (value, type, isHtml = false) => {
-  if (type === 'list-string' || type === 'list-number') {
+  if (type === FEATURE_CONTROL_TYPES.LIST_STRING || type === FEATURE_CONTROL_TYPES.LIST_NUMBER) {
     if (Array.isArray(value)) {
       return isHtml ? wrapInList(value) : value.join(', ')
     }
     return value?.toString() ?? ''
   }
 
-  if (type === 'boolean') {
+  if (type === FEATURE_CONTROL_TYPES.BOOLEAN) {
     return value ? 'True' : 'False'
   }
 
@@ -268,17 +280,17 @@ const formatRoles = (roles) => (Array.isArray(roles) && roles.length > 0 ? wrapI
 const formatType = (type) => TYPE_LABELS[type] || DEFAULT_TYPE_LABEL
 
 const convertValueForType = (rawValue, type) => {
-  if (type === 'boolean') {
+  if (type === FEATURE_CONTROL_TYPES.BOOLEAN) {
     return rawValue === 'true'
   }
-  if (type === 'number') {
+  if (type === FEATURE_CONTROL_TYPES.NUMBER) {
     return Number(rawValue)
   }
   const rawItems = Array.isArray(rawValue) ? rawValue : [rawValue]
-  if (type === 'list-string') {
+  if (type === FEATURE_CONTROL_TYPES.LIST_STRING) {
     return rawItems.map((v) => (typeof v === 'string' ? v.trim() : ''))
   }
-  if (type === 'list-number') {
+  if (type === FEATURE_CONTROL_TYPES.LIST_NUMBER) {
     return rawItems.map((v) => (typeof v === 'string' ? v.trim() : '')).map(Number)
   }
   return rawValue // must be string
