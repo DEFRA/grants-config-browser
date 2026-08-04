@@ -148,7 +148,7 @@ const addError = (errors, field, message) => {
   errors[field] = { text: message }
 }
 
-const isValidNumber = (val) => val.trim() !== '' && !isNaN(Number(val))
+const isValidNumber = (val) => val.trim() !== '' && !Number.isNaN(Number(val))
 
 const validateUpdate = (rawValue, currentValue, note, type) => {
   const errors = { summary: [] }
@@ -185,8 +185,10 @@ const getBreadcrumbs = (displayName, name, isUpdatePage = false) => {
   ]
 
   if (isUpdatePage) {
-    breadcrumbs.push({ text: displayName, href: `/feature-control/detail?name=${name}` })
-    breadcrumbs.push({ text: 'Update' })
+    breadcrumbs.push(
+      { text: displayName, href: `/feature-control/detail?name=${name}` },
+      { text: 'Update' }
+    )
   } else {
     breadcrumbs.push({ text: displayName })
   }
