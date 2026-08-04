@@ -170,7 +170,7 @@ const handleListAction = (action, rawValue) => {
   if (action === 'add-item') {
     items.push('')
   } else {
-    const index = parseInt(action.replace('remove-item-', ''), 10)
+    const index = Number.parseInt(action.replace('remove-item-', ''), 10)
     items.splice(index, 1)
   }
   return items
