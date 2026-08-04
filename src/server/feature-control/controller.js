@@ -171,7 +171,7 @@ const renderUpdatePage = (h, featureControl, errors = null, note = '', submitted
 const validateUpdate = (value, currentValue, note) => {
   const errors = { summary: [] }
 
-  if (value === currentValue) {
+  if (valueNotChanged(value, currentValue)) {
     const errorMessage = 'The value must be different from the current value'
     errors.summary.push({ text: errorMessage, href: '#value' })
     errors.value = { text: errorMessage }
@@ -235,4 +235,11 @@ const convertValueForType = (rawValue, type) => {
     return rawValue.split(',').map((v) => Number(v.trim()))
   }
   return rawValue // must be string
+}
+
+const valueNotChanged = (newValue, currentValue) => {
+  if (Array.isArray(newValue) && Array.isArray(currentValue)) {
+    return newValue.length === currentValue.length && newValue.every((v, i) => v === currentValue[i])
+  }
+  return newValue === currentValue
 }

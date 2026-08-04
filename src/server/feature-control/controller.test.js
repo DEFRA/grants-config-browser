@@ -237,6 +237,31 @@ describe('#featureControlController', () => {
     expect($('a.govuk-button')).toHaveLength(0)
   })
 
+  test('Should show Update button for list-string type when authenticated', async () => {
+    requestFromApi.mockResolvedValue({
+      response: {
+        name: 'test-list',
+        displayName: 'Test List',
+        type: 'list-string',
+        value: ['a', 'b']
+      }
+    })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/feature-control/detail?name=test-list',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = load(result)
+    const updateButton = $('a.govuk-button')
+    expect(updateButton.text().trim()).toBe('Update')
+  })
+
   test('Should render page for boolean type with false value', async () => {
     requestFromApi.mockResolvedValue({
       response: {
@@ -425,6 +450,33 @@ describe('#featureControlController', () => {
       expect($('.govuk-caption-m').text()).toBe('TEST_BOOLEAN')
       expect($('input[name="value"][value="true"]').is(':checked')).toBe(true)
       expect($('input[name="value"][value="false"]').is(':checked')).toBe(false)
+    })
+
+    test('Should render update page for list-string type', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'TEST_LIST',
+          displayName: 'Test List',
+          type: 'list-string',
+          value: ['a', 'b'],
+          description: 'A test list'
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/update?name=TEST_LIST',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('[data-testid="app-heading-title"]').text()).toBe('Update Test List')
+      expect($('textarea[name="value"]').val()).toBe('a, b')
+      expect($('.govuk-hint').first().text()).toContain('Enter values separated by commas')
     })
   })
 
@@ -671,6 +723,91 @@ describe('#featureControlController', () => {
         value: 200,
         user: 'User A',
         note: 'Updating number'
+      })
+    })
+
+    test('Should successfully update list-string type', async () => {
+      requestFromApi.mockResolvedValueOnce({
+        response: {
+          name: 'TEST_LIST',
+          displayName: 'Test List',
+          type: 'list-string',
+          value: ['a', 'b']
+        }
+      })
+      requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'TEST_LIST', value: 'a, b, c', note: 'Adding item' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(requestFromApi).toHaveBeenLastCalledWith('feature-control/value', expect.anything(), {}, 'PUT', {
+        name: 'TEST_LIST',
+        value: ['a', 'b', 'c'],
+        user: 'User A',
+        note: 'Adding item'
+      })
+    })
+
+    test('Should show error if list-string value is same as current', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'TEST_LIST',
+          displayName: 'Test List',
+          type: 'list-string',
+          value: ['a', 'b']
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'TEST_LIST', value: ' a,b ', note: 'Same value' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain('The value must be different from the current value')
+    })
+
+    test('Should successfully update list-number type', async () => {
+      requestFromApi.mockResolvedValueOnce({
+        response: {
+          name: 'TEST_LIST_NUMBER',
+          displayName: 'Test List Number',
+          type: 'list-number',
+          value: [1, 2]
+        }
+      })
+      requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'TEST_LIST_NUMBER', value: '1, 2, 3', note: 'Adding number' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(requestFromApi).toHaveBeenLastCalledWith('feature-control/value', expect.anything(), {}, 'PUT', {
+        name: 'TEST_LIST_NUMBER',
+        value: [1, 2, 3],
+        user: 'User A',
+        note: 'Adding number'
       })
     })
   })
