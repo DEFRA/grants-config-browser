@@ -502,8 +502,8 @@ describe('#featureControlController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
       expect($('[data-testid="app-heading-title"]').text()).toBe('Update Test List')
-      expect($('textarea[name="value"]').val()).toBe('a, b')
-      expect($('.govuk-hint').first().text()).toContain('Enter values separated by commas')
+      expect($('input[name="value"]').eq(0).val()).toBe('a')
+      expect($('input[name="value"]').eq(1).val()).toBe('b')
     })
 
     test('Should render update page for list-number type', async () => {
@@ -529,8 +529,8 @@ describe('#featureControlController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
       expect($('[data-testid="app-heading-title"]').text()).toBe('Update Test List Number')
-      expect($('textarea[name="value"]').val()).toBe('1, 2')
-      expect($('.govuk-hint').first().text()).toContain('Enter values separated by commas')
+      expect($('input[name="value"]').eq(0).val()).toBe('1')
+      expect($('input[name="value"]').eq(1).val()).toBe('2')
     })
   })
 
@@ -794,7 +794,7 @@ describe('#featureControlController', () => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: '/feature-control/update',
-        payload: { name: 'TEST_LIST', value: 'a, b, c', note: 'Adding item' },
+        payload: { name: 'TEST_LIST', value: ['a', 'b', 'c'], note: 'Adding item' },
         auth: {
           strategy: 'session',
           credentials
@@ -823,7 +823,7 @@ describe('#featureControlController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: '/feature-control/update',
-        payload: { name: 'TEST_LIST', value: ' a,b ', note: 'Same value' },
+        payload: { name: 'TEST_LIST', value: ['a', 'b'], note: 'Same value' },
         auth: {
           strategy: 'session',
           credentials
@@ -833,6 +833,32 @@ describe('#featureControlController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
       expect($('.govuk-error-summary').text()).toContain('The value must be different from the current value')
+    })
+
+    test('Should show error if list is empty', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'TEST_LIST',
+          displayName: 'Test List',
+          type: 'list-string',
+          value: ['a', 'b']
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'TEST_LIST', value: ['', '  '], note: 'Empty list' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain('Enter at least one item')
+      expect($('#value-error').text()).toContain('Enter at least one item')
     })
 
     test('Should successfully update list-number type', async () => {
@@ -849,7 +875,7 @@ describe('#featureControlController', () => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: '/feature-control/update',
-        payload: { name: 'TEST_LIST_NUMBER', value: '1, 2, 3', note: 'Adding number' },
+        payload: { name: 'TEST_LIST_NUMBER', value: ['1', '2', '3'], note: 'Adding number' },
         auth: {
           strategy: 'session',
           credentials
@@ -922,7 +948,7 @@ describe('#featureControlController', () => {
       const { result } = await server.inject({
         method: 'POST',
         url: '/feature-control/update',
-        payload: { name: 'LNUM', value: '1, abc, 3', note: 'Invalid item' },
+        payload: { name: 'LNUM', value: ['1', 'abc', '3'], note: 'Invalid item' },
         auth: { strategy: 'session', credentials }
       })
       const $ = load(result)
@@ -937,7 +963,7 @@ describe('#featureControlController', () => {
       const { result } = await server.inject({
         method: 'POST',
         url: '/feature-control/update',
-        payload: { name: 'LNUM', value: '1, 2', note: 'Same' },
+        payload: { name: 'LNUM', value: ['1', '2'], note: 'Same' },
         auth: { strategy: 'session', credentials }
       })
 
@@ -954,7 +980,7 @@ describe('#featureControlController', () => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: '/feature-control/update',
-        payload: { name: 'LNUM', value: '1, 2, 3', note: 'Different length' },
+        payload: { name: 'LNUM', value: ['1', '2', '3'], note: 'Different length' },
         auth: { strategy: 'session', credentials }
       })
 
@@ -970,7 +996,7 @@ describe('#featureControlController', () => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: '/feature-control/update',
-        payload: { name: 'LNUM', value: '1, 3', note: 'Different elements' },
+        payload: { name: 'LNUM', value: ['1', '3'], note: 'Different elements' },
         auth: { strategy: 'session', credentials }
       })
 

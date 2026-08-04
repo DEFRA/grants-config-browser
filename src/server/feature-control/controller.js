@@ -70,14 +70,30 @@ export const featureControlController = {
   },
   processUpdate: {
     async handler(request, h) {
-      const { name, value: rawValue, note } = request.payload
+      const { name, note, action } = request.payload
+      let { value: rawValue } = request.payload
 
       const { featureControl, errorResponse } = await getFeatureControl(name, request, h)
       if (errorResponse) {
         return errorResponse
       }
 
+      if (action === 'add-item' || action?.startsWith('remove-item-')) {
+        let items = Array.isArray(rawValue) ? rawValue : (rawValue !== undefined ? [rawValue] : [])
+        if (action === 'add-item') {
+          items.push('')
+        } else {
+          const index = parseInt(action.replace('remove-item-', ''), 10)
+          items.splice(index, 1)
+        }
+        return renderUpdatePage(h, featureControl, null, note, items)
+      }
+
       const user = request.auth.credentials.displayName
+
+      if ((featureControl.type === 'list-string' || featureControl.type === 'list-number') && !Array.isArray(rawValue)) {
+        rawValue = rawValue !== undefined ? [rawValue] : []
+      }
 
       const errors = validateUpdate(rawValue, featureControl.value, note, featureControl.type)
       if (errors.summary.length > 0) {
@@ -148,18 +164,31 @@ const addError = (errors, field, message) => {
   errors[field] = { text: message }
 }
 
-const isValidNumber = (val) => val.trim() !== '' && !Number.isNaN(Number(val))
+const isValidNumber = (val) => typeof val === 'string' && val.trim() !== '' && !Number.isNaN(Number(val))
+
+const isNonEmptyString = (val) => typeof val === 'string' && val.trim() !== ''
 
 const validateUpdate = (rawValue, currentValue, note, type) => {
   const errors = { summary: [] }
+
+  if (type === 'string' && !isNonEmptyString(rawValue)) {
+    addError(errors, 'value', 'Enter a valid value')
+  }
 
   if (type === 'number' && !isValidNumber(rawValue)) {
     addError(errors, 'value', 'Enter a valid number')
   }
 
-  if (type === 'list-number') {
-    const items = rawValue.split(',').map((v) => v.trim())
-    if (items.some((v) => !isValidNumber(v))) {
+  if (type === 'list-number' || type === 'list-string') {
+    const rawItems = Array.isArray(rawValue) ? rawValue : [rawValue]
+    const filteredItems = rawItems.map((v) => (typeof v === 'string' ? v.trim() : '')).filter((v) => v !== '')
+
+    if (filteredItems.length === 0) {
+      addError(errors, 'value', 'Enter at least one item')
+    } else if (rawItems.some((v) => !isNonEmptyString(v))) {
+      const errorMessage = type === 'list-number' ? 'Enter a valid list of numbers' : 'Enter a valid list of items'
+      addError(errors, 'value', errorMessage)
+    } else if (type === 'list-number' && rawItems.some((v) => !isValidNumber(v))) {
       addError(errors, 'value', 'Enter a valid list of numbers')
     }
   }
@@ -234,12 +263,13 @@ const convertValueForType = (rawValue, type) => {
     return Number(rawValue)
   }
   if (type === 'list-string') {
-    return rawValue.split(',').map((v) => v.trim())
+    const rawItems = Array.isArray(rawValue) ? rawValue : [rawValue]
+    return rawItems.map((v) => (typeof v === 'string' ? v.trim() : ''))
   }
   if (type === 'list-number') {
-    return rawValue
-      .split(',')
-      .map((v) => v.trim())
+    const rawItems = Array.isArray(rawValue) ? rawValue : [rawValue]
+    return rawItems
+      .map((v) => (typeof v === 'string' ? v.trim() : ''))
       .filter((v) => v !== '')
       .map(Number)
   }
