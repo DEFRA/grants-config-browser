@@ -79,7 +79,12 @@ export const featureControlController = {
       }
 
       if (action === 'add-item' || action?.startsWith('remove-item-')) {
-        const items = Array.isArray(rawValue) ? rawValue : rawValue !== undefined ? [rawValue] : []
+        let items = []
+        if (Array.isArray(rawValue)) {
+          items = rawValue
+        } else if (rawValue !== undefined) {
+          items = [rawValue]
+        }
         if (action === 'add-item') {
           items.push('')
         } else {
@@ -95,7 +100,11 @@ export const featureControlController = {
         (featureControl.type === 'list-string' || featureControl.type === 'list-number') &&
         !Array.isArray(rawValue)
       ) {
-        rawValue = rawValue !== undefined ? [rawValue] : []
+        if (rawValue !== undefined) {
+          rawValue = [rawValue]
+        } else {
+          rawValue = []
+        }
       }
 
       const errors = validateUpdate(rawValue, featureControl.value, note, featureControl.type)
