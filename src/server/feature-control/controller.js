@@ -79,7 +79,7 @@ export const featureControlController = {
       }
 
       if (action === 'add-item' || action?.startsWith('remove-item-')) {
-        let items = Array.isArray(rawValue) ? rawValue : (rawValue !== undefined ? [rawValue] : [])
+        const items = Array.isArray(rawValue) ? rawValue : rawValue !== undefined ? [rawValue] : []
         if (action === 'add-item') {
           items.push('')
         } else {
@@ -91,7 +91,10 @@ export const featureControlController = {
 
       const user = request.auth.credentials.displayName
 
-      if ((featureControl.type === 'list-string' || featureControl.type === 'list-number') && !Array.isArray(rawValue)) {
+      if (
+        (featureControl.type === 'list-string' || featureControl.type === 'list-number') &&
+        !Array.isArray(rawValue)
+      ) {
         rawValue = rawValue !== undefined ? [rawValue] : []
       }
 
