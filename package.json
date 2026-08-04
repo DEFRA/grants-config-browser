@@ -114,7 +114,6 @@
   "overrides": {
     "tmp": "0.2.5",
     "joi": "18.2.1",
-    "brace-expansion": "5.0.9",
     "fast-uri": "3.1.5"
   }
 }
