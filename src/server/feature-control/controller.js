@@ -49,19 +49,7 @@ export const featureControlController = {
         updated: lastUpdated ? `${formatDateTimeExplicit(lastUpdated)} by ${lastUpdatedBy}` : '',
         historyRows,
         historyHeaders: buildHistoryTableHeaders(),
-        breadcrumbs: [
-          {
-            text: 'Home',
-            href: '/'
-          },
-          {
-            text: 'Features',
-            href: '/features'
-          },
-          {
-            text: displayName
-          }
-        ],
+        breadcrumbs: getBreadcrumbs(displayName, name),
         isAuthenticated
       })
     }
@@ -115,6 +103,8 @@ const getFeatureControlSchema = Joi.object({
   name: Joi.string().required()
 })
 
+const featureControlNotFound = 'Feature control not found'
+
 const getFeatureControl = async (name, request, h) => {
   const result = await requestFromApi(`feature-control/${name}/detailed`, request)
   const featureControl = result?.response
@@ -149,65 +139,60 @@ const renderUpdatePage = (h, featureControl, errors = null, note = '', submitted
     errors,
     note,
     submittedValue,
-    breadcrumbs: [
-      {
-        text: 'Home',
-        href: '/'
-      },
-      {
-        text: 'Features',
-        href: '/features'
-      },
-      {
-        text: displayName,
-        href: `/feature-control/detail?name=${name}`
-      },
-      {
-        text: 'Update'
-      }
-    ]
+    breadcrumbs: getBreadcrumbs(displayName, name, true)
   })
 }
+
+const addError = (errors, field, message) => {
+  errors.summary.push({ text: message, href: `#${field}` })
+  errors[field] = { text: message }
+}
+
+const isValidNumber = (val) => val.trim() !== '' && !isNaN(Number(val))
 
 const validateUpdate = (rawValue, currentValue, note, type) => {
   const errors = { summary: [] }
 
-  if (type === 'number') {
-    if (isNaN(Number(rawValue)) || rawValue.trim() === '') {
-      const errorMessage = 'Enter a valid number'
-      errors.summary.push({ text: errorMessage, href: '#value' })
-      errors.value = { text: errorMessage }
-    }
+  if (type === 'number' && !isValidNumber(rawValue)) {
+    addError(errors, 'value', 'Enter a valid number')
   }
 
   if (type === 'list-number') {
-    const values = rawValue.split(',').map((v) => v.trim())
-    if (values.some((v) => isNaN(Number(v)) || v === '')) {
-      const errorMessage = 'Enter a valid list of numbers'
-      errors.summary.push({ text: errorMessage, href: '#value' })
-      errors.value = { text: errorMessage }
+    const items = rawValue.split(',').map((v) => v.trim())
+    if (items.some((v) => !isValidNumber(v))) {
+      addError(errors, 'value', 'Enter a valid list of numbers')
     }
   }
 
   if (errors.summary.length === 0) {
     const value = convertValueForType(rawValue, type)
     if (valueNotChanged(value, currentValue)) {
-      const errorMessage = 'The value must be different from the current value'
-      errors.summary.push({ text: errorMessage, href: '#value' })
-      errors.value = { text: errorMessage }
+      addError(errors, 'value', 'The value must be different from the current value')
     }
   }
 
   if (!note?.trim()) {
-    const errorMessage = 'Enter a note to explain why this change is being made'
-    errors.summary.push({ text: errorMessage, href: '#note' })
-    errors.note = { text: errorMessage }
+    addError(errors, 'note', 'Enter a note to explain why this change is being made')
   }
 
   return errors
 }
 
-const featureControlNotFound = 'Feature control not found'
+const getBreadcrumbs = (displayName, name, isUpdatePage = false) => {
+  const breadcrumbs = [
+    { text: 'Home', href: '/' },
+    { text: 'Features', href: '/features' }
+  ]
+
+  if (isUpdatePage) {
+    breadcrumbs.push({ text: displayName, href: `/feature-control/detail?name=${name}` })
+    breadcrumbs.push({ text: 'Update' })
+  } else {
+    breadcrumbs.push({ text: displayName })
+  }
+
+  return breadcrumbs
+}
 
 const TYPE_LABELS = {
   boolean: 'Toggle',
@@ -253,7 +238,11 @@ const convertValueForType = (rawValue, type) => {
     return rawValue.split(',').map((v) => v.trim())
   }
   if (type === 'list-number') {
-    return rawValue.split(',').map((v) => Number(v.trim()))
+    return rawValue
+      .split(',')
+      .map((v) => v.trim())
+      .filter((v) => v !== '')
+      .map(Number)
   }
   return rawValue // must be string
 }
