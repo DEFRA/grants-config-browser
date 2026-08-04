@@ -265,16 +265,12 @@ const convertValueForType = (rawValue, type) => {
   if (type === 'number') {
     return Number(rawValue)
   }
+  const rawItems = Array.isArray(rawValue) ? rawValue : [rawValue]
   if (type === 'list-string') {
-    const rawItems = Array.isArray(rawValue) ? rawValue : [rawValue]
     return rawItems.map((v) => (typeof v === 'string' ? v.trim() : ''))
   }
   if (type === 'list-number') {
-    const rawItems = Array.isArray(rawValue) ? rawValue : [rawValue]
-    return rawItems
-      .map((v) => (typeof v === 'string' ? v.trim() : ''))
-      .filter((v) => v !== '')
-      .map(Number)
+    return rawItems.map((v) => (typeof v === 'string' ? v.trim() : '')).map(Number)
   }
   return rawValue // must be string
 }

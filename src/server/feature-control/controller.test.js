@@ -381,6 +381,26 @@ describe('#featureControlController', () => {
       expect($('.govuk-summary-list__value').eq(6).text().trim()).toBe('No role required') // Roles
     })
 
+    test('Should handle history entries with same dateTime', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          ...featureControl,
+          history: [
+            { value: true, dateTime: '2023-01-01T12:00:00Z', setBy: 'User A', note: 'A' },
+            { value: false, dateTime: '2023-01-01T12:00:00Z', setBy: 'User B', note: 'B' }
+          ]
+        }
+      })
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=TEST_SAME_DATE',
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
     test('Should handle null value in formatValue', async () => {
       requestFromApi.mockResolvedValue({
         response: {
@@ -694,6 +714,18 @@ describe('#featureControlController', () => {
       expect($('textarea[name="value"]').val()).toBe('old value')
     })
 
+    test('Should show error for empty string type', async () => {
+      requestFromApi.mockResolvedValue({ response: { name: 'STR', type: 'string', value: 'old' } })
+      const { result } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'STR', value: ' ', note: 'Empty' },
+        auth: { strategy: 'session', credentials }
+      })
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain('Enter a valid value')
+    })
+
     test('Should render update page for number type', async () => {
       requestFromApi.mockResolvedValue({
         response: {
@@ -861,6 +893,83 @@ describe('#featureControlController', () => {
       expect($('#value-error').text()).toContain('Enter at least one item')
     })
 
+    test('Should handle list type with missing value in payload', async () => {
+      requestFromApi.mockResolvedValue({
+        response: { name: 'LSTR', type: 'list-string', value: ['a'] }
+      })
+
+      const { result } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'LSTR', note: 'Missing value' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain('Enter at least one item')
+    })
+
+    test('Should successfully add an item to list', async () => {
+      requestFromApi.mockResolvedValue({
+        response: { name: 'LSTR', type: 'list-string', value: ['a'] }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'LSTR', value: 'a', action: 'add-item', note: 'Adding' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      const inputs = $('input[name="value"]')
+      expect(inputs.length).toBe(2)
+      expect(inputs.eq(0).val()).toBe('a')
+      expect(inputs.eq(1).val()).toBe('')
+    })
+
+    test('Should successfully remove an item from list', async () => {
+      requestFromApi.mockResolvedValue({
+        response: { name: 'LSTR', type: 'list-string', value: ['a', 'b', 'c'] }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'LSTR', value: ['a', 'b', 'c'], action: 'remove-item-1', note: 'Removing' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      const inputs = $('input[name="value"]')
+      expect(inputs.length).toBe(2)
+      expect(inputs.eq(0).val()).toBe('a')
+      expect(inputs.eq(1).val()).toBe('c')
+    })
+
+    test('Should handle list-string contains empty items', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'TEST_LIST',
+          displayName: 'Test List',
+          type: 'list-string',
+          value: ['a', 'b']
+        }
+      })
+
+      const { result } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'TEST_LIST', value: ['a', ' ', 'b'], note: 'Empty item' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain('Enter a valid list of items')
+    })
+
     test('Should successfully update list-number type', async () => {
       requestFromApi.mockResolvedValueOnce({
         response: {
@@ -949,6 +1058,62 @@ describe('#featureControlController', () => {
         method: 'POST',
         url: '/feature-control/update',
         payload: { name: 'LNUM', value: ['1', 'abc', '3'], note: 'Invalid item' },
+        auth: { strategy: 'session', credentials }
+      })
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain('Enter a valid list of numbers')
+    })
+
+    test('Should handle list-string with single non-array value in payload', async () => {
+      requestFromApi.mockResolvedValueOnce({
+        response: { name: 'LSTR', type: 'list-string', value: ['a'] }
+      })
+      requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'LSTR', value: 'b', note: 'Single value' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(requestFromApi).toHaveBeenLastCalledWith('feature-control/value', expect.anything(), {}, 'PUT', {
+        name: 'LSTR',
+        value: ['b'],
+        user: 'User A',
+        note: 'Single value'
+      })
+    })
+
+    test('Should handle list-number with single non-array value in payload', async () => {
+      requestFromApi.mockResolvedValueOnce({
+        response: { name: 'LNUM', type: 'list-number', value: [1] }
+      })
+      requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'LNUM', value: '2', note: 'Single value' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(requestFromApi).toHaveBeenLastCalledWith('feature-control/value', expect.anything(), {}, 'PUT', {
+        name: 'LNUM',
+        value: [2],
+        user: 'User A',
+        note: 'Single value'
+      })
+    })
+
+    test('Should handle list-number contains empty items', async () => {
+      requestFromApi.mockResolvedValue({ response: { name: 'LNUM', type: 'list-number', value: [1] } })
+      const { result } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'LNUM', value: ['1', '', '3'], note: 'Empty item' },
         auth: { strategy: 'session', credentials }
       })
       const $ = load(result)
