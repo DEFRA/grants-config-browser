@@ -90,12 +90,13 @@ export const featureControlController = {
       }
 
       const user = request.auth.credentials.displayName
-      const value = convertValueForType(rawValue, featureControl.type)
 
-      const errors = validateUpdate(value, featureControl.value, note)
+      const errors = validateUpdate(rawValue, featureControl.value, note, featureControl.type)
       if (errors.summary.length > 0) {
         return renderUpdatePage(h, featureControl, errors, note, rawValue)
       }
+
+      const value = convertValueForType(rawValue, featureControl.type)
 
       const result = await requestFromApi(`feature-control/value`, request, {}, 'PUT', { name, value, user, note })
 
@@ -168,13 +169,33 @@ const renderUpdatePage = (h, featureControl, errors = null, note = '', submitted
   })
 }
 
-const validateUpdate = (value, currentValue, note) => {
+const validateUpdate = (rawValue, currentValue, note, type) => {
   const errors = { summary: [] }
 
-  if (valueNotChanged(value, currentValue)) {
-    const errorMessage = 'The value must be different from the current value'
-    errors.summary.push({ text: errorMessage, href: '#value' })
-    errors.value = { text: errorMessage }
+  if (type === 'number') {
+    if (isNaN(Number(rawValue)) || rawValue.trim() === '') {
+      const errorMessage = 'Enter a valid number'
+      errors.summary.push({ text: errorMessage, href: '#value' })
+      errors.value = { text: errorMessage }
+    }
+  }
+
+  if (type === 'list-number') {
+    const values = rawValue.split(',').map((v) => v.trim())
+    if (values.some((v) => isNaN(Number(v)) || v === '')) {
+      const errorMessage = 'Enter a valid list of numbers'
+      errors.summary.push({ text: errorMessage, href: '#value' })
+      errors.value = { text: errorMessage }
+    }
+  }
+
+  if (errors.summary.length === 0) {
+    const value = convertValueForType(rawValue, type)
+    if (valueNotChanged(value, currentValue)) {
+      const errorMessage = 'The value must be different from the current value'
+      errors.summary.push({ text: errorMessage, href: '#value' })
+      errors.value = { text: errorMessage }
+    }
   }
 
   if (!note?.trim()) {
