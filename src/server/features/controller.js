@@ -3,10 +3,8 @@ import { formatDateTime } from '../helpers/date-display.js'
 
 export const featuresController = {
   async handler(request, h) {
-    const {
-      response: { items }
-    } = await requestFromApi(`feature-controls`, request)
-    const features = modifyFeaturesForDisplay(items)
+    const { name } = request.query
+    const features = await getFeatures(request, name)
 
     return h.view('features/index', {
       pageTitle: `Features`,
@@ -21,7 +19,8 @@ export const featuresController = {
         }
       ],
       headers: buildTableHeaders(),
-      featureTableRows: buildTableRows(features)
+      featureTableRows: buildTableRows(features),
+      filters: { name }
     })
   }
 }
@@ -109,7 +108,28 @@ export const buildTableRows = (features) => {
   })
 }
 
-export const modifyFeaturesForDisplay = (features) => {
+const getFeatures = async (request, name) => {
+  const filters = { name }
+  const endpoint = buildEndpointWithQueryParams('feature-controls', filters)
+
+  const {
+    response: { items }
+  } = await requestFromApi(endpoint, request)
+
+  return modifyFeaturesForDisplay(items)
+}
+
+const buildEndpointWithQueryParams = (endpoint, { name }) => {
+  let queryString = ''
+
+  if (name) {
+    queryString = `?name=${name}`
+  }
+
+  return `${endpoint}${queryString}`
+}
+
+const modifyFeaturesForDisplay = (features) => {
   const maxLength = 15
   const ellipsis = '...'
   const maxLengthWithoutEllipsis = maxLength - ellipsis.length

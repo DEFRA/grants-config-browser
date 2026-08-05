@@ -91,6 +91,59 @@ describe('#featuresController', () => {
     expect(valueRow.find('.govuk-summary-list__value').text().trim()).toBe('true')
   })
 
+  test('Should call API with name filter from query params', async () => {
+    const mockFeatures = { items: [] }
+    requestFromApi.mockResolvedValueOnce({ response: mockFeatures })
+
+    const nameFilter = 'TEST_FEATURE'
+    await server.inject({
+      method: 'GET',
+      url: `/features?name=${nameFilter}`,
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(requestFromApi).toHaveBeenCalledWith(`feature-controls?name=${nameFilter}`, expect.anything())
+  })
+
+  test('Should include filter form in the response', async () => {
+    requestFromApi.mockResolvedValueOnce({ response: { items: [] } })
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: '/features',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    const $ = load(result)
+    const form = $('form')
+    expect(form.attr('method')).toBe('GET')
+    expect(form.find('input[name="name"]')).toHaveLength(1)
+    expect(form.find('button[type="submit"]').text().trim()).toBe('Filter')
+  })
+
+  test('Should populate filter form with current filter value', async () => {
+    requestFromApi.mockResolvedValueOnce({ response: { items: [] } })
+
+    const nameFilter = 'some-feature'
+    const { result } = await server.inject({
+      method: 'GET',
+      url: `/features?name=${nameFilter}`,
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    const $ = load(result)
+    expect($('input[name="name"]').val()).toBe(nameFilter)
+  })
+
   test('Should truncate long feature value', async () => {
     const mockFeatures = {
       items: [
