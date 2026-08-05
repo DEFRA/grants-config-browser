@@ -46,6 +46,12 @@ export const config = convict({
     format: String,
     default: 'grants-config-browser'
   },
+  cdpEnvironment: {
+    doc: 'The CDP environment the app is running in. With the addition of "local" for local development',
+    format: ['local', 'infra-dev', 'management', 'dev', 'test', 'perf-test', 'ext-test', 'prod'],
+    default: 'local',
+    env: 'ENVIRONMENT'
+  },
   root: {
     doc: 'Project root',
     format: String,

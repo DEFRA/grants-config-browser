@@ -3,6 +3,8 @@
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/textarea/macro.njk" import govukTextarea %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
 
 {% block content %}
   {% if errors %}
@@ -22,6 +24,10 @@
       {% if featureControl.description %}
         <p class="govuk-body">{{ featureControl.description }}</p>
       {% endif %}
+      {{ govukWarningText({
+        text: "This change takes effect immediately in " + environment + ".",
+        iconFallbackText: "Warning"
+      }) }}
       <form method="post">
         <input type="hidden" name="name" value="{{ technicalName }}">
         {% if featureControl.type === 'boolean' %}
@@ -39,12 +45,12 @@
               {
                 value: "true",
                 text: "True",
-                checked: submittedValue === "true" if submittedValue !== null else featureControl.value === true
+                checked: submittedValue === "true" if submittedValue != null else featureControl.value === true
               },
               {
                 value: "false",
                 text: "False",
-                checked: submittedValue === "false" if submittedValue !== null else featureControl.value === false
+                checked: submittedValue === "false" if submittedValue != null else featureControl.value === false
               }
             ]
           }) }}
@@ -52,15 +58,59 @@
           {{ govukTextarea({
             name: "value",
             id: "value",
-            value: submittedValue if submittedValue !== null else featureControl.value,
+            value: submittedValue if submittedValue != null else featureControl.value,
             errorMessage: errors.value if errors.value,
             label: {
               text: "Value",
               classes: "govuk-label--m"
             }
           }) }}
+        {% elif featureControl.type === 'list-string' or featureControl.type === 'list-number' %}
+          {% set listItems = submittedValue if submittedValue != null else (featureControl.value if featureControl.value else ['']) %}
+          <div class="govuk-form-group {{ 'govuk-form-group--error' if errors.value }}">
+            <fieldset class="govuk-fieldset">
+              <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
+                Value
+              </legend>
+              {% if errors.value %}
+                <p id="value-error" class="govuk-error-message">
+                  <span class="govuk-visually-hidden">Error:</span> {{ errors.value.text }}
+                </p>
+              {% endif %}
+              {% for item in listItems %}
+                <div class="govuk-grid-row govuk-!-margin-bottom-2">
+                  <div class="govuk-grid-column-three-quarters">
+                    {{ govukInput({
+                      name: "value",
+                      value: item,
+                      id: "value-" + loop.index0,
+                      classes: "govuk-input--error" if errors.value,
+                      label: {
+                        text: "Item " + (loop.index),
+                        classes: "govuk-visually-hidden"
+                      }
+                    }) }}
+                  </div>
+                  <div class="govuk-grid-column-one-quarter">
+                    {{ govukButton({
+                      text: "Remove",
+                      name: "action",
+                      value: "remove-item-" + loop.index0,
+                      classes: "govuk-button--warning govuk-!-margin-bottom-0"
+                    }) }}
+                  </div>
+                </div>
+              {% endfor %}
+              {{ govukButton({
+                text: "Add another item",
+                name: "action",
+                value: "add-item",
+                classes: "govuk-button--secondary"
+              }) }}
+            </fieldset>
+          </div>
         {% else %}
-          <p class="govuk-body">Update for {{ featureControl.type }} type is not yet supported. Only boolean, string and number updates are allowed for now.</p>
+          <p class="govuk-body">Update for {{ featureControl.type }} type is not yet supported. Only boolean, string, number, list-string and list-number updates are allowed for now.</p>
         {% endif %}
 
         {{ govukTextarea({
