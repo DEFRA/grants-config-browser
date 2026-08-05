@@ -4,6 +4,7 @@
 {% from "govuk/components/textarea/macro.njk" import govukTextarea %}
 {% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
 {% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
 
 {% block content %}
   {% if errors %}
@@ -23,6 +24,10 @@
       {% if featureControl.description %}
         <p class="govuk-body">{{ featureControl.description }}</p>
       {% endif %}
+      {{ govukWarningText({
+        text: "This change takes effect immediately in " + environment + ".",
+        iconFallbackText: "Warning"
+      }) }}
       <form method="post">
         <input type="hidden" name="name" value="{{ technicalName }}">
         {% if featureControl.type === 'boolean' %}
