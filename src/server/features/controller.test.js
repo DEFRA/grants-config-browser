@@ -39,7 +39,8 @@ describe('#featuresController', () => {
           scopes: 'Scope B',
           lastUpdated: '2024-01-02T12:00:00Z'
         }
-      ]
+      ],
+      uniqueScopes: ['Scope A', 'Scope B']
     }
     requestFromApi.mockResolvedValueOnce({ response: mockFeatures })
 
@@ -89,6 +90,105 @@ describe('#featuresController', () => {
     expect(scopesRow.find('.govuk-summary-list__value').text().trim()).toBe('Scope A')
     const valueRow = summaryRows.filter((_, el) => $(el).find('.govuk-summary-list__key').text().trim() === 'Value')
     expect(valueRow.find('.govuk-summary-list__value').text().trim()).toBe('true')
+  })
+
+  test('Should call API with name filter from query params', async () => {
+    const mockFeatures = { items: [] }
+    requestFromApi.mockResolvedValueOnce({ response: mockFeatures })
+
+    const nameFilter = 'TEST_FEATURE'
+    await server.inject({
+      method: 'GET',
+      url: `/features?name=${nameFilter}`,
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(requestFromApi).toHaveBeenCalledWith(`feature-controls?name=${nameFilter}`, expect.anything())
+  })
+
+  test('Should call API with displayName filter from query params', async () => {
+    const mockFeatures = { items: [] }
+    requestFromApi.mockResolvedValueOnce({ response: mockFeatures })
+
+    const displayNameFilter = 'Test Feature'
+    await server.inject({
+      method: 'GET',
+      url: `/features?displayName=${encodeURIComponent(displayNameFilter)}`,
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(requestFromApi).toHaveBeenCalledWith(`feature-controls?displayName=Test+Feature`, expect.anything())
+  })
+
+  test('Should call API with all filters from query params', async () => {
+    const mockFeatures = { items: [], uniqueScopes: [] }
+    requestFromApi.mockResolvedValueOnce({ response: mockFeatures })
+
+    const nameFilter = 'TEST_FEATURE'
+    const displayNameFilter = 'Test Feature'
+    const scopeFilter = 'Scope A'
+    await server.inject({
+      method: 'GET',
+      url: `/features?name=${nameFilter}&displayName=${encodeURIComponent(displayNameFilter)}&scope=${scopeFilter}`,
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(requestFromApi).toHaveBeenCalledWith(
+      `feature-controls?name=${nameFilter}&displayName=Test+Feature&scope=Scope+A`,
+      expect.anything()
+    )
+  })
+
+  test('Should include filter form in the response', async () => {
+    requestFromApi.mockResolvedValueOnce({ response: { items: [], uniqueScopes: ['Scope A'] } })
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: '/features',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    const $ = load(result)
+    const form = $('form')
+    expect(form.attr('method')).toBe('GET')
+    expect(form.find('input[name="name"]')).toHaveLength(1)
+    expect(form.find('input[name="displayName"]')).toHaveLength(1)
+    expect(form.find('select[name="scope"]')).toHaveLength(1)
+    expect(form.find('select[name="scope"] option')).toHaveLength(2) // "All scopes" + "Scope A"
+    expect(form.find('button[type="submit"]').text().trim()).toBe('Filter')
+  })
+
+  test('Should populate filter form with current filter values', async () => {
+    requestFromApi.mockResolvedValueOnce({ response: { items: [], uniqueScopes: ['Scope A', 'Scope B'] } })
+
+    const nameFilter = 'some-feature'
+    const displayNameFilter = 'Some Feature'
+    const scopeFilter = 'Scope B'
+    const { result } = await server.inject({
+      method: 'GET',
+      url: `/features?name=${nameFilter}&displayName=${encodeURIComponent(displayNameFilter)}&scope=${scopeFilter}`,
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    const $ = load(result)
+    expect($('input[name="name"]').val()).toBe(nameFilter)
+    expect($('input[name="displayName"]').val()).toBe(displayNameFilter)
+    expect($('select[name="scope"]').val()).toBe(scopeFilter)
   })
 
   test('Should truncate long feature value', async () => {

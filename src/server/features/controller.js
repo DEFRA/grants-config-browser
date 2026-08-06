@@ -3,10 +3,8 @@ import { formatDateTime } from '../helpers/date-display.js'
 
 export const featuresController = {
   async handler(request, h) {
-    const {
-      response: { items }
-    } = await requestFromApi(`feature-controls`, request)
-    const features = modifyFeaturesForDisplay(items)
+    const { name, displayName, scope } = request.query
+    const { features, uniqueScopes } = await getFeatures(request, name, displayName, scope)
 
     return h.view('features/index', {
       pageTitle: `Features`,
@@ -21,7 +19,9 @@ export const featuresController = {
         }
       ],
       headers: buildTableHeaders(),
-      featureTableRows: buildTableRows(features)
+      featureTableRows: buildTableRows(features),
+      filters: { name, displayName, scope },
+      uniqueScopes
     })
   }
 }
@@ -109,7 +109,38 @@ export const buildTableRows = (features) => {
   })
 }
 
-export const modifyFeaturesForDisplay = (features) => {
+const getFeatures = async (request, name, displayName, scope) => {
+  const filters = { name, displayName, scope }
+  const endpoint = buildEndpointWithQueryParams('feature-controls', filters)
+
+  const {
+    response: { items, uniqueScopes }
+  } = await requestFromApi(endpoint, request)
+
+  return {
+    features: modifyFeaturesForDisplay(items),
+    uniqueScopes
+  }
+}
+
+const buildEndpointWithQueryParams = (endpoint, { name, displayName, scope }) => {
+  const params = new URLSearchParams()
+
+  if (name) {
+    params.append('name', name)
+  }
+  if (displayName) {
+    params.append('displayName', displayName)
+  }
+  if (scope) {
+    params.append('scope', scope)
+  }
+
+  const queryString = params.toString()
+  return queryString ? `${endpoint}?${queryString}` : endpoint
+}
+
+const modifyFeaturesForDisplay = (features) => {
   const maxLength = 15
   const ellipsis = '...'
   const maxLengthWithoutEllipsis = maxLength - ellipsis.length

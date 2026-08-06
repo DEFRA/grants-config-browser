@@ -1,5 +1,10 @@
 {% extends 'layouts/page.njk' %}
 
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+
 {% block content %}
 
   {{ appHeading({
@@ -7,7 +12,62 @@
   }) }}
 
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column">
+    <div class="govuk-grid-column-full">
+      <form method="GET">
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-one-quarter">
+            {{ govukInput({
+              label: {
+                text: "Filter by feature",
+                classes: "govuk-label--s"
+              },
+              id: "displayName",
+              name: "displayName",
+              value: filters.displayName
+            }) }}
+          </div>
+          <div class="govuk-grid-column-one-quarter">
+            {{ govukInput({
+              label: {
+                text: "Filter by name",
+                classes: "govuk-label--s"
+              },
+              id: "name",
+              name: "name",
+              value: filters.name
+            }) }}
+          </div>
+          <div class="govuk-grid-column-one-quarter">
+            {% set scopeItems = [{ value: "", text: "All scopes" }] %}
+            {% for scope in uniqueScopes %}
+              {% set scopeItems = (scopeItems.push({
+                value: scope,
+                text: scope,
+                selected: filters.scope == scope
+              }), scopeItems) %}
+            {% endfor %}
+
+            {{ govukSelect({
+              id: "scope",
+              name: "scope",
+              label: {
+                text: "Filter by scope",
+                classes: "govuk-label--s"
+              },
+              items: scopeItems
+            }) }}
+          </div>
+          <div class="govuk-grid-column-one-quarter">
+            <div class="govuk-!-margin-top-6">
+              {{ govukButton({
+                text: "Filter"
+              }) }}
+              <a href="/features" class="govuk-link govuk-!-margin-left-3">Clear</a>
+            </div>
+          </div>
+        </div>
+      </form>
+
       <div class="govuk-body" data-testid="features-page-body">
         {% if featureTableRows.length %}
           <div>
@@ -22,7 +82,7 @@
             }) }}
           </div>
         {% else %}
-          <p class="govuk-!-margin-left-3">No features available</p>
+          <p>No features available</p>
         {% endif %}
       </div>
     </div>
