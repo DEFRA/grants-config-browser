@@ -3,8 +3,8 @@ import { formatDateTime } from '../helpers/date-display.js'
 
 export const featuresController = {
   async handler(request, h) {
-    const { name } = request.query
-    const features = await getFeatures(request, name)
+    const { name, displayName } = request.query
+    const features = await getFeatures(request, name, displayName)
 
     return h.view('features/index', {
       pageTitle: `Features`,
@@ -20,7 +20,7 @@ export const featuresController = {
       ],
       headers: buildTableHeaders(),
       featureTableRows: buildTableRows(features),
-      filters: { name }
+      filters: { name, displayName }
     })
   }
 }
@@ -108,8 +108,8 @@ export const buildTableRows = (features) => {
   })
 }
 
-const getFeatures = async (request, name) => {
-  const filters = { name }
+const getFeatures = async (request, name, displayName) => {
+  const filters = { name, displayName }
   const endpoint = buildEndpointWithQueryParams('feature-controls', filters)
 
   const {
@@ -119,14 +119,18 @@ const getFeatures = async (request, name) => {
   return modifyFeaturesForDisplay(items)
 }
 
-const buildEndpointWithQueryParams = (endpoint, { name }) => {
-  let queryString = ''
+const buildEndpointWithQueryParams = (endpoint, { name, displayName }) => {
+  const params = new URLSearchParams()
 
   if (name) {
-    queryString = `?name=${name}`
+    params.append('name', name)
+  }
+  if (displayName) {
+    params.append('displayName', displayName)
   }
 
-  return `${endpoint}${queryString}`
+  const queryString = params.toString()
+  return queryString ? `${endpoint}?${queryString}` : endpoint
 }
 
 const modifyFeaturesForDisplay = (features) => {

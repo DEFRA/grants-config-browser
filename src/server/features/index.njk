@@ -17,6 +17,17 @@
           <div class="govuk-grid-column-one-third">
             {{ govukInput({
               label: {
+                text: "Filter by feature",
+                classes: "govuk-label--s"
+              },
+              id: "displayName",
+              name: "displayName",
+              value: filters.displayName
+            }) }}
+          </div>
+          <div class="govuk-grid-column-one-third">
+            {{ govukInput({
+              label: {
                 text: "Filter by name",
                 classes: "govuk-label--s"
               },

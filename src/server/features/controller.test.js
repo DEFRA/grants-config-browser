@@ -108,6 +108,44 @@ describe('#featuresController', () => {
     expect(requestFromApi).toHaveBeenCalledWith(`feature-controls?name=${nameFilter}`, expect.anything())
   })
 
+  test('Should call API with displayName filter from query params', async () => {
+    const mockFeatures = { items: [] }
+    requestFromApi.mockResolvedValueOnce({ response: mockFeatures })
+
+    const displayNameFilter = 'Test Feature'
+    await server.inject({
+      method: 'GET',
+      url: `/features?displayName=${encodeURIComponent(displayNameFilter)}`,
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(requestFromApi).toHaveBeenCalledWith(`feature-controls?displayName=Test+Feature`, expect.anything())
+  })
+
+  test('Should call API with both filters from query params', async () => {
+    const mockFeatures = { items: [] }
+    requestFromApi.mockResolvedValueOnce({ response: mockFeatures })
+
+    const nameFilter = 'TEST_FEATURE'
+    const displayNameFilter = 'Test Feature'
+    await server.inject({
+      method: 'GET',
+      url: `/features?name=${nameFilter}&displayName=${encodeURIComponent(displayNameFilter)}`,
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(requestFromApi).toHaveBeenCalledWith(
+      `feature-controls?name=${nameFilter}&displayName=Test+Feature`,
+      expect.anything()
+    )
+  })
+
   test('Should include filter form in the response', async () => {
     requestFromApi.mockResolvedValueOnce({ response: { items: [] } })
 
@@ -124,16 +162,18 @@ describe('#featuresController', () => {
     const form = $('form')
     expect(form.attr('method')).toBe('GET')
     expect(form.find('input[name="name"]')).toHaveLength(1)
+    expect(form.find('input[name="displayName"]')).toHaveLength(1)
     expect(form.find('button[type="submit"]').text().trim()).toBe('Filter')
   })
 
-  test('Should populate filter form with current filter value', async () => {
+  test('Should populate filter form with current filter values', async () => {
     requestFromApi.mockResolvedValueOnce({ response: { items: [] } })
 
     const nameFilter = 'some-feature'
+    const displayNameFilter = 'Some Feature'
     const { result } = await server.inject({
       method: 'GET',
-      url: `/features?name=${nameFilter}`,
+      url: `/features?name=${nameFilter}&displayName=${encodeURIComponent(displayNameFilter)}`,
       auth: {
         strategy: 'session',
         credentials
@@ -142,6 +182,7 @@ describe('#featuresController', () => {
 
     const $ = load(result)
     expect($('input[name="name"]').val()).toBe(nameFilter)
+    expect($('input[name="displayName"]').val()).toBe(displayNameFilter)
   })
 
   test('Should truncate long feature value', async () => {
