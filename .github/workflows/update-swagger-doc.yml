@@ -48,3 +48,4 @@ jobs:
           body: Update swagger doc
           branch: update-swagger-doc
           delete-branch: true
+          sign-commits: true

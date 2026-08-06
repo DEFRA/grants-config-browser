@@ -19,6 +19,7 @@ export async function saveUserSession(request, sessionId, credentials) {
     email: claims?.email ?? claims?.preferred_username,
     loginHint: claims?.login_hint,
     isAuthenticated: true,
+    roles: claims?.roles,
     accessToken,
     refreshToken,
     expiresIn: expiresInMilliSeconds,

@@ -81,6 +81,16 @@ export const formatScopes = (scopes) => (Array.isArray(scopes) && scopes.length 
 export const formatRoles = (roles) =>
   Array.isArray(roles) && roles.length > 0 ? wrapInList(roles) : 'No role required'
 
+export const canUserUpdate = (userRoles, roleRequired) => {
+  if (!Array.isArray(roleRequired) || roleRequired.length === 0) {
+    return true
+  }
+  if (!Array.isArray(userRoles)) {
+    return false
+  }
+  return userRoles.some((role) => roleRequired.includes(role))
+}
+
 const wrapInList = (items) => `<ul class="govuk-list govuk-list--bullet">${items.map(mapValueToListItem).join('')}</ul>`
 const mapValueToListItem = (value) => `<li>${value}</li>`
 

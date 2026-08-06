@@ -31,6 +31,8 @@ export function context(request) {
     serviceUrl: '/',
     breadcrumbs: [],
     isAuthenticated,
+    userDisplayName: userSession?.displayName,
+    userRoles: userSession?.roles,
     navigation,
     slots,
     getAssetPath(asset) {

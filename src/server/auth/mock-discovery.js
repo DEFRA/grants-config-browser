@@ -89,7 +89,8 @@ export const mockTokenHandler = {
       exp: now + 3600,
       iss: ISSUER,
       aud: CLIENT_ID,
-      auth_time: now
+      auth_time: now,
+      roles: ['user', 'admin', 'role1']
     }
 
     if (nonce) {

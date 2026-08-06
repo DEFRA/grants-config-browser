@@ -33,7 +33,8 @@ describe('saveUserSession', () => {
         oid: 'user-id',
         name: 'Test User',
         email: 'test@example.com',
-        login_hint: 'login-hint'
+        login_hint: 'login-hint',
+        roles: ['role1', 'role2']
       }
     }
 
@@ -48,7 +49,8 @@ describe('saveUserSession', () => {
       refreshToken: 'refresh-token',
       expiresIn: 3600000,
       expiresAt: expectedExpiresAt,
-      token: sessionData
+      token: sessionData,
+      roles: ['role1', 'role2']
     }
 
     const result = await saveUserSession(request, sessionId, sessionData)
