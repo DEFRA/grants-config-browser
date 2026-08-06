@@ -24,7 +24,9 @@ const featureControl = {
       value: true,
       dateTime: '2023-01-01T12:00:00Z',
       setBy: 'User A',
-      note: 'Initial'
+      note: 'Initial',
+      changeToValue: 'true',
+      notificationEmitted: true
     }
   ]
 }
@@ -99,9 +101,9 @@ describe('#featureControlController', () => {
       // check history, initial so won't have change or notification
       expect($('.govuk-table__cell').eq(0).text().trim()).toBe('01/01/2023')
       expect($('.govuk-table__cell').eq(1).text().trim()).toBe('User A')
-      expect($('.govuk-table__cell').eq(2).text().trim()).toBe('')
+      expect($('.govuk-table__cell').eq(2).text().trim()).toBe('true')
       expect($('.govuk-table__cell').eq(3).text().trim()).toBe('Initial')
-      expect($('.govuk-table__cell').eq(4).text().trim()).toBe('No')
+      expect($('.govuk-table__cell').eq(4).text().trim()).toBe('Yes')
 
       // Check breadcrumbs
       const breadcrumbs = $('.govuk-breadcrumbs__list-item')
