@@ -13,7 +13,8 @@ import {
   formatAuditInfo,
   handleListAction,
   convertValueForType,
-  formatEnvironment
+  formatEnvironment,
+  canUserUpdate
 } from './helpers.js'
 import { getFeatureControlSchema, validateUpdate } from './validation.js'
 
@@ -33,6 +34,7 @@ export const detailHandler = async (request, h) => {
 
   const { displayName, value, type, scopes, roleRequired, history } = featureControl
   const auditInfo = formatAuditInfo(featureControl)
+  const canUpdate = isAuthenticated && canUserUpdate(request.auth.credentials?.roles, roleRequired)
 
   return h.view('feature-control/index', {
     pageTitle: `Feature control details - ${displayName}`,
@@ -47,7 +49,8 @@ export const detailHandler = async (request, h) => {
     historyRows: createHistoryRows(history, type),
     historyHeaders: buildHistoryTableHeaders(),
     breadcrumbs: getBreadcrumbs(displayName, name),
-    isAuthenticated
+    isAuthenticated,
+    canUpdate
   })
 }
 
@@ -61,6 +64,10 @@ export const updateHandler = async (request, h) => {
     return errorResponse
   }
 
+  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
+    return h.response('Forbidden').code(statusCodes.forbidden)
+  }
+
   return renderUpdatePage(h, featureControl)
 }
 
@@ -71,6 +78,10 @@ export const processUpdateHandler = async (request, h) => {
   const { featureControl, errorResponse } = await getFeatureControl(name, request, h)
   if (errorResponse) {
     return errorResponse
+  }
+
+  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
+    return h.response('Forbidden').code(statusCodes.forbidden)
   }
 
   if (action === 'add-item' || action?.startsWith('remove-item-')) {

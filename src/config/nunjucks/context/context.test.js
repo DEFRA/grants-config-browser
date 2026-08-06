@@ -49,6 +49,8 @@ describe('context and cache', () => {
           breadcrumbs: [],
           getAssetPath: expect.any(Function),
           isAuthenticated: false,
+          userDisplayName: undefined,
+          userRoles: undefined,
           navigation: [
             {
               current: true,
@@ -147,6 +149,8 @@ describe('context and cache', () => {
           breadcrumbs: [],
           getAssetPath: expect.any(Function),
           isAuthenticated: true,
+          userDisplayName: 'User A',
+          userRoles: undefined,
           navigation: [
             {
               current: true,

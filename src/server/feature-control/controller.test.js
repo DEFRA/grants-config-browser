@@ -34,7 +34,7 @@ describe('#featureControlController', () => {
     await server.stop({ timeout: 0 })
   })
 
-  const credentials = { isAuthenticated: true, displayName: 'User A' }
+  const credentials = { isAuthenticated: true, displayName: 'User A', roles: ['admin'] }
 
   describe('detail', () => {
     test('Should redirect to home page if invalid query parameters supplied', async () => {
