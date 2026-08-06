@@ -73,7 +73,7 @@ export const updateHandler = async (request, h) => {
 
 export const processUpdateHandler = async (request, h) => {
   const { name, note, action } = request.payload
-  let { value: rawValue } = request.payload
+  const { value: rawValue } = request.payload
 
   const { featureControl, errorResponse } = await getFeatureControl(name, request, h)
   if (errorResponse) {
@@ -84,6 +84,10 @@ export const processUpdateHandler = async (request, h) => {
     return h.response('Forbidden').code(statusCodes.forbidden)
   }
 
+  return processUpdate({ request, h, featureControl, action, rawValue, note, name })
+}
+
+const processUpdate = async ({ request, h, featureControl, action, rawValue, note, name }) => {
   if (action === 'add-item' || action?.startsWith('remove-item-')) {
     const items = handleListAction(action, rawValue)
     return renderUpdatePage(h, featureControl, null, note, items)
