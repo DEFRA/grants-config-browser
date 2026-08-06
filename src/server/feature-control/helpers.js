@@ -21,7 +21,7 @@ export const buildHistoryTableHeaders = () => [
   { text: 'Changed by' },
   { text: 'Change' },
   { text: 'Note' },
-  { text: 'Notification emmitted' }
+  { text: 'Notification emitted' }
 ]
 
 export const createHistoryRows = (history, type) =>
