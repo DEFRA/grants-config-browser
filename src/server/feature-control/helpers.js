@@ -24,7 +24,7 @@ export const buildHistoryTableHeaders = () => [
   { text: 'Notification emitted' }
 ]
 
-export const createHistoryRows = (history, type) =>
+export const createHistoryRows = (history) =>
   (history || [])
     .sort((x, y) => (y.dateTime || '').localeCompare(x.dateTime || ''))
     .map((entry) => [
