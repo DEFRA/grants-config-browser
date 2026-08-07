@@ -9,11 +9,12 @@ on:
       - reopened
       - synchronize
       - ready_for_review
+    paths-ignore:
+      - 'src/docs/swagger.yaml'
 
 jobs:
   pr-validator:
     name: Run Pull Request Checks
-    if: github.head_ref != 'update-swagger-doc'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
