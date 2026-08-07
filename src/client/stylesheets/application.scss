@@ -9,6 +9,10 @@
 
 @use "node_modules/tippy.js/dist/tippy";
 
+.govuk-width-container {
+  max-width: 1200px;
+}
+
 .tippy-box[data-theme~="white-bg"] {
   background-color: #ffffff;
   color: #333333;
