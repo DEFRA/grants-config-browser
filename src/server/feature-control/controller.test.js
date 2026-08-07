@@ -19,7 +19,16 @@ const featureControl = {
   expiryDate: '2024-01-01T12:00:00Z',
   scopes: ['scope1'],
   roleRequired: ['admin'],
-  history: [{ value: true, dateTime: '2023-01-01T12:00:00Z', setBy: 'User A', note: 'Initial' }]
+  history: [
+    {
+      value: true,
+      dateTime: '2023-01-01T12:00:00Z',
+      setBy: 'User A',
+      note: 'Initial',
+      changeToValue: 'true',
+      notificationEmitted: true
+    }
+  ]
 }
 
 describe('#featureControlController', () => {
@@ -89,8 +98,12 @@ describe('#featureControlController', () => {
       expect($('.govuk-inset-text').text()).toContain('True')
       expect($('.govuk-summary-list__value').eq(0).text().trim()).toBe('Toggle')
       expect($('.govuk-summary-list__value').eq(1).text().trim()).toBe('scope1')
+      // check history, initial so won't have change or notification
       expect($('.govuk-table__cell').eq(0).text().trim()).toBe('01/01/2023')
-      expect($('.govuk-table__cell').eq(2).text().trim()).toBe('True')
+      expect($('.govuk-table__cell').eq(1).text().trim()).toBe('User A')
+      expect($('.govuk-table__cell').eq(2).text().trim()).toBe('true')
+      expect($('.govuk-table__cell').eq(3).text().trim()).toBe('Initial')
+      expect($('.govuk-table__cell').eq(4).text().trim()).toBe('Yes')
 
       // Check breadcrumbs
       const breadcrumbs = $('.govuk-breadcrumbs__list-item')
@@ -110,7 +123,16 @@ describe('#featureControlController', () => {
           createdBy: 'User A',
           lastUpdated: '2023-01-02T12:00:00Z',
           lastUpdatedBy: 'User B',
-          history: [{ value: ['a', 'b'], dateTime: '2023-01-01T12:00:00Z', setBy: 'User A' }]
+          history: [
+            {
+              value: ['a', 'b'],
+              dateTime: '2023-01-01T12:00:00Z',
+              setBy: 'User A',
+              note: 'Fake update by user',
+              changeToValue: 'Added: a | Removed: c',
+              notificationEmitted: true
+            }
+          ]
         }
       })
 
@@ -128,8 +150,12 @@ describe('#featureControlController', () => {
       expect($('.govuk-inset-text').find('ul li')).toHaveLength(2)
       expect($('.govuk-inset-text').find('li').eq(0).text().trim()).toBe('a')
       expect($('.govuk-inset-text').find('li').eq(1).text().trim()).toBe('b')
+      // check history, initial so won't have change or notification
       expect($('.govuk-table__cell').eq(0).text().trim()).toBe('01/01/2023')
-      expect($('.govuk-table__cell').eq(2).text().trim()).toBe('a, b')
+      expect($('.govuk-table__cell').eq(1).text().trim()).toBe('User A')
+      expect($('.govuk-table__cell').eq(2).text().trim()).toBe('Added: a | Removed: c')
+      expect($('.govuk-table__cell').eq(3).text().trim()).toBe('Fake update by user')
+      expect($('.govuk-table__cell').eq(4).text().trim()).toBe('Yes')
     })
 
     test('Should render page for number type', async () => {

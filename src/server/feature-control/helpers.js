@@ -19,18 +19,20 @@ export const getBreadcrumbs = (displayName, name, isUpdatePage = false) => {
 export const buildHistoryTableHeaders = () => [
   { text: 'Date' },
   { text: 'Changed by' },
-  { text: 'Value' },
-  { text: 'Note' }
+  { text: 'Change' },
+  { text: 'Note' },
+  { text: 'Notification emitted' }
 ]
 
-export const createHistoryRows = (history, type) =>
+export const createHistoryRows = (history) =>
   (history || [])
     .sort((x, y) => (y.dateTime || '').localeCompare(x.dateTime || ''))
     .map((entry) => [
       { text: entry.dateTime ? formatDateTime(entry.dateTime) : '' },
       { text: entry.setBy },
-      { text: formatValue(entry.value, type) },
-      { text: entry.note }
+      { text: entry.changeToValue },
+      { text: entry.note },
+      { text: entry.notificationEmitted ? 'Yes' : 'No' }
     ])
 
 export const handleListAction = (action, rawValue) => {
