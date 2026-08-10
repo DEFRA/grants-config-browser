@@ -34,6 +34,31 @@ export const api = {
           method: 'POST',
           path: '/api/release-config',
           ...apiController
+        },
+        {
+          method: 'GET',
+          path: '/api/feature-control/{name}',
+          ...apiController
+        },
+        {
+          method: 'GET',
+          path: '/api/feature-control/{name}/detailed',
+          ...apiController
+        },
+        {
+          method: 'POST',
+          path: '/api/feature-control',
+          ...apiController
+        },
+        {
+          method: 'PUT',
+          path: '/api/feature-control/value',
+          ...apiController
+        },
+        {
+          method: 'GET',
+          path: '/api/feature-controls',
+          ...apiController
         }
       ])
     }
