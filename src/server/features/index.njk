@@ -15,7 +15,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
       <form method="GET">
-        <div class="govuk-grid-row">
+        <div class="govuk-grid-row" style="display: flex; align-items: flex-end;">
           <div class="govuk-grid-column-one-quarter">
             {{ govukInput({
               label: {
@@ -24,7 +24,10 @@
               },
               id: "displayName",
               name: "displayName",
-              value: filters.displayName
+              value: filters.displayName,
+              formGroup: {
+                classes: "govuk-!-margin-bottom-0"
+              }
             }) }}
           </div>
           <div class="govuk-grid-column-one-quarter">
@@ -35,7 +38,10 @@
               },
               id: "name",
               name: "name",
-              value: filters.name
+              value: filters.name,
+              formGroup: {
+                classes: "govuk-!-margin-bottom-0"
+              }
             }) }}
           </div>
           <div class="govuk-grid-column-one-quarter">
@@ -55,13 +61,30 @@
                 text: "Filter by scope",
                 classes: "govuk-label--s"
               },
-              items: scopeItems
+              items: scopeItems,
+              formGroup: {
+                classes: "govuk-!-margin-bottom-0"
+              }
             }) }}
           </div>
           <div class="govuk-grid-column-one-quarter">
+            <div class="govuk-button-group govuk-!-margin-bottom-0" style="align-items: center;">
+              {{ govukButton({
+                text: "Filter",
+                classes: "govuk-!-margin-bottom-0"
+              }) }}
+              <a href="/features" class="govuk-link">Clear</a>
+            </div>
+          </div>
+        </div>
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-full">
             {{ govukCheckboxes({
               name: "status",
-              classes: "govuk-checkboxes--small govuk-!-margin-top-6",
+              classes: "govuk-checkboxes--small govuk-!-margin-top-2",
+              formGroup: {
+                classes: "govuk-!-margin-bottom-2"
+              },
               items: [
                 {
                   value: "",
@@ -70,16 +93,6 @@
                 }
               ]
             }) }}
-          </div>
-        </div>
-        <div class="govuk-grid-row">
-          <div class="govuk-grid-column-full">
-            <div class="govuk-!-margin-top-2">
-              {{ govukButton({
-                text: "Filter"
-              }) }}
-              <a href="/features" class="govuk-link govuk-!-margin-left-3">Clear</a>
-            </div>
           </div>
         </div>
       </form>
