@@ -12,6 +12,7 @@ const featureControl = {
   type: 'boolean',
   value: true,
   description: 'A test boolean',
+  status: 'active',
   created: '2023-01-01T12:00:00Z',
   createdBy: 'User A',
   lastUpdated: '2023-01-02T12:00:00Z',
@@ -96,8 +97,10 @@ describe('#featureControlController', () => {
       expect($('.govuk-caption-m').text()).toBe('TEST_BOOLEAN')
       expect($('.govuk-inset-text').text()).toContain('Current value')
       expect($('.govuk-inset-text').text()).toContain('True')
-      expect($('.govuk-summary-list__value').eq(0).text().trim()).toBe('Toggle')
-      expect($('.govuk-summary-list__value').eq(1).text().trim()).toBe('scope1')
+      expect($('.govuk-summary-list__value').eq(0).text().trim()).toBe('ACTIVE')
+      expect($('.govuk-summary-list__value').eq(0).find('.govuk-tag').hasClass('govuk-tag--grey')).toBe(false)
+      expect($('.govuk-summary-list__value').eq(1).text().trim()).toBe('Toggle')
+      expect($('.govuk-summary-list__value').eq(2).text().trim()).toBe('scope1')
       // check history, initial so won't have change or notification
       expect($('.govuk-table__cell').eq(0).text().trim()).toBe('01/01/2023')
       expect($('.govuk-table__cell').eq(1).text().trim()).toBe('User A')
@@ -378,6 +381,7 @@ describe('#featureControlController', () => {
           displayName: 'Minimal Feature',
           type: 'string',
           value: 'some value',
+          status: 'active',
           created: null,
           createdBy: 'User A',
           lastUpdated: null,
@@ -401,10 +405,34 @@ describe('#featureControlController', () => {
       const $ = load(result)
       expect($('.govuk-table__cell').eq(0).text().trim()).toBe('') // Missing history dateTime
       expect($('.govuk-table__cell').eq(1).text().trim()).toBe('User A')
-      expect($('.govuk-summary-list__value').eq(1).text().trim()).toBe('') // Scopes
+      expect($('.govuk-summary-list__value').eq(0).text().trim()).toBe('ACTIVE') // Status
+      expect($('.govuk-summary-list__value').eq(2).text().trim()).toBe('') // Scopes
       expect($('.govuk-summary-list__value').eq(4).text().trim()).toBe('') // Created (missing date)
       expect($('.govuk-summary-list__value').eq(5).text().trim()).toBe('') // Updated (missing date)
-      expect($('.govuk-summary-list__value').eq(6).text().trim()).toBe('No role required') // Roles
+      expect($('.govuk-summary-list__value').eq(7).text().trim()).toBe('No role required') // Roles
+    })
+
+    test('Should render page for expired status with grey tag', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          ...featureControl,
+          status: 'expired'
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=TEST_BOOLEAN',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-summary-list__value').eq(0).text().trim()).toBe('EXPIRED')
+      expect($('.govuk-summary-list__value').eq(0).find('.govuk-tag').hasClass('govuk-tag--grey')).toBe(true)
     })
 
     test('Should handle history entries with same dateTime', async () => {

@@ -106,7 +106,7 @@ describe('#featuresController', () => {
       }
     })
 
-    expect(requestFromApi).toHaveBeenCalledWith(`feature-controls?name=${nameFilter}`, expect.anything())
+    expect(requestFromApi).toHaveBeenCalledWith(`feature-controls?name=${nameFilter}&status=active`, expect.anything())
   })
 
   test('Should call API with displayName filter from query params', async () => {
@@ -123,7 +123,10 @@ describe('#featuresController', () => {
       }
     })
 
-    expect(requestFromApi).toHaveBeenCalledWith(`feature-controls?displayName=Test+Feature`, expect.anything())
+    expect(requestFromApi).toHaveBeenCalledWith(
+      `feature-controls?displayName=Test+Feature&status=active`,
+      expect.anything()
+    )
   })
 
   test('Should call API with all filters from query params', async () => {
@@ -143,7 +146,7 @@ describe('#featuresController', () => {
     })
 
     expect(requestFromApi).toHaveBeenCalledWith(
-      `feature-controls?name=${nameFilter}&displayName=Test+Feature&scope=Scope+A`,
+      `feature-controls?name=${nameFilter}&displayName=Test+Feature&scope=Scope+A&status=active`,
       expect.anything()
     )
   })
@@ -178,7 +181,7 @@ describe('#featuresController', () => {
     const scopeFilter = 'Scope B'
     const { result } = await server.inject({
       method: 'GET',
-      url: `/features?name=${nameFilter}&displayName=${encodeURIComponent(displayNameFilter)}&scope=${scopeFilter}`,
+      url: `/features?name=${nameFilter}&displayName=${encodeURIComponent(displayNameFilter)}&scope=${scopeFilter}&status=`,
       auth: {
         strategy: 'session',
         credentials
@@ -189,6 +192,7 @@ describe('#featuresController', () => {
     expect($('input[name="name"]').val()).toBe(nameFilter)
     expect($('input[name="displayName"]').val()).toBe(displayNameFilter)
     expect($('select[name="scope"]').val()).toBe(scopeFilter)
+    expect($('input[name="status"]').is(':checked')).toBe(true)
   })
 
   test('Should truncate long feature value', async () => {
@@ -290,5 +294,21 @@ describe('#featuresController', () => {
 
     expect($('p').text()).toContain('No features available')
     expect($('table')).toHaveLength(0)
+  })
+
+  test('Should call API with empty status when checkbox is unchecked', async () => {
+    const mockFeatures = { items: [] }
+    requestFromApi.mockResolvedValueOnce({ response: mockFeatures })
+
+    await server.inject({
+      method: 'GET',
+      url: '/features?status=',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(requestFromApi).toHaveBeenCalledWith('feature-controls', expect.anything())
   })
 })

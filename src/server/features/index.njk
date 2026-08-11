@@ -2,6 +2,7 @@
 
 {% from "govuk/components/input/macro.njk" import govukInput %}
 {% from "govuk/components/select/macro.njk" import govukSelect %}
+{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
 
@@ -58,7 +59,22 @@
             }) }}
           </div>
           <div class="govuk-grid-column-one-quarter">
-            <div class="govuk-!-margin-top-6">
+            {{ govukCheckboxes({
+              name: "status",
+              classes: "govuk-checkboxes--small govuk-!-margin-top-6",
+              items: [
+                {
+                  value: "",
+                  text: "Include inactive",
+                  checked: filters.status === ""
+                }
+              ]
+            }) }}
+          </div>
+        </div>
+        <div class="govuk-grid-row">
+          <div class="govuk-grid-column-full">
+            <div class="govuk-!-margin-top-2">
               {{ govukButton({
                 text: "Filter"
               }) }}
