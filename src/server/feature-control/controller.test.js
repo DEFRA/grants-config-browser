@@ -217,13 +217,14 @@ describe('#featureControlController', () => {
       expect($('.govuk-inset-text').text().replace('Current value', '').trim()).toBe('')
     })
 
-    test('Should show Update button for string type when authenticated', async () => {
+    test('Should show Update button for string type when authenticated and status is active', async () => {
       requestFromApi.mockResolvedValue({
         response: {
           name: 'test-string',
           displayName: 'Test String',
           type: 'string',
           value: 'some value',
+          status: 'active',
           created: '2023-01-01T12:00:00Z',
           createdBy: 'User A',
           lastUpdated: '2023-01-02T12:00:00Z',
@@ -247,6 +248,35 @@ describe('#featureControlController', () => {
       expect(updateButton.attr('href')).toBe('/feature-control/update?name=test-string')
     })
 
+    test('Should NOT show Update button for string type when authenticated but status is NOT active', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          name: 'test-string',
+          displayName: 'Test String',
+          type: 'string',
+          value: 'some value',
+          status: 'expired',
+          created: '2023-01-01T12:00:00Z',
+          createdBy: 'User A',
+          lastUpdated: '2023-01-02T12:00:00Z',
+          lastUpdatedBy: 'User B'
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=test-string',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('a.govuk-button')).toHaveLength(0)
+    })
+
     test('Should NOT show Update button for string type when NOT authenticated', async () => {
       requestFromApi.mockResolvedValue({
         response: {
@@ -267,13 +297,14 @@ describe('#featureControlController', () => {
       expect($('a.govuk-button')).toHaveLength(0)
     })
 
-    test('Should show Update button for list-string type when authenticated', async () => {
+    test('Should show Update button for list-string type when authenticated and active', async () => {
       requestFromApi.mockResolvedValue({
         response: {
           name: 'test-list',
           displayName: 'Test List',
           type: 'list-string',
-          value: ['a', 'b']
+          value: ['a', 'b'],
+          status: 'active'
         }
       })
 
@@ -292,13 +323,14 @@ describe('#featureControlController', () => {
       expect(updateButton.text().trim()).toBe('Update')
     })
 
-    test('Should show Update button for list-number type when authenticated', async () => {
+    test('Should show Update button for list-number type when authenticated and active', async () => {
       requestFromApi.mockResolvedValue({
         response: {
           name: 'test-list-number',
           displayName: 'Test List Number',
           type: 'list-number',
-          value: [1, 2]
+          value: [1, 2],
+          status: 'active'
         }
       })
 
@@ -806,13 +838,14 @@ describe('#featureControlController', () => {
       expect($('textarea[name="value"]').val()).toBe('123')
     })
 
-    test('Should show Update button for number type when authenticated', async () => {
+    test('Should show Update button for number type when authenticated and active', async () => {
       requestFromApi.mockResolvedValue({
         response: {
           name: 'test-number',
           displayName: 'Test Number',
           type: 'number',
-          value: 456
+          value: 456,
+          status: 'active'
         }
       })
 

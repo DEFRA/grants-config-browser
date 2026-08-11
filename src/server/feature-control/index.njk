@@ -95,7 +95,7 @@
       }) }}
 
       <div class="govuk-button-group">
-        {% if canUpdate and (featureControl.type === 'boolean' or featureControl.type === 'string' or featureControl.type === 'number' or featureControl.type === 'list-string' or featureControl.type === 'list-number') %}
+        {% if canUpdate and featureControl.status === 'active' and (featureControl.type === 'boolean' or featureControl.type === 'string' or featureControl.type === 'number' or featureControl.type === 'list-string' or featureControl.type === 'list-number') %}
           <a href="/feature-control/update?name={{ technicalName }}" class="govuk-button" data-module="govuk-button">
             Update
           </a>
