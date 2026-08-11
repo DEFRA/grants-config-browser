@@ -61,9 +61,10 @@ export const buildTableHeaders = () => {
 }
 
 export const buildTableRows = (features) => {
-  const centringClass = 'vertical-middle'
-
   return features.map((feature) => {
+    const isInactive = feature.status && feature.status !== 'active'
+    const rowClass = `vertical-middle ${isInactive ? 'row-inactive-highlight' : ''}`.trim()
+
     return [
       {
         html: `
@@ -73,6 +74,14 @@ export const buildTableRows = (features) => {
             </summary>
             <div class="govuk-details__text">
               <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-0">
+                <div class="govuk-summary-list__row">
+                  <dt class="govuk-summary-list__key">Status</dt>
+                  <dd class="govuk-summary-list__value">
+                    <strong class="govuk-tag ${isInactive ? 'govuk-tag--grey' : ''}">
+                      ${(feature.status || 'unknown').toUpperCase()}
+                    </strong>
+                  </dd>
+                </div>
                 <div class="govuk-summary-list__row">
                   <dt class="govuk-summary-list__key">Description</dt>
                   <dd class="govuk-summary-list__value">${feature.description}</dd>
@@ -89,19 +98,19 @@ export const buildTableRows = (features) => {
             </div>
           </details>
         `,
-        classes: centringClass
+        classes: rowClass
       },
       {
         text: feature.name,
-        classes: centringClass
+        classes: rowClass
       },
       {
         text: feature.displayValue,
-        classes: centringClass
+        classes: rowClass
       },
       {
         text: formatDateTime(feature.lastUpdated),
-        classes: centringClass,
+        classes: rowClass,
         attributes: {
           'data-sort-value': new Date(feature.lastUpdated).getTime()
         }
