@@ -30,13 +30,13 @@ const buildTableHeaders = () => {
   ]
 }
 
-const createRowsForTable = (versions) => {
+const createRowsForTable = (versions, grantName) => {
   const env = nunjucks.configure(['src/server/common/templates/partials', 'node_modules/govuk-frontend/dist'])
   const rows = versions.map((version) => {
     const centringClass = 'vertical-middle'
     return [
       {
-        text: version.version,
+        html: `<a href="/version?grant=${grantName}&version=${version.version}">${version.version}</a>`,
         classes: centringClass
       },
       {
@@ -58,7 +58,7 @@ const createTableData = (allVersions) => {
   return allVersions
     .sort((a, b) => a.grant.localeCompare(b.grant))
     .map((grant) => {
-      const { rows, isTruncated } = createRowsForTable(grant.versions)
+      const { rows, isTruncated } = createRowsForTable(grant.versions, grant.grant)
       return {
         title: grant.grant,
         rows,

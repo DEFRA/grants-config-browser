@@ -28,6 +28,24 @@
         {% else %}
           <li>No versions available</li>
         {% endif %}
+
+        {% if featureControlTableRows.length %}
+          <h2 class="govuk-heading-m govuk-!-static-margin-top-8">
+            Related feature controls
+          </h2>
+
+          <div>
+            {{ govukTable({
+              attributes: {
+                'data-module': 'moj-sortable-table'
+              },
+              firstCellIsHeader: false,
+              head: featureControlHeaders,
+              rows: featureControlTableRows,
+              classes: 'fixed-layout-table'
+            }) }}
+          </div>
+        {% endif %}
       </div>
     </div>
   </div>
