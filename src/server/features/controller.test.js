@@ -29,7 +29,8 @@ describe('#featuresController', () => {
           value: true,
           description: 'Description for feature one',
           scopes: 'Scope A',
-          lastUpdated: '2024-01-01T12:00:00Z'
+          lastUpdated: '2024-01-01T12:00:00Z',
+          status: 'active'
         },
         {
           name: 'FEATURE_TWO',
@@ -37,7 +38,8 @@ describe('#featuresController', () => {
           value: 'some-value',
           description: 'Description for feature two',
           scopes: 'Scope B',
-          lastUpdated: '2024-01-02T12:00:00Z'
+          lastUpdated: '2024-01-02T12:00:00Z',
+          status: 'active'
         }
       ],
       uniqueScopes: ['Scope A', 'Scope B']
@@ -57,6 +59,10 @@ describe('#featuresController', () => {
     const $ = load(result)
 
     expect($('h1').text()).toContain('Features')
+
+    const checkboxLabel = $('.govuk-checkboxes__label')
+    expect(checkboxLabel.text()).toContain('Include inactive')
+    expect(checkboxLabel.hasClass('inactive-highlight')).toBe(true)
 
     // Check breadcrumbs
     const breadcrumbs = $('.govuk-breadcrumbs__list-item')
@@ -78,7 +84,8 @@ describe('#featuresController', () => {
     const firstRow = rows.eq(0)
     expect(firstRow.find('td').eq(0).text()).toContain('Feature One')
     expect(firstRow.find('td').eq(1).text()).toBe('FEATURE_ONE')
-    expect(firstRow.find('td').eq(2).text()).toBe('true')
+    expect(firstRow.find('td').eq(2).text().trim()).toBe('true')
+
     // Check row one expanded details
     const details = firstRow.find('td').eq(0).find('details')
     const summaryRows = details.find('.govuk-summary-list__row')
@@ -106,7 +113,7 @@ describe('#featuresController', () => {
       }
     })
 
-    expect(requestFromApi).toHaveBeenCalledWith(`feature-controls?name=${nameFilter}`, expect.anything())
+    expect(requestFromApi).toHaveBeenCalledWith(`feature-controls?name=${nameFilter}&status=active`, expect.anything())
   })
 
   test('Should call API with displayName filter from query params', async () => {
@@ -123,7 +130,10 @@ describe('#featuresController', () => {
       }
     })
 
-    expect(requestFromApi).toHaveBeenCalledWith(`feature-controls?displayName=Test+Feature`, expect.anything())
+    expect(requestFromApi).toHaveBeenCalledWith(
+      `feature-controls?displayName=Test+Feature&status=active`,
+      expect.anything()
+    )
   })
 
   test('Should call API with all filters from query params', async () => {
@@ -143,7 +153,7 @@ describe('#featuresController', () => {
     })
 
     expect(requestFromApi).toHaveBeenCalledWith(
-      `feature-controls?name=${nameFilter}&displayName=Test+Feature&scope=Scope+A`,
+      `feature-controls?name=${nameFilter}&displayName=Test+Feature&scope=Scope+A&status=active`,
       expect.anything()
     )
   })
@@ -178,7 +188,7 @@ describe('#featuresController', () => {
     const scopeFilter = 'Scope B'
     const { result } = await server.inject({
       method: 'GET',
-      url: `/features?name=${nameFilter}&displayName=${encodeURIComponent(displayNameFilter)}&scope=${scopeFilter}`,
+      url: `/features?name=${nameFilter}&displayName=${encodeURIComponent(displayNameFilter)}&scope=${scopeFilter}&status=`,
       auth: {
         strategy: 'session',
         credentials
@@ -189,6 +199,7 @@ describe('#featuresController', () => {
     expect($('input[name="name"]').val()).toBe(nameFilter)
     expect($('input[name="displayName"]').val()).toBe(displayNameFilter)
     expect($('select[name="scope"]').val()).toBe(scopeFilter)
+    expect($('input[name="status"]').is(':checked')).toBe(true)
   })
 
   test('Should truncate long feature value', async () => {
@@ -198,13 +209,15 @@ describe('#featuresController', () => {
           name: 'LONG_FEATURE',
           displayName: 'Long Feature',
           value: 'this_is_a_very_long_value_that_should_be_truncated',
-          lastUpdated: '2024-01-03T12:00:00Z'
+          lastUpdated: '2024-01-03T12:00:00Z',
+          status: 'active'
         },
         {
           name: 'ANOTHER_FEATURE',
           displayName: 'Another Feature',
           value: 'val',
-          lastUpdated: '2024-01-01T12:00:00Z'
+          lastUpdated: '2024-01-01T12:00:00Z',
+          status: 'active'
         }
       ]
     }
@@ -223,7 +236,7 @@ describe('#featuresController', () => {
     const rows = $('tbody tr')
 
     const firstRow = rows.eq(0)
-    expect(firstRow.find('td').eq(2).text()).toBe('this_is_a_ve...')
+    expect(firstRow.find('td').eq(2).text().trim()).toBe('this_is_a_ve...')
   })
 
   test('Should handle array values correctly', async () => {
@@ -233,13 +246,15 @@ describe('#featuresController', () => {
           name: 'ARRAY_FEATURE',
           displayName: 'Array Feature',
           value: ['val1', 'val2'],
-          lastUpdated: '2024-01-01T12:00:00Z'
+          lastUpdated: '2024-01-01T12:00:00Z',
+          status: 'active'
         },
         {
           name: 'ANOTHER_FEATURE',
           displayName: 'Another Feature',
           value: 'val',
-          lastUpdated: '2024-01-01T12:00:00Z'
+          lastUpdated: '2024-01-01T12:00:00Z',
+          status: 'active'
         }
       ]
     }
@@ -258,7 +273,7 @@ describe('#featuresController', () => {
     expect($('tbody tr')).toHaveLength(2)
 
     const row = $('tbody tr').eq(0)
-    expect(row.find('td').eq(2).text()).toBe('val1,val2')
+    expect(row.find('td').eq(2).text().trim()).toBe('val1,val2')
 
     // Check expanded details for array value
     const details = row.find('td').eq(0).find('details')
@@ -290,5 +305,89 @@ describe('#featuresController', () => {
 
     expect($('p').text()).toContain('No features available')
     expect($('table')).toHaveLength(0)
+  })
+
+  test('Should call API with empty status when checkbox is unchecked', async () => {
+    const mockFeatures = { items: [] }
+    requestFromApi.mockResolvedValueOnce({ response: mockFeatures })
+
+    await server.inject({
+      method: 'GET',
+      url: '/features?status=',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(requestFromApi).toHaveBeenCalledWith('feature-controls', expect.anything())
+  })
+
+  test('Should handle inactive features correctly', async () => {
+    const mockFeatures = {
+      items: [
+        {
+          name: 'EXPIRED_FEATURE',
+          displayName: 'Expired Feature',
+          value: 'expired-val',
+          description: 'Expired description',
+          scopes: 'Scope C',
+          lastUpdated: '2024-01-01T12:00:00Z',
+          status: 'expired'
+        }
+      ],
+      uniqueScopes: ['Scope C']
+    }
+    requestFromApi.mockResolvedValueOnce({ response: mockFeatures })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/features?status=',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = load(result)
+    const rows = $('tbody tr')
+    expect(rows).toHaveLength(1)
+
+    // Check Expired Feature (inactive-highlight and strikethrough should be applied)
+    const expiredRow = rows.eq(0)
+    expect(expiredRow.find('td').eq(0).hasClass('inactive-highlight')).toBe(true)
+    expect(expiredRow.find('td').eq(1).hasClass('inactive-highlight')).toBe(true)
+    expect(expiredRow.find('td').eq(1).hasClass('strikethrough')).toBe(true)
+
+    // Check the status tag in the Feature column summary
+    const expiredStatusTag = expiredRow.find('td').eq(0).find('.govuk-tag')
+    expect(expiredStatusTag.text().trim()).toBe('EXPIRED')
+    expect(expiredStatusTag.hasClass('govuk-tag--grey')).toBe(true)
+  })
+
+  test('Should exercise all filter branches in buildEndpointWithQueryParams', async () => {
+    requestFromApi.mockResolvedValue({ response: { items: [], uniqueScopes: [] } })
+
+    // Test each filter individually to cover branches in buildEndpointWithQueryParams
+    const filterCombos = [
+      { params: 'name=feat', expected: 'feature-controls?name=feat&status=active' },
+      { params: 'displayName=display', expected: 'feature-controls?displayName=display&status=active' },
+      { params: 'scope=ScopeA', expected: 'feature-controls?scope=ScopeA&status=active' },
+      { params: 'status=active', expected: 'feature-controls?status=active' },
+      { params: '', expected: 'feature-controls?status=active' }
+    ]
+
+    for (const combo of filterCombos) {
+      await server.inject({
+        method: 'GET',
+        url: `/features?${combo.params}`,
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+      expect(requestFromApi).toHaveBeenCalledWith(combo.expected, expect.anything())
+    }
   })
 })

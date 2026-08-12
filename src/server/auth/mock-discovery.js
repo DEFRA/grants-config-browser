@@ -90,7 +90,7 @@ export const mockTokenHandler = {
       iss: ISSUER,
       aud: CLIENT_ID,
       auth_time: now,
-      roles: ['user', 'admin', 'role1']
+      roles: ['user', 'admin', 'role1', 'FGF.Basic']
     }
 
     if (nonce) {

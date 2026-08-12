@@ -10,7 +10,15 @@
 @use "node_modules/tippy.js/dist/tippy";
 
 .govuk-width-container {
-  max-width: 1200px;
+  max-width: 1280px;
+}
+
+.inactive-highlight {
+  background-color: variables.$app-very-light-blue;
+}
+
+.strikethrough {
+  text-decoration: line-through;
 }
 
 .tippy-box[data-theme~="white-bg"] {

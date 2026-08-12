@@ -3,8 +3,9 @@ import { formatDateTime } from '../helpers/date-display.js'
 
 export const featuresController = {
   async handler(request, h) {
-    const { name, displayName, scope } = request.query
-    const { features, uniqueScopes } = await getFeatures(request, name, displayName, scope)
+    const { name, displayName, scope, status = 'active' } = request.query
+
+    const { features, uniqueScopes } = await getFeatures(request, name, displayName, scope, status)
 
     return h.view('features/index', {
       pageTitle: `Features`,
@@ -20,7 +21,7 @@ export const featuresController = {
       ],
       headers: buildTableHeaders(),
       featureTableRows: buildTableRows(features),
-      filters: { name, displayName, scope },
+      filters: { name, displayName, scope, status },
       uniqueScopes
     })
   }
@@ -60,15 +61,21 @@ export const buildTableHeaders = () => {
 }
 
 export const buildTableRows = (features) => {
-  const centringClass = 'vertical-middle'
-
   return features.map((feature) => {
+    const isInactive = feature.status !== 'active'
+    const rowClass = `vertical-middle ${isInactive ? 'inactive-highlight' : ''}`.trim()
+
     return [
       {
         html: `
           <details class="govuk-details govuk-!-margin-top-1 govuk-!-margin-bottom-0">
             <summary class="govuk-details__summary">
               <a href="/feature-control/detail?name=${feature.name}">${feature.displayName}</a>
+              ${
+                feature.status === 'expired'
+                  ? `<strong class="govuk-tag govuk-tag--grey govuk-!-margin-left-2">EXPIRED</strong>`
+                  : ''
+              }
             </summary>
             <div class="govuk-details__text">
               <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-0">
@@ -88,19 +95,19 @@ export const buildTableRows = (features) => {
             </div>
           </details>
         `,
-        classes: centringClass
+        classes: rowClass
       },
       {
         text: feature.name,
-        classes: centringClass
+        classes: `${rowClass} ${isInactive ? 'strikethrough' : ''}`.trim()
       },
       {
         text: feature.displayValue,
-        classes: centringClass
+        classes: rowClass
       },
       {
         text: formatDateTime(feature.lastUpdated),
-        classes: centringClass,
+        classes: rowClass,
         attributes: {
           'data-sort-value': new Date(feature.lastUpdated).getTime()
         }
@@ -109,8 +116,8 @@ export const buildTableRows = (features) => {
   })
 }
 
-const getFeatures = async (request, name, displayName, scope) => {
-  const filters = { name, displayName, scope }
+const getFeatures = async (request, name, displayName, scope, status) => {
+  const filters = { name, displayName, scope, status }
   const endpoint = buildEndpointWithQueryParams('feature-controls', filters)
 
   const {
@@ -123,7 +130,7 @@ const getFeatures = async (request, name, displayName, scope) => {
   }
 }
 
-const buildEndpointWithQueryParams = (endpoint, { name, displayName, scope }) => {
+const buildEndpointWithQueryParams = (endpoint, { name, displayName, scope, status }) => {
   const params = new URLSearchParams()
 
   if (name) {
@@ -134,6 +141,9 @@ const buildEndpointWithQueryParams = (endpoint, { name, displayName, scope }) =>
   }
   if (scope) {
     params.append('scope', scope)
+  }
+  if (status) {
+    params.append('status', status)
   }
 
   const queryString = params.toString()
