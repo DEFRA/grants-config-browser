@@ -15,8 +15,10 @@
 
 .inactive-highlight {
   background-color: variables.$app-very-light-blue;
-  padding: 2px 5px;
-  display: inline-block;
+}
+
+.strikethrough {
+  text-decoration: line-through;
 }
 
 .tippy-box[data-theme~="white-bg"] {

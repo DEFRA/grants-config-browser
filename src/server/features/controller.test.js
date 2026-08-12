@@ -84,10 +84,19 @@ describe('#featuresController', () => {
     const firstRow = rows.eq(0)
     expect(firstRow.find('td').eq(0).text()).toContain('Feature One')
     expect(firstRow.find('td').eq(1).text()).toBe('FEATURE_ONE')
-    expect(firstRow.find('td').eq(2).text()).toBe('true')
+    expect(firstRow.find('td').eq(2).text().trim()).toBe('true')
     // Check row one expanded details
     const details = firstRow.find('td').eq(0).find('details')
+    // Status tag should NOT be in the summary (Feature column) as it is active
+    expect(details.find('.govuk-tag')).toHaveLength(0)
     const summaryRows = details.find('.govuk-summary-list__row')
+
+    // Status should NOT be in the expander anymore
+    const statusInExpander = summaryRows.filter(
+      (_, el) => $(el).find('.govuk-summary-list__key').text().trim() === 'Status'
+    )
+    expect(statusInExpander).toHaveLength(0)
+
     const descriptionRow = summaryRows.filter(
       (_, el) => $(el).find('.govuk-summary-list__key').text().trim() === 'Description'
     )
@@ -235,7 +244,7 @@ describe('#featuresController', () => {
     const rows = $('tbody tr')
 
     const firstRow = rows.eq(0)
-    expect(firstRow.find('td').eq(2).text()).toBe('this_is_a_ve...')
+    expect(firstRow.find('td').eq(2).text().trim()).toBe('this_is_a_ve...')
   })
 
   test('Should handle array values correctly', async () => {
@@ -272,7 +281,7 @@ describe('#featuresController', () => {
     expect($('tbody tr')).toHaveLength(2)
 
     const row = $('tbody tr').eq(0)
-    expect(row.find('td').eq(2).text()).toBe('val1,val2')
+    expect(row.find('td').eq(2).text().trim()).toBe('val1,val2')
 
     // Check expanded details for array value
     const details = row.find('td').eq(0).find('details')
@@ -353,12 +362,26 @@ describe('#featuresController', () => {
     const rows = $('tbody tr')
     expect(rows).toHaveLength(1)
 
-    // Check Expired Feature (inactive-highlight should be applied)
+    // Check Expired Feature (inactive-highlight and strikethrough should be applied)
     const expiredRow = rows.eq(0)
     expect(expiredRow.find('td').eq(0).hasClass('inactive-highlight')).toBe(true)
-    const expiredStatusTag = expiredRow.find('.govuk-tag')
+    expect(expiredRow.find('td').eq(1).hasClass('inactive-highlight')).toBe(true)
+    expect(expiredRow.find('td').eq(1).hasClass('strikethrough')).toBe(true)
+
+    // Check status tag in the Feature column summary
+    const expiredStatusTag = expiredRow.find('td').eq(0).find('.govuk-tag')
     expect(expiredStatusTag.text().trim()).toBe('EXPIRED')
     expect(expiredStatusTag.hasClass('govuk-tag--grey')).toBe(true)
+
+    // Check Value column does NOT have the tag
+    expect(expiredRow.find('td').eq(2).find('.govuk-tag')).toHaveLength(0)
+
+    // Ensure status is NOT in the expander summary list
+    const expiredDetails = expiredRow.find('td').eq(0).find('details')
+    const expiredStatusInExpander = expiredDetails
+      .find('.govuk-summary-list__row')
+      .filter((_, el) => $(el).find('.govuk-summary-list__key').text().trim() === 'Status')
+    expect(expiredStatusInExpander).toHaveLength(0)
   })
 
   test('Should exercise all filter branches in buildEndpointWithQueryParams', async () => {

@@ -71,17 +71,14 @@ export const buildTableRows = (features) => {
           <details class="govuk-details govuk-!-margin-top-1 govuk-!-margin-bottom-0">
             <summary class="govuk-details__summary">
               <a href="/feature-control/detail?name=${feature.name}">${feature.displayName}</a>
+              ${
+                feature.status === 'expired'
+                  ? `<strong class="govuk-tag govuk-tag--grey govuk-!-margin-left-2">EXPIRED</strong>`
+                  : ''
+              }
             </summary>
             <div class="govuk-details__text">
               <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-0">
-                <div class="govuk-summary-list__row">
-                  <dt class="govuk-summary-list__key">Status</dt>
-                  <dd class="govuk-summary-list__value">
-                    <strong class="govuk-tag ${isInactive ? 'govuk-tag--grey' : ''}">
-                      ${feature.status.toUpperCase()}
-                    </strong>
-                  </dd>
-                </div>
                 <div class="govuk-summary-list__row">
                   <dt class="govuk-summary-list__key">Description</dt>
                   <dd class="govuk-summary-list__value">${feature.description}</dd>
@@ -102,7 +99,7 @@ export const buildTableRows = (features) => {
       },
       {
         text: feature.name,
-        classes: rowClass
+        classes: `${rowClass} ${isInactive ? 'strikethrough' : ''}`.trim()
       },
       {
         text: feature.displayValue,
