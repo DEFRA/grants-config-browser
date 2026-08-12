@@ -63,7 +63,7 @@ export const buildTableHeaders = () => {
 export const buildTableRows = (features) => {
   return features.map((feature) => {
     const isInactive = feature.status && feature.status !== 'active'
-    const rowClass = `vertical-middle ${isInactive ? 'row-inactive-highlight' : ''}`.trim()
+    const rowClass = `vertical-middle ${isInactive ? 'inactive-highlight' : ''}`.trim()
 
     return [
       {
