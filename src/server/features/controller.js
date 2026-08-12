@@ -62,7 +62,7 @@ export const buildTableHeaders = () => {
 
 export const buildTableRows = (features) => {
   return features.map((feature) => {
-    const isInactive = feature.status && feature.status !== 'active'
+    const isInactive = feature.status !== 'active'
     const rowClass = `vertical-middle ${isInactive ? 'inactive-highlight' : ''}`.trim()
 
     return [
@@ -78,7 +78,7 @@ export const buildTableRows = (features) => {
                   <dt class="govuk-summary-list__key">Status</dt>
                   <dd class="govuk-summary-list__value">
                     <strong class="govuk-tag ${isInactive ? 'govuk-tag--grey' : ''}">
-                      ${(feature.status || 'unknown').toUpperCase()}
+                      ${feature.status.toUpperCase()}
                     </strong>
                   </dd>
                 </div>
