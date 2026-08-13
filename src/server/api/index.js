@@ -56,6 +56,11 @@ export const api = {
           ...apiController
         },
         {
+          method: 'PUT',
+          path: '/api/feature-control/status',
+          ...apiController
+        },
+        {
           method: 'GET',
           path: '/api/feature-controls',
           ...apiController
