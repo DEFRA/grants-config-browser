@@ -15,7 +15,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
       <form method="GET">
-        <div class="govuk-grid-row" style="display: flex; align-items: flex-end;">
+        <div class="govuk-grid-row" style="display: flex; align-items: flex-end; flex-wrap: wrap;">
           <div class="govuk-grid-column-one-quarter">
             {{ govukInput({
               label: {
@@ -26,7 +26,7 @@
               name: "displayName",
               value: filters.displayName,
               formGroup: {
-                classes: "govuk-!-margin-bottom-0"
+                classes: "govuk-!-margin-bottom-2"
               }
             }) }}
           </div>
@@ -40,7 +40,7 @@
               name: "name",
               value: filters.name,
               formGroup: {
-                classes: "govuk-!-margin-bottom-0"
+                classes: "govuk-!-margin-bottom-2"
               }
             }) }}
           </div>
@@ -63,17 +63,17 @@
               },
               items: scopeItems,
               formGroup: {
-                classes: "govuk-!-margin-bottom-0"
+                classes: "govuk-!-margin-bottom-2"
               }
             }) }}
           </div>
           <div class="govuk-grid-column-one-quarter">
-            <div class="govuk-button-group govuk-!-margin-bottom-0" style="align-items: center;">
+            <div class="govuk-button-group govuk-!-margin-bottom-3" style="display: flex; align-items: baseline;">
               {{ govukButton({
                 text: "Filter",
                 classes: "govuk-!-margin-bottom-0"
               }) }}
-              <a href="/features" class="govuk-link">Clear</a>
+              <a href="/features" class="govuk-link govuk-!-margin-bottom-0">Clear</a>
             </div>
           </div>
         </div>
@@ -88,7 +88,7 @@
               items: [
                 {
                   value: "",
-                  text: "Include inactive",
+                  text: "Include expired/withdrawn",
                   checked: filters.status === "",
                   label: {
                     classes: "inactive-highlight"

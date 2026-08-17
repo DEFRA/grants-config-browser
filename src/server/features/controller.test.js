@@ -61,7 +61,7 @@ describe('#featuresController', () => {
     expect($('h1').text()).toContain('Features')
 
     const checkboxLabel = $('.govuk-checkboxes__label')
-    expect(checkboxLabel.text()).toContain('Include inactive')
+    expect(checkboxLabel.text()).toContain('Include expired/withdrawn')
     expect(checkboxLabel.hasClass('inactive-highlight')).toBe(true)
 
     // Check breadcrumbs
@@ -364,6 +364,47 @@ describe('#featuresController', () => {
     const expiredStatusTag = expiredRow.find('td').eq(0).find('.govuk-tag')
     expect(expiredStatusTag.text().trim()).toBe('EXPIRED')
     expect(expiredStatusTag.hasClass('govuk-tag--grey')).toBe(true)
+  })
+
+  test('Should handle withdrawn features correctly', async () => {
+    const mockFeatures = {
+      items: [
+        {
+          name: 'WITHDRAWN_FEATURE',
+          displayName: 'Withdrawn Feature',
+          value: 'withdrawn-val',
+          description: 'Withdrawn description',
+          scopes: 'Scope D',
+          lastUpdated: '2024-01-01T12:00:00Z',
+          status: 'withdrawn'
+        }
+      ],
+      uniqueScopes: ['Scope D']
+    }
+    requestFromApi.mockResolvedValueOnce({ response: mockFeatures })
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/features?status=',
+      auth: {
+        strategy: 'session',
+        credentials
+      }
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    const $ = load(result)
+    const rows = $('tbody tr')
+    expect(rows).toHaveLength(1)
+
+    const withdrawnRow = rows.eq(0)
+    expect(withdrawnRow.find('td').eq(0).hasClass('inactive-highlight')).toBe(true)
+    expect(withdrawnRow.find('td').eq(1).hasClass('inactive-highlight')).toBe(true)
+    expect(withdrawnRow.find('td').eq(1).hasClass('strikethrough')).toBe(true)
+
+    const withdrawnStatusTag = withdrawnRow.find('td').eq(0).find('.govuk-tag')
+    expect(withdrawnStatusTag.text().trim()).toBe('WITHDRAWN')
+    expect(withdrawnStatusTag.hasClass('govuk-tag--grey')).toBe(true)
   })
 
   test('Should exercise all filter branches in buildEndpointWithQueryParams', async () => {

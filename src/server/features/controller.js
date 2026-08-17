@@ -72,8 +72,8 @@ export const buildTableRows = (features) => {
             <summary class="govuk-details__summary">
               <a href="/feature-control/detail?name=${feature.name}">${feature.displayName}</a>
               ${
-                feature.status === 'expired'
-                  ? `<strong class="govuk-tag govuk-tag--grey govuk-!-margin-left-2">EXPIRED</strong>`
+                ['expired', 'withdrawn'].includes(feature.status)
+                  ? `<strong class="govuk-tag govuk-tag--grey govuk-!-margin-left-2">${feature.status.toUpperCase()}</strong>`
                   : ''
               }
             </summary>

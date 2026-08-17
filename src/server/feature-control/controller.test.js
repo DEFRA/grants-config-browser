@@ -467,6 +467,29 @@ describe('#featureControlController', () => {
       expect($('.govuk-summary-list__value').eq(0).find('.govuk-tag').hasClass('govuk-tag--grey')).toBe(true)
     })
 
+    test('Should render page for withdrawn status with grey tag', async () => {
+      requestFromApi.mockResolvedValue({
+        response: {
+          ...featureControl,
+          status: 'withdrawn'
+        }
+      })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=TEST_BOOLEAN',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-summary-list__value').eq(0).text().trim()).toBe('WITHDRAWN')
+      expect($('.govuk-summary-list__value').eq(0).find('.govuk-tag').hasClass('govuk-tag--grey')).toBe(true)
+    })
+
     test('Should handle history entries with same dateTime', async () => {
       requestFromApi.mockResolvedValue({
         response: {
