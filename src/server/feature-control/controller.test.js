@@ -494,6 +494,17 @@ describe('#featureControlController', () => {
       expect($('.govuk-summary-list__value').eq(0).find('.govuk-tag').hasClass('govuk-tag--grey')).toBe(true)
     })
 
+    test('Should redirect if invalid technical name provided', async () => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/detail?name=',
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(headers.location).toBe('/features')
+    })
+
     test('Should handle history entries with same dateTime', async () => {
       requestFromApi.mockResolvedValue({
         response: {
@@ -664,6 +675,18 @@ describe('#featureControlController', () => {
       expect($('[data-testid="app-heading-title"]').text()).toBe('Update Test List Number')
       expect($('input[name="value"]').eq(0).val()).toBe('1')
       expect($('input[name="value"]').eq(1).val()).toBe('2')
+    })
+
+    test('Should return 403 if user lacks required roles', async () => {
+      requestFromApi.mockResolvedValue({ response: featureControl })
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/update?name=TEST_BOOLEAN',
+        auth: { strategy: 'session', credentials: { ...credentials, roles: ['viewer'] } }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
     })
   })
 
@@ -981,6 +1004,19 @@ describe('#featureControlController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
       expect($('.govuk-error-summary').text()).toContain('The value must be different from the current value')
+    })
+
+    test('Should return 403 if user lacks required roles', async () => {
+      requestFromApi.mockResolvedValue({ response: featureControl })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'TEST_BOOLEAN', value: 'false', note: 'Changing value' },
+        auth: { strategy: 'session', credentials: { ...credentials, roles: ['viewer'] } }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
     })
 
     test('Should show error if list is empty', async () => {
@@ -1334,6 +1370,29 @@ describe('#featureControlController', () => {
       expect(statusCode).toBe(statusCodes.moved)
       expect(headers.location).toBe('/feature-control/detail?name=TEST_BOOLEAN')
     })
+
+    test('Should return 403 if user lacks required roles', async () => {
+      requestFromApi.mockResolvedValue({ response: featureControl })
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/withdraw?name=TEST_BOOLEAN',
+        auth: { strategy: 'session', credentials: { ...credentials, roles: ['viewer'] } }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    })
+
+    test('Should redirect if technical name is missing in update', async () => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/withdraw?name=',
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(headers.location).toBe('/features')
+    })
   })
 
   describe('processWithdraw', () => {
@@ -1372,6 +1431,51 @@ describe('#featureControlController', () => {
       const $ = load(result)
       expect($('.govuk-error-summary').text()).toContain(
         'Enter a note to explain why this feature control is being withdrawn'
+      )
+    })
+
+    test('Should redirect if feature is not active', async () => {
+      requestFromApi.mockResolvedValue({ response: { ...featureControl, status: 'withdrawn' } })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/withdraw',
+        payload: { name: 'TEST_BOOLEAN', note: 'already withdrawn' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(headers.location).toBe('/feature-control/detail?name=TEST_BOOLEAN')
+    })
+
+    test('Should return 403 if user lacks required roles', async () => {
+      requestFromApi.mockResolvedValue({ response: featureControl })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/withdraw',
+        payload: { name: 'TEST_BOOLEAN', note: 'some note' },
+        auth: { strategy: 'session', credentials: { ...credentials, roles: ['viewer'] } }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    })
+
+    test('Should show error on API failure', async () => {
+      requestFromApi.mockResolvedValueOnce({ response: featureControl })
+      requestFromApi.mockResolvedValueOnce({ status: statusCodes.internalServerError })
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/withdraw',
+        payload: { name: 'TEST_BOOLEAN', note: 'Withdrawing it' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain(
+        'There was a problem communicating with the API. Please try again later.'
       )
     })
   })

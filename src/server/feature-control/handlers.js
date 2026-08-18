@@ -14,8 +14,7 @@ import {
   handleListAction,
   convertValueForType,
   formatEnvironment,
-  canUserUpdate,
-  addError
+  canUserUpdate
 } from './helpers.js'
 import { getFeatureControlSchema, validateUpdate } from './validation.js'
 
@@ -72,6 +71,22 @@ export const updateHandler = async (request, h) => {
   return renderUpdatePage(h, featureControl)
 }
 
+export const processUpdateHandler = async (request, h) => {
+  const { name, note, action } = request.payload
+  const { value: rawValue } = request.payload
+
+  const { featureControl, errorResponse } = await getFeatureControl(name, request, h)
+  if (errorResponse) {
+    return errorResponse
+  }
+
+  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
+    return h.response('Forbidden').code(statusCodes.forbidden)
+  }
+
+  return processUpdate({ request, h, featureControl, action, rawValue, note, name })
+}
+
 export const withdrawHandler = async (request, h) => {
   if (getFeatureControlSchema.validate(request.query).error) {
     return h.redirect('/features')
@@ -113,7 +128,8 @@ export const processWithdrawHandler = async (request, h) => {
   const errors = { summary: [] }
 
   if (!note?.trim()) {
-    addError(errors, 'note', 'Enter a note to explain why this feature control is being withdrawn')
+    errors.summary.push({ text: 'Enter a note to explain why this feature control is being withdrawn', href: '#note' })
+    errors.note = { text: 'Enter a note to explain why this feature control is being withdrawn' }
   }
 
   if (errors.summary.length > 0) {
@@ -131,20 +147,15 @@ export const processWithdrawHandler = async (request, h) => {
   return h.redirect(`/feature-control/detail?name=${name}`)
 }
 
-export const processUpdateHandler = async (request, h) => {
-  const { name, note, action } = request.payload
-  const { value: rawValue } = request.payload
+const getFeatureControl = async (name, request, h) => {
+  const result = await requestFromApi(`feature-control/${name}/detailed`, request)
+  const featureControl = result?.response
 
-  const { featureControl, errorResponse } = await getFeatureControl(name, request, h)
-  if (errorResponse) {
-    return errorResponse
+  if (!featureControl) {
+    return { errorResponse: h.response(featureControlNotFound).code(statusCodes.notFound) }
   }
 
-  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
-    return h.response('Forbidden').code(statusCodes.forbidden)
-  }
-
-  return processUpdate({ request, h, featureControl, action, rawValue, note, name })
+  return { featureControl }
 }
 
 const processUpdate = async ({ request, h, featureControl, action, rawValue, note, name }) => {
@@ -179,17 +190,6 @@ const processUpdate = async ({ request, h, featureControl, action, rawValue, not
 
   // success, redirect to the detail page
   return h.redirect(`/feature-control/detail?name=${name}`)
-}
-
-const getFeatureControl = async (name, request, h) => {
-  const result = await requestFromApi(`feature-control/${name}/detailed`, request)
-  const featureControl = result?.response
-
-  if (!featureControl) {
-    return { errorResponse: h.response(featureControlNotFound).code(statusCodes.notFound) }
-  }
-
-  return { featureControl }
 }
 
 const renderUpdatePage = (h, featureControl, errors = null, note = '', submittedValue = null) => {

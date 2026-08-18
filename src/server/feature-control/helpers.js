@@ -123,8 +123,3 @@ export const valueNotChanged = (newValue, currentValue) => {
 }
 
 export const formatEnvironment = (env) => ENVIRONMENT_LABELS[env] || 'UNKNOWN'
-
-export const addError = (errors, field, message) => {
-  errors.summary.push({ text: message, href: `#${field}` })
-  errors[field] = { text: message }
-}
