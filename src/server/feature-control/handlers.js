@@ -148,7 +148,7 @@ export const processWithdrawHandler = async (request, h) => {
   const result = await requestFromApi('feature-control/status', request, {}, 'PUT', { name, status, user, note })
 
   if (result?.status !== statusCodes.accepted) {
-    errors.summary.push({ text: 'There was a problem communicating with the API. Please try again later.' })
+    errors.summary.push({ text: apiCommsErrorMessage })
     return renderWithdrawPage(h, featureControl, errors, note)
   }
 
@@ -211,7 +211,7 @@ export const processReactivateHandler = async (request, h) => {
   const result = await requestFromApi('feature-control/status', request, {}, 'PUT', { name, status, user, note })
 
   if (result?.status !== statusCodes.accepted) {
-    errors.summary.push({ text: 'There was a problem communicating with the API. Please try again later.' })
+    errors.summary.push({ text: apiCommsErrorMessage })
     return renderReactivatePage(h, featureControl, errors, note)
   }
 
@@ -255,7 +255,7 @@ const processUpdate = async ({ request, h, featureControl, action, rawValue, not
   const result = await requestFromApi(`feature-control/value`, request, {}, 'PUT', { name, value, user, note })
 
   if (result?.status !== statusCodes.accepted) {
-    errors.summary.push({ text: 'There was a problem communicating with the API. Please try again later.' })
+    errors.summary.push({ text: apiCommsErrorMessage })
     return renderUpdatePage(h, featureControl, errors, note, rawValue)
   }
 
@@ -308,3 +308,5 @@ const renderReactivatePage = (h, featureControl, errors = null, note = '') => {
     environment: formatEnvironment(config.get('cdpEnvironment'))
   })
 }
+
+const apiCommsErrorMessage = 'There was a problem communicating with the API. Please try again later.'
