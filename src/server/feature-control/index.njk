@@ -100,6 +100,11 @@
             Update
           </a>
         {% endif %}
+        {% if canUpdate and featureControl.status === 'active' %}
+          <a href="/feature-control/withdraw?name={{ technicalName }}" class="govuk-button govuk-button--warning" data-module="govuk-button">
+            Withdraw
+          </a>
+        {% endif %}
       </div>
 
     </div>

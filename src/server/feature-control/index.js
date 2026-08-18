@@ -24,6 +24,16 @@ export const featureControl = {
           method: 'POST',
           path: '/feature-control/update',
           ...featureControlController.processUpdate
+        },
+        {
+          method: 'GET',
+          path: '/feature-control/withdraw',
+          ...featureControlController.withdraw
+        },
+        {
+          method: 'POST',
+          path: '/feature-control/withdraw',
+          ...featureControlController.processWithdraw
         }
       ])
     }

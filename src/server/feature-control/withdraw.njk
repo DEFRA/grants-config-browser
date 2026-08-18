@@ -1,0 +1,56 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/textarea/macro.njk" import govukTextarea %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+
+{% block content %}
+  {% if errors %}
+    {{ govukErrorSummary({
+      titleText: "There is a problem",
+      errorList: errors.summary
+    }) }}
+  {% endif %}
+
+  {{ appHeading({
+    text: heading,
+    caption: technicalName
+  }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <p class="govuk-body">Withdraw this feature control if it is no longer needed. This action cannot be undone from this application.</p>
+
+      {{ govukWarningText({
+        text: "This change takes effect immediately in " + environment + ".",
+        iconFallbackText: "Warning"
+      }) }}
+
+      <form method="post">
+        <input type="hidden" name="name" value="{{ technicalName }}">
+
+        {{ govukTextarea({
+          name: "note",
+          id: "note",
+          value: note,
+          errorMessage: errors.note if errors.note,
+          label: {
+            text: "Why is this feature control being withdrawn?",
+            classes: "govuk-label--m"
+          },
+          hint: {
+            text: "Explain why this change is being made."
+          }
+        }) }}
+
+        <div class="govuk-button-group">
+          {{ govukButton({
+            text: "Withdraw feature control",
+            classes: "govuk-button--warning"
+          }) }}
+          <a class="govuk-link" href="/feature-control/detail?name={{ technicalName }}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

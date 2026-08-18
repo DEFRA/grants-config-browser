@@ -14,7 +14,8 @@ import {
   handleListAction,
   convertValueForType,
   formatEnvironment,
-  canUserUpdate
+  canUserUpdate,
+  addError
 } from './helpers.js'
 import { getFeatureControlSchema, validateUpdate } from './validation.js'
 
@@ -69,6 +70,65 @@ export const updateHandler = async (request, h) => {
   }
 
   return renderUpdatePage(h, featureControl)
+}
+
+export const withdrawHandler = async (request, h) => {
+  if (getFeatureControlSchema.validate(request.query).error) {
+    return h.redirect('/features')
+  }
+
+  const { featureControl, errorResponse } = await getFeatureControl(request.query.name, request, h)
+  if (errorResponse) {
+    return errorResponse
+  }
+
+  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
+    return h.response('Forbidden').code(statusCodes.forbidden)
+  }
+
+  if (featureControl.status !== 'active') {
+    return h.redirect(`/feature-control/detail?name=${featureControl.name}`)
+  }
+
+  return renderWithdrawPage(h, featureControl)
+}
+
+export const processWithdrawHandler = async (request, h) => {
+  const { name, note } = request.payload
+
+  const { featureControl, errorResponse } = await getFeatureControl(name, request, h)
+  if (errorResponse) {
+    return errorResponse
+  }
+
+  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
+    return h.response('Forbidden').code(statusCodes.forbidden)
+  }
+
+  if (featureControl.status !== 'active') {
+    return h.redirect(`/feature-control/detail?name=${featureControl.name}`)
+  }
+
+  const user = request.auth.credentials.displayName
+  const errors = { summary: [] }
+
+  if (!note?.trim()) {
+    addError(errors, 'note', 'Enter a note to explain why this feature control is being withdrawn')
+  }
+
+  if (errors.summary.length > 0) {
+    return renderWithdrawPage(h, featureControl, errors, note)
+  }
+
+  const status = 'withdrawn'
+  const result = await requestFromApi('feature-control/status', request, {}, 'PUT', { name, status, user, note })
+
+  if (result?.status !== statusCodes.accepted) {
+    errors.summary.push({ text: 'There was a problem communicating with the API. Please try again later.' })
+    return renderWithdrawPage(h, featureControl, errors, note)
+  }
+
+  return h.redirect(`/feature-control/detail?name=${name}`)
 }
 
 export const processUpdateHandler = async (request, h) => {
@@ -143,6 +203,21 @@ const renderUpdatePage = (h, featureControl, errors = null, note = '', submitted
     errors,
     note,
     submittedValue,
+    breadcrumbs: getBreadcrumbs(displayName, name, true),
+    environment: formatEnvironment(config.get('cdpEnvironment'))
+  })
+}
+
+const renderWithdrawPage = (h, featureControl, errors = null, note = '') => {
+  const { name, displayName } = featureControl
+
+  return h.view('feature-control/withdraw', {
+    pageTitle: (errors ? 'Error: ' : '') + `Withdraw feature control - ${displayName}`,
+    heading: `Withdraw ${displayName}`,
+    technicalName: name,
+    featureControl,
+    errors,
+    note,
     breadcrumbs: getBreadcrumbs(displayName, name, true),
     environment: formatEnvironment(config.get('cdpEnvironment'))
   })

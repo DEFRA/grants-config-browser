@@ -243,9 +243,11 @@ describe('#featureControlController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
-      const updateButton = $('a.govuk-button')
-      expect(updateButton.text().trim()).toBe('Update')
-      expect(updateButton.attr('href')).toBe('/feature-control/update?name=test-string')
+      const buttons = $('a.govuk-button')
+      expect(buttons.eq(0).text().trim()).toBe('Update')
+      expect(buttons.eq(0).attr('href')).toBe('/feature-control/update?name=test-string')
+      expect(buttons.eq(1).text().trim()).toBe('Withdraw')
+      expect(buttons.eq(1).attr('href')).toBe('/feature-control/withdraw?name=test-string')
     })
 
     test('Should NOT show Update button for string type when authenticated but status is NOT active', async () => {
@@ -319,8 +321,9 @@ describe('#featureControlController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
-      const updateButton = $('a.govuk-button')
-      expect(updateButton.text().trim()).toBe('Update')
+      const buttons = $('a.govuk-button')
+      expect(buttons.eq(0).text().trim()).toBe('Update')
+      expect(buttons.eq(1).text().trim()).toBe('Withdraw')
     })
 
     test('Should show Update button for list-number type when authenticated and active', async () => {
@@ -345,8 +348,9 @@ describe('#featureControlController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
-      const updateButton = $('a.govuk-button')
-      expect(updateButton.text().trim()).toBe('Update')
+      const buttons = $('a.govuk-button')
+      expect(buttons.eq(0).text().trim()).toBe('Update')
+      expect(buttons.eq(1).text().trim()).toBe('Withdraw')
     })
 
     test('Should render page for boolean type with false value', async () => {
@@ -883,9 +887,11 @@ describe('#featureControlController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       const $ = load(result)
-      const updateButton = $('a.govuk-button')
-      expect(updateButton.text().trim()).toBe('Update')
-      expect(updateButton.attr('href')).toBe('/feature-control/update?name=test-number')
+      const buttons = $('a.govuk-button')
+      expect(buttons.eq(0).text().trim()).toBe('Update')
+      expect(buttons.eq(0).attr('href')).toBe('/feature-control/update?name=test-number')
+      expect(buttons.eq(1).text().trim()).toBe('Withdraw')
+      expect(buttons.eq(1).attr('href')).toBe('/feature-control/withdraw?name=test-number')
     })
 
     test('Should successfully update number type', async () => {
@@ -1276,6 +1282,97 @@ describe('#featureControlController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.moved)
+    })
+  })
+
+  describe('withdraw', () => {
+    test('Should return 401 if not authenticated', async () => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/withdraw?name=TEST_BOOLEAN'
+      })
+
+      expect(statusCode).toBe(statusCodes.unauthorized)
+    })
+
+    test('Should return 404 if feature control not found', async () => {
+      requestFromApi.mockResolvedValue(null)
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/withdraw?name=unknown',
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    test('Should render withdraw page', async () => {
+      requestFromApi.mockResolvedValue({ response: featureControl })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/withdraw?name=TEST_BOOLEAN',
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('[data-testid="app-heading-title"]').text()).toBe('Withdraw Test Boolean')
+      expect($('textarea[name="note"]')).toHaveLength(1)
+    })
+
+    test('Should redirect if feature is not active', async () => {
+      requestFromApi.mockResolvedValue({ response: { ...featureControl, status: 'expired' } })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/withdraw?name=TEST_BOOLEAN',
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(headers.location).toBe('/feature-control/detail?name=TEST_BOOLEAN')
+    })
+  })
+
+  describe('processWithdraw', () => {
+    test('Should successfully withdraw feature control', async () => {
+      requestFromApi.mockResolvedValueOnce({ response: featureControl })
+      requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/withdraw',
+        payload: { name: 'TEST_BOOLEAN', note: 'Withdrawing it' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(headers.location).toBe('/feature-control/detail?name=TEST_BOOLEAN')
+      expect(requestFromApi).toHaveBeenLastCalledWith('feature-control/status', expect.anything(), {}, 'PUT', {
+        name: 'TEST_BOOLEAN',
+        status: 'withdrawn',
+        user: 'User A',
+        note: 'Withdrawing it'
+      })
+    })
+
+    test('Should show error if note is missing', async () => {
+      requestFromApi.mockResolvedValue({ response: featureControl })
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/withdraw',
+        payload: { name: 'TEST_BOOLEAN', note: '' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain(
+        'Enter a note to explain why this feature control is being withdrawn'
+      )
     })
   })
 })
