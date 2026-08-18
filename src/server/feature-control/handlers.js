@@ -68,6 +68,10 @@ export const updateHandler = async (request, h) => {
     return h.response('Forbidden').code(statusCodes.forbidden)
   }
 
+  if (featureControl.status !== 'active') {
+    return h.response('Forbidden').code(statusCodes.forbidden)
+  }
+
   return renderUpdatePage(h, featureControl)
 }
 
@@ -81,6 +85,10 @@ export const processUpdateHandler = async (request, h) => {
   }
 
   if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
+    return h.response('Forbidden').code(statusCodes.forbidden)
+  }
+
+  if (featureControl.status !== 'active') {
     return h.response('Forbidden').code(statusCodes.forbidden)
   }
 
@@ -147,6 +155,69 @@ export const processWithdrawHandler = async (request, h) => {
   return h.redirect(`/feature-control/detail?name=${name}`)
 }
 
+export const reactivateHandler = async (request, h) => {
+  if (getFeatureControlSchema.validate(request.query).error) {
+    return h.redirect('/features')
+  }
+
+  const { featureControl, errorResponse } = await getFeatureControl(request.query.name, request, h)
+  if (errorResponse) {
+    return errorResponse
+  }
+
+  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
+    return h.response('Forbidden').code(statusCodes.forbidden)
+  }
+
+  if (featureControl.status !== 'withdrawn') {
+    return h.redirect(`/feature-control/detail?name=${featureControl.name}`)
+  }
+
+  return renderReactivatePage(h, featureControl)
+}
+
+export const processReactivateHandler = async (request, h) => {
+  const { name, note } = request.payload
+
+  const { featureControl, errorResponse } = await getFeatureControl(name, request, h)
+  if (errorResponse) {
+    return errorResponse
+  }
+
+  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
+    return h.response('Forbidden').code(statusCodes.forbidden)
+  }
+
+  if (featureControl.status !== 'withdrawn') {
+    return h.redirect(`/feature-control/detail?name=${featureControl.name}`)
+  }
+
+  const user = request.auth.credentials.displayName
+  const errors = { summary: [] }
+
+  if (!note?.trim()) {
+    errors.summary.push({
+      text: 'Enter a note to explain why this feature control is being reactivated',
+      href: '#note'
+    })
+    errors.note = { text: 'Enter a note to explain why this feature control is being reactivated' }
+  }
+
+  if (errors.summary.length > 0) {
+    return renderReactivatePage(h, featureControl, errors, note)
+  }
+
+  const status = 'active'
+  const result = await requestFromApi('feature-control/status', request, {}, 'PUT', { name, status, user, note })
+
+  if (result?.status !== statusCodes.accepted) {
+    errors.summary.push({ text: 'There was a problem communicating with the API. Please try again later.' })
+    return renderReactivatePage(h, featureControl, errors, note)
+  }
+
+  return h.redirect(`/feature-control/detail?name=${name}`)
+}
+
 const getFeatureControl = async (name, request, h) => {
   const result = await requestFromApi(`feature-control/${name}/detailed`, request)
   const featureControl = result?.response
@@ -203,7 +274,7 @@ const renderUpdatePage = (h, featureControl, errors = null, note = '', submitted
     errors,
     note,
     submittedValue,
-    breadcrumbs: getBreadcrumbs(displayName, name, true),
+    breadcrumbs: getBreadcrumbs(displayName, name, 'update'),
     environment: formatEnvironment(config.get('cdpEnvironment'))
   })
 }
@@ -218,7 +289,22 @@ const renderWithdrawPage = (h, featureControl, errors = null, note = '') => {
     featureControl,
     errors,
     note,
-    breadcrumbs: getBreadcrumbs(displayName, name, true),
+    breadcrumbs: getBreadcrumbs(displayName, name, 'withdraw'),
+    environment: formatEnvironment(config.get('cdpEnvironment'))
+  })
+}
+
+const renderReactivatePage = (h, featureControl, errors = null, note = '') => {
+  const { name, displayName } = featureControl
+
+  return h.view('feature-control/reactivate', {
+    pageTitle: (errors ? 'Error: ' : '') + `Reactivate feature control - ${displayName}`,
+    heading: `Reactivate ${displayName}`,
+    technicalName: name,
+    featureControl,
+    errors,
+    note,
+    breadcrumbs: getBreadcrumbs(displayName, name, 'reactivate'),
     environment: formatEnvironment(config.get('cdpEnvironment'))
   })
 }

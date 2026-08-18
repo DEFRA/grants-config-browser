@@ -44,6 +44,7 @@ const isNonEmptyString = (val) => typeof val === 'string' && val.trim() !== ''
 const isValidNumber = (val) => typeof val === 'string' && val.trim() !== '' && !Number.isNaN(Number(val))
 
 const validateListType = (errors, rawValue, type) => {
+  const messageEnterValidListOfNumbers = 'Enter a valid list of numbers'
   const rawItems = Array.isArray(rawValue) ? rawValue : [rawValue]
   const filteredItems = rawItems.map((v) => (typeof v === 'string' ? v.trim() : '')).filter((v) => v !== '')
 
@@ -52,11 +53,11 @@ const validateListType = (errors, rawValue, type) => {
     errors.value = { text: 'Enter at least one item' }
   } else if (rawItems.some((v) => !isNonEmptyString(v))) {
     const errorMessage =
-      type === FEATURE_CONTROL_TYPES.LIST_NUMBER ? 'Enter a valid list of numbers' : 'Enter a valid list of items'
+      type === FEATURE_CONTROL_TYPES.LIST_NUMBER ? messageEnterValidListOfNumbers : 'Enter a valid list of items'
     errors.summary.push({ text: errorMessage, href: '#value' })
     errors.value = { text: errorMessage }
   } else if (type === FEATURE_CONTROL_TYPES.LIST_NUMBER && rawItems.some((v) => !isValidNumber(v))) {
-    errors.summary.push({ text: 'Enter a valid list of numbers', href: '#value' })
-    errors.value = { text: 'Enter a valid list of numbers' }
+    errors.summary.push({ text: messageEnterValidListOfNumbers, href: '#value' })
+    errors.value = { text: messageEnterValidListOfNumbers }
   }
 }

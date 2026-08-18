@@ -99,6 +99,57 @@ describe('#featuresController', () => {
     expect(valueRow.find('.govuk-summary-list__value').text().trim()).toBe('true')
   })
 
+  test('Should display WITHDRAWN tag for withdrawn and removed features', async () => {
+    const mockFeatures = {
+      items: [
+        {
+          name: 'EXPIRED_FEATURE',
+          displayName: 'Expired Feature',
+          value: true,
+          description: 'Desc',
+          scopes: 'Scope',
+          lastUpdated: '2024-01-01T12:00:00Z',
+          status: 'expired'
+        },
+        {
+          name: 'WITHDRAWN_FEATURE',
+          displayName: 'Withdrawn Feature',
+          value: true,
+          description: 'Desc',
+          scopes: 'Scope',
+          lastUpdated: '2024-01-01T12:00:00Z',
+          status: 'withdrawn'
+        },
+        {
+          name: 'REMOVED_FEATURE',
+          displayName: 'Removed Feature',
+          value: true,
+          description: 'Desc',
+          scopes: 'Scope',
+          lastUpdated: '2024-01-01T12:00:00Z',
+          status: 'removed'
+        }
+      ],
+      uniqueScopes: []
+    }
+    requestFromApi.mockResolvedValueOnce({ response: mockFeatures })
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: '/features?status=all',
+      auth: { strategy: 'session', credentials }
+    })
+
+    const $ = load(result)
+    // console.log(result)
+    const rows = $('tbody tr')
+
+    expect(rows).toHaveLength(3)
+    expect(rows.eq(0).find('.govuk-tag--grey').text().trim()).toBe('EXPIRED')
+    expect(rows.eq(1).find('.govuk-tag--grey').text().trim()).toBe('WITHDRAWN')
+    expect(rows.eq(2).find('.govuk-tag--grey').text().trim()).toBe('WITHDRAWN')
+  })
+
   test('Should call API with name filter from query params', async () => {
     const mockFeatures = { items: [] }
     requestFromApi.mockResolvedValueOnce({ response: mockFeatures })

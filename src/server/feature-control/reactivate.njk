@@ -35,7 +35,7 @@
           value: note,
           errorMessage: errors.note if errors.note,
           label: {
-            text: "Why is this feature control being withdrawn?",
+            text: "Why is this feature control being reactivated?",
             classes: "govuk-label--m"
           },
           hint: {
@@ -45,8 +45,7 @@
 
         <div class="govuk-button-group">
           {{ govukButton({
-            text: "Withdraw feature control",
-            classes: "govuk-button--warning"
+            text: "Reactivate feature control"
           }) }}
           <a class="govuk-link" href="/feature-control/detail?name={{ technicalName }}">Cancel</a>
         </div>

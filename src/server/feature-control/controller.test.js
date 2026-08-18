@@ -602,7 +602,8 @@ describe('#featureControlController', () => {
           displayName: 'Test Boolean',
           type: 'boolean',
           value: true,
-          description: 'A test boolean'
+          description: 'A test boolean',
+          status: 'active'
         }
       })
 
@@ -630,7 +631,8 @@ describe('#featureControlController', () => {
           displayName: 'Test List',
           type: 'list-string',
           value: ['a', 'b'],
-          description: 'A test list'
+          description: 'A test list',
+          status: 'active'
         }
       })
 
@@ -657,7 +659,8 @@ describe('#featureControlController', () => {
           displayName: 'Test List Number',
           type: 'list-number',
           value: [1, 2],
-          description: 'A test list number'
+          description: 'A test list number',
+          status: 'active'
         }
       })
 
@@ -684,6 +687,18 @@ describe('#featureControlController', () => {
         method: 'GET',
         url: '/feature-control/update?name=TEST_BOOLEAN',
         auth: { strategy: 'session', credentials: { ...credentials, roles: ['viewer'] } }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    })
+
+    test('Should return 403 if feature is removed', async () => {
+      requestFromApi.mockResolvedValue({ response: { ...featureControl, status: 'removed' } })
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/update?name=TEST_BOOLEAN',
+        auth: { strategy: 'session', credentials }
       })
 
       expect(statusCode).toBe(statusCodes.forbidden)
@@ -831,7 +846,8 @@ describe('#featureControlController', () => {
           displayName: 'Test String',
           type: 'string',
           value: 'old value',
-          description: 'A test string'
+          description: 'A test string',
+          status: 'active'
         }
       })
 
@@ -851,7 +867,7 @@ describe('#featureControlController', () => {
     })
 
     test('Should show error for empty string type', async () => {
-      requestFromApi.mockResolvedValue({ response: { name: 'STR', type: 'string', value: 'old' } })
+      requestFromApi.mockResolvedValue({ response: { name: 'STR', type: 'string', value: 'old', status: 'active' } })
       const { result } = await server.inject({
         method: 'POST',
         url: '/feature-control/update',
@@ -869,7 +885,8 @@ describe('#featureControlController', () => {
           displayName: 'Test Number',
           type: 'number',
           value: 123,
-          description: 'A test number'
+          description: 'A test number',
+          status: 'active'
         }
       })
 
@@ -923,7 +940,8 @@ describe('#featureControlController', () => {
           name: 'TEST_NUMBER',
           displayName: 'Test Number',
           type: 'number',
-          value: 100
+          value: 100,
+          status: 'active'
         }
       })
       requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
@@ -957,7 +975,8 @@ describe('#featureControlController', () => {
           name: 'TEST_LIST',
           displayName: 'Test List',
           type: 'list-string',
-          value: ['a', 'b']
+          value: ['a', 'b'],
+          status: 'active'
         }
       })
       requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
@@ -987,7 +1006,8 @@ describe('#featureControlController', () => {
           name: 'TEST_LIST',
           displayName: 'Test List',
           type: 'list-string',
-          value: ['a', 'b']
+          value: ['a', 'b'],
+          status: 'active'
         }
       })
 
@@ -1019,13 +1039,27 @@ describe('#featureControlController', () => {
       expect(statusCode).toBe(statusCodes.forbidden)
     })
 
+    test('Should return 403 if feature is removed', async () => {
+      requestFromApi.mockResolvedValue({ response: { ...featureControl, status: 'removed' } })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/update',
+        payload: { name: 'TEST_BOOLEAN', value: 'false', note: 'Changing value' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    })
+
     test('Should show error if list is empty', async () => {
       requestFromApi.mockResolvedValue({
         response: {
           name: 'TEST_LIST',
           displayName: 'Test List',
           type: 'list-string',
-          value: ['a', 'b']
+          value: ['a', 'b'],
+          status: 'active'
         }
       })
 
@@ -1047,7 +1081,7 @@ describe('#featureControlController', () => {
 
     test('Should handle list type with missing value in payload', async () => {
       requestFromApi.mockResolvedValue({
-        response: { name: 'LSTR', type: 'list-string', value: ['a'] }
+        response: { name: 'LSTR', type: 'list-string', value: ['a'], status: 'active' }
       })
 
       const { result } = await server.inject({
@@ -1063,7 +1097,7 @@ describe('#featureControlController', () => {
 
     test('Should successfully add an item to list', async () => {
       requestFromApi.mockResolvedValue({
-        response: { name: 'LSTR', type: 'list-string', value: ['a'] }
+        response: { name: 'LSTR', type: 'list-string', value: ['a'], status: 'active' }
       })
 
       const { result, statusCode } = await server.inject({
@@ -1083,7 +1117,7 @@ describe('#featureControlController', () => {
 
     test('Should successfully remove an item from list', async () => {
       requestFromApi.mockResolvedValue({
-        response: { name: 'LSTR', type: 'list-string', value: ['a', 'b', 'c'] }
+        response: { name: 'LSTR', type: 'list-string', value: ['a', 'b'], status: 'active' }
       })
 
       const { result, statusCode } = await server.inject({
@@ -1107,7 +1141,8 @@ describe('#featureControlController', () => {
           name: 'TEST_LIST',
           displayName: 'Test List',
           type: 'list-string',
-          value: ['a', 'b']
+          value: ['a', 'b'],
+          status: 'active'
         }
       })
 
@@ -1128,7 +1163,8 @@ describe('#featureControlController', () => {
           name: 'TEST_LIST_NUMBER',
           displayName: 'Test List Number',
           type: 'list-number',
-          value: [1, 2]
+          value: [1, 2],
+          status: 'active'
         }
       })
       requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
@@ -1193,7 +1229,9 @@ describe('#featureControlController', () => {
     })
 
     test('Should show error for invalid number (empty string)', async () => {
-      requestFromApi.mockResolvedValue({ response: { name: 'NUM', type: 'number', value: 1 } })
+      requestFromApi.mockResolvedValue({
+        response: { name: 'NUM', type: 'number', value: 1, status: 'active' }
+      })
       const { result } = await server.inject({
         method: 'POST',
         url: '/feature-control/update',
@@ -1205,7 +1243,9 @@ describe('#featureControlController', () => {
     })
 
     test('Should show error for invalid list-number (non-numeric item)', async () => {
-      requestFromApi.mockResolvedValue({ response: { name: 'LNUM', type: 'list-number', value: [1] } })
+      requestFromApi.mockResolvedValue({
+        response: { name: 'LNUM', type: 'list-number', value: [1], status: 'active' }
+      })
       const { result } = await server.inject({
         method: 'POST',
         url: '/feature-control/update',
@@ -1218,7 +1258,7 @@ describe('#featureControlController', () => {
 
     test('Should handle list-string with single non-array value in payload', async () => {
       requestFromApi.mockResolvedValueOnce({
-        response: { name: 'LSTR', type: 'list-string', value: ['a'] }
+        response: { name: 'LSTR', type: 'list-string', value: ['a'], status: 'active' }
       })
       requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
 
@@ -1240,7 +1280,7 @@ describe('#featureControlController', () => {
 
     test('Should handle list-number with single non-array value in payload', async () => {
       requestFromApi.mockResolvedValueOnce({
-        response: { name: 'LNUM', type: 'list-number', value: [1] }
+        response: { name: 'LNUM', type: 'list-number', value: [1], status: 'active' }
       })
       requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
 
@@ -1261,7 +1301,9 @@ describe('#featureControlController', () => {
     })
 
     test('Should handle list-number contains empty items', async () => {
-      requestFromApi.mockResolvedValue({ response: { name: 'LNUM', type: 'list-number', value: [1] } })
+      requestFromApi.mockResolvedValue({
+        response: { name: 'LNUM', type: 'list-number', value: [1], status: 'active' }
+      })
       const { result } = await server.inject({
         method: 'POST',
         url: '/feature-control/update',
@@ -1274,7 +1316,7 @@ describe('#featureControlController', () => {
 
     test('Should show error if list-number value is same as current (array comparison)', async () => {
       requestFromApi.mockResolvedValue({
-        response: { name: 'LNUM', type: 'list-number', value: [1, 2] }
+        response: { name: 'LNUM', type: 'list-number', value: [1, 2], status: 'active' }
       })
 
       const { result } = await server.inject({
@@ -1290,7 +1332,7 @@ describe('#featureControlController', () => {
 
     test('Should NOT show error if list-number value is different length', async () => {
       requestFromApi.mockResolvedValueOnce({
-        response: { name: 'LNUM', type: 'list-number', value: [1, 2] }
+        response: { name: 'LNUM', type: 'list-number', value: [1, 2], status: 'active' }
       })
       requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
 
@@ -1306,7 +1348,7 @@ describe('#featureControlController', () => {
 
     test('Should NOT show error if list-number value has different elements', async () => {
       requestFromApi.mockResolvedValueOnce({
-        response: { name: 'LNUM', type: 'list-number', value: [1, 2] }
+        response: { name: 'LNUM', type: 'list-number', value: [1, 2], status: 'active' }
       })
       requestFromApi.mockResolvedValueOnce({ status: statusCodes.accepted })
 
@@ -1383,6 +1425,19 @@ describe('#featureControlController', () => {
       expect(statusCode).toBe(statusCodes.forbidden)
     })
 
+    test('Should redirect if feature is removed', async () => {
+      requestFromApi.mockResolvedValue({ response: { ...featureControl, status: 'removed' } })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/withdraw?name=TEST_BOOLEAN',
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(headers.location).toBe('/feature-control/detail?name=TEST_BOOLEAN')
+    })
+
     test('Should redirect if technical name is missing in update', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
@@ -1448,6 +1503,20 @@ describe('#featureControlController', () => {
       expect(headers.location).toBe('/feature-control/detail?name=TEST_BOOLEAN')
     })
 
+    test('Should redirect if feature is removed', async () => {
+      requestFromApi.mockResolvedValue({ response: { ...featureControl, status: 'removed' } })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/withdraw',
+        payload: { name: 'TEST_BOOLEAN', note: 'removed' },
+        auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(headers.location).toBe('/feature-control/detail?name=TEST_BOOLEAN')
+    })
+
     test('Should return 403 if user lacks required roles', async () => {
       requestFromApi.mockResolvedValue({ response: featureControl })
 
@@ -1470,6 +1539,249 @@ describe('#featureControlController', () => {
         url: '/feature-control/withdraw',
         payload: { name: 'TEST_BOOLEAN', note: 'Withdrawing it' },
         auth: { strategy: 'session', credentials }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain(
+        'There was a problem communicating with the API. Please try again later.'
+      )
+    })
+  })
+  describe('reactivate', () => {
+    test('Should redirect if invalid query parameters', async () => {
+      const {
+        headers: { location },
+        statusCode
+      } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/reactivate',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(location).toBe('/features')
+    })
+
+    test('Should return 404 if feature control not found', async () => {
+      requestFromApi.mockResolvedValue(null)
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/reactivate?name=unknown',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    test('Should return 403 if user does not have required role', async () => {
+      requestFromApi.mockResolvedValue({ response: featureControl })
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/reactivate?name=TEST_BOOLEAN',
+        auth: {
+          strategy: 'session',
+          credentials: { ...credentials, roles: ['viewer'] }
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    })
+
+    test('Should redirect to detail if feature is not withdrawn', async () => {
+      requestFromApi.mockResolvedValue({ response: featureControl })
+
+      const {
+        headers: { location },
+        statusCode
+      } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/reactivate?name=TEST_BOOLEAN',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(location).toBe('/feature-control/detail?name=TEST_BOOLEAN')
+    })
+
+    test('Should redirect to detail if feature is removed', async () => {
+      requestFromApi.mockResolvedValue({ response: { ...featureControl, status: 'removed' } })
+
+      const {
+        headers: { location },
+        statusCode
+      } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/reactivate?name=TEST_BOOLEAN',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(location).toBe('/feature-control/detail?name=TEST_BOOLEAN')
+    })
+
+    test('Should render reactivate page', async () => {
+      requestFromApi.mockResolvedValue({ response: { ...featureControl, status: 'withdrawn' } })
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: '/feature-control/reactivate?name=TEST_BOOLEAN',
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('[data-testid="app-heading-title"]').text()).toBe('Reactivate Test Boolean')
+    })
+  })
+
+  describe('processReactivate', () => {
+    test('Should return 404 if feature control not found', async () => {
+      requestFromApi.mockResolvedValue(null)
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/reactivate',
+        payload: { name: 'unknown', note: 'Reactivating' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    test('Should return 404 if feature control not found during process withdrawal', async () => {
+      requestFromApi.mockResolvedValue(null)
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/withdraw',
+        payload: { name: 'unknown', note: 'Withdrawing' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    test('Should return 403 if user does not have required role', async () => {
+      requestFromApi.mockResolvedValue({ response: featureControl })
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/reactivate',
+        payload: { name: 'TEST_BOOLEAN', note: 'Reactivating' },
+        auth: {
+          strategy: 'session',
+          credentials: { ...credentials, roles: ['viewer'] }
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+    })
+
+    test('Should redirect to detail if feature is not withdrawn', async () => {
+      requestFromApi.mockResolvedValue({ response: featureControl })
+
+      const {
+        headers: { location },
+        statusCode
+      } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/reactivate',
+        payload: { name: 'TEST_BOOLEAN', note: 'Reactivating' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(location).toBe('/feature-control/detail?name=TEST_BOOLEAN')
+    })
+
+    test('Should show error if note is missing', async () => {
+      requestFromApi.mockResolvedValue({ response: { ...featureControl, status: 'withdrawn' } })
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/reactivate',
+        payload: { name: 'TEST_BOOLEAN', note: '' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      const $ = load(result)
+      expect($('.govuk-error-summary').text()).toContain(
+        'Enter a note to explain why this feature control is being reactivated'
+      )
+    })
+
+    test('Should redirect to detail page on success', async () => {
+      requestFromApi
+        .mockResolvedValueOnce({ response: { ...featureControl, status: 'withdrawn' } })
+        .mockResolvedValueOnce({ status: statusCodes.accepted })
+
+      const {
+        headers: { location },
+        statusCode
+      } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/reactivate',
+        payload: { name: 'TEST_BOOLEAN', note: 'Reactivating' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(location).toBe('/feature-control/detail?name=TEST_BOOLEAN')
+      expect(requestFromApi).toHaveBeenLastCalledWith('feature-control/status', expect.anything(), {}, 'PUT', {
+        name: 'TEST_BOOLEAN',
+        status: 'active',
+        user: 'User A',
+        note: 'Reactivating'
+      })
+    })
+
+    test('Should show error if API call fails', async () => {
+      requestFromApi
+        .mockResolvedValueOnce({ response: { ...featureControl, status: 'withdrawn' } })
+        .mockResolvedValueOnce({ status: statusCodes.serverError })
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/feature-control/reactivate',
+        payload: { name: 'TEST_BOOLEAN', note: 'Reactivating' },
+        auth: {
+          strategy: 'session',
+          credentials
+        }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
