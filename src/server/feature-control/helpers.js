@@ -1,20 +1,14 @@
 import { formatDateExplicit, formatDateTime, formatDateTimeExplicit } from '../helpers/date-display.js'
 import { FEATURE_CONTROL_TYPES, TYPE_LABELS, DEFAULT_TYPE_LABEL, ENVIRONMENT_LABELS } from './constants.js'
 
-export const getBreadcrumbs = (displayName, name, pageType = null) => {
-  const breadcrumbs = [
-    { text: 'Home', href: '/' },
-    { text: 'Features', href: '/features' }
-  ]
+export const getBreadcrumbs = (displayName, name, amendType = null) => {
+  const breadcrumbs = [buildBreadcrumb('Home', '/'), buildBreadcrumb('Features', '/features')]
 
-  if (pageType === 'update') {
-    breadcrumbs.push({ text: displayName, href: `/feature-control/detail?name=${name}` }, { text: 'Update' })
-  } else if (pageType === 'withdraw') {
-    breadcrumbs.push({ text: displayName, href: `/feature-control/detail?name=${name}` }, { text: 'Withdraw' })
-  } else if (pageType === 'reactivate') {
-    breadcrumbs.push({ text: displayName, href: `/feature-control/detail?name=${name}` }, { text: 'Reactivate' })
+  if (amendType) {
+    breadcrumbs.push(buildBreadcrumb(displayName, `/feature-control/detail?name=${name}`))
+    breadcrumbs.push(buildBreadcrumb(amendTypeLabels[amendType]))
   } else {
-    breadcrumbs.push({ text: displayName })
+    breadcrumbs.push(buildBreadcrumb(displayName))
   }
 
   return breadcrumbs
@@ -127,3 +121,11 @@ export const valueNotChanged = (newValue, currentValue) => {
 }
 
 export const formatEnvironment = (env) => ENVIRONMENT_LABELS[env] || 'UNKNOWN'
+
+const amendTypeLabels = {
+  update: 'Update',
+  withdraw: 'Withdraw',
+  reactivate: 'Reactivate'
+}
+
+const buildBreadcrumb = (text, href) => (href ? { text, href } : { text })

@@ -59,17 +59,9 @@ export const updateHandler = async (request, h) => {
     return h.redirect('/features')
   }
 
-  const { featureControl, errorResponse } = await getFeatureControl(request.query.name, request, h)
+  const { featureControl, errorResponse } = await getFeatureControlForUpdate(request.query.name, request, h, 'active')
   if (errorResponse) {
     return errorResponse
-  }
-
-  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
-    return h.response('Forbidden').code(statusCodes.forbidden)
-  }
-
-  if (featureControl.status !== 'active') {
-    return h.response('Forbidden').code(statusCodes.forbidden)
   }
 
   return renderUpdatePage(h, featureControl)
@@ -79,143 +71,28 @@ export const processUpdateHandler = async (request, h) => {
   const { name, note, action } = request.payload
   const { value: rawValue } = request.payload
 
-  const { featureControl, errorResponse } = await getFeatureControl(name, request, h)
+  const { featureControl, errorResponse } = await getFeatureControlForUpdate(name, request, h, 'active')
   if (errorResponse) {
     return errorResponse
-  }
-
-  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
-    return h.response('Forbidden').code(statusCodes.forbidden)
-  }
-
-  if (featureControl.status !== 'active') {
-    return h.response('Forbidden').code(statusCodes.forbidden)
   }
 
   return processUpdate({ request, h, featureControl, action, rawValue, note, name })
 }
 
 export const withdrawHandler = async (request, h) => {
-  if (getFeatureControlSchema.validate(request.query).error) {
-    return h.redirect('/features')
-  }
-
-  const { featureControl, errorResponse } = await getFeatureControl(request.query.name, request, h)
-  if (errorResponse) {
-    return errorResponse
-  }
-
-  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
-    return h.response('Forbidden').code(statusCodes.forbidden)
-  }
-
-  if (featureControl.status !== 'active') {
-    return h.redirect(`/feature-control/detail?name=${featureControl.name}`)
-  }
-
-  return renderWithdrawPage(h, featureControl)
+  return statusChangeHandler(request, h, 'active', renderWithdrawPage)
 }
 
 export const processWithdrawHandler = async (request, h) => {
-  const { name, note } = request.payload
-
-  const { featureControl, errorResponse } = await getFeatureControl(name, request, h)
-  if (errorResponse) {
-    return errorResponse
-  }
-
-  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
-    return h.response('Forbidden').code(statusCodes.forbidden)
-  }
-
-  if (featureControl.status !== 'active') {
-    return h.redirect(`/feature-control/detail?name=${featureControl.name}`)
-  }
-
-  const user = request.auth.credentials.displayName
-  const errors = { summary: [] }
-
-  if (!note?.trim()) {
-    errors.summary.push({ text: 'Enter a note to explain why this feature control is being withdrawn', href: '#note' })
-    errors.note = { text: 'Enter a note to explain why this feature control is being withdrawn' }
-  }
-
-  if (errors.summary.length > 0) {
-    return renderWithdrawPage(h, featureControl, errors, note)
-  }
-
-  const status = 'withdrawn'
-  const result = await requestFromApi('feature-control/status', request, {}, 'PUT', { name, status, user, note })
-
-  if (result?.status !== statusCodes.accepted) {
-    errors.summary.push({ text: apiCommsErrorMessage })
-    return renderWithdrawPage(h, featureControl, errors, note)
-  }
-
-  return h.redirect(`/feature-control/detail?name=${name}`)
+  return processStatusChangeHandler(request, h, 'active', 'withdrawn', renderWithdrawPage)
 }
 
 export const reactivateHandler = async (request, h) => {
-  if (getFeatureControlSchema.validate(request.query).error) {
-    return h.redirect('/features')
-  }
-
-  const { featureControl, errorResponse } = await getFeatureControl(request.query.name, request, h)
-  if (errorResponse) {
-    return errorResponse
-  }
-
-  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
-    return h.response('Forbidden').code(statusCodes.forbidden)
-  }
-
-  if (featureControl.status !== 'withdrawn') {
-    return h.redirect(`/feature-control/detail?name=${featureControl.name}`)
-  }
-
-  return renderReactivatePage(h, featureControl)
+  return statusChangeHandler(request, h, 'withdrawn', renderReactivatePage)
 }
 
 export const processReactivateHandler = async (request, h) => {
-  const { name, note } = request.payload
-
-  const { featureControl, errorResponse } = await getFeatureControl(name, request, h)
-  if (errorResponse) {
-    return errorResponse
-  }
-
-  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
-    return h.response('Forbidden').code(statusCodes.forbidden)
-  }
-
-  if (featureControl.status !== 'withdrawn') {
-    return h.redirect(`/feature-control/detail?name=${featureControl.name}`)
-  }
-
-  const user = request.auth.credentials.displayName
-  const errors = { summary: [] }
-
-  if (!note?.trim()) {
-    errors.summary.push({
-      text: 'Enter a note to explain why this feature control is being reactivated',
-      href: '#note'
-    })
-    errors.note = { text: 'Enter a note to explain why this feature control is being reactivated' }
-  }
-
-  if (errors.summary.length > 0) {
-    return renderReactivatePage(h, featureControl, errors, note)
-  }
-
-  const status = 'active'
-  const result = await requestFromApi('feature-control/status', request, {}, 'PUT', { name, status, user, note })
-
-  if (result?.status !== statusCodes.accepted) {
-    errors.summary.push({ text: apiCommsErrorMessage })
-    return renderReactivatePage(h, featureControl, errors, note)
-  }
-
-  return h.redirect(`/feature-control/detail?name=${name}`)
+  return processStatusChangeHandler(request, h, 'withdrawn', 'active', renderReactivatePage)
 }
 
 const getFeatureControl = async (name, request, h) => {
@@ -307,6 +184,82 @@ const renderReactivatePage = (h, featureControl, errors = null, note = '') => {
     breadcrumbs: getBreadcrumbs(displayName, name, 'reactivate'),
     environment: formatEnvironment(config.get('cdpEnvironment'))
   })
+}
+
+const getFeatureControlForUpdate = async (name, request, h, requiredStatus) => {
+  const { featureControl, errorResponse } = await getFeatureControl(name, request, h)
+  if (errorResponse) {
+    return { errorResponse }
+  }
+
+  if (!canUserUpdate(request.auth.credentials?.roles, featureControl.roleRequired)) {
+    return { errorResponse: h.response('Forbidden').code(statusCodes.forbidden) }
+  }
+
+  if (featureControl.status !== requiredStatus) {
+    const isUpdate = requiredStatus === 'active' && !request.path.includes('withdraw')
+    if (isUpdate) {
+      return { errorResponse: h.response('Forbidden').code(statusCodes.forbidden) }
+    }
+    return { errorResponse: h.redirect(`/feature-control/detail?name=${featureControl.name}`) }
+  }
+
+  return { featureControl }
+}
+
+const statusChangeHandler = async (request, h, requiredStatus, renderPage) => {
+  if (getFeatureControlSchema.validate(request.query).error) {
+    return h.redirect('/features')
+  }
+
+  const { featureControl, errorResponse } = await getFeatureControlForUpdate(
+    request.query.name,
+    request,
+    h,
+    requiredStatus
+  )
+  if (errorResponse) {
+    return errorResponse
+  }
+
+  return renderPage(h, featureControl)
+}
+
+const processStatusChangeHandler = async (request, h, requiredStatus, newStatus, renderPage) => {
+  const { name, note } = request.payload
+
+  const { featureControl, errorResponse } = await getFeatureControlForUpdate(name, request, h, requiredStatus)
+  if (errorResponse) {
+    return errorResponse
+  }
+
+  const user = request.auth.credentials.displayName
+  const errors = { summary: [] }
+
+  if (!note?.trim()) {
+    const action = newStatus === 'withdrawn' ? 'withdrawn' : 'reactivated'
+    const errorMessage = `Enter a note to explain why this feature control is being ${action}`
+    errors.summary.push({ text: errorMessage, href: '#note' })
+    errors.note = { text: errorMessage }
+  }
+
+  if (errors.summary.length > 0) {
+    return renderPage(h, featureControl, errors, note)
+  }
+
+  const result = await requestFromApi('feature-control/status', request, {}, 'PUT', {
+    name,
+    status: newStatus,
+    user,
+    note
+  })
+
+  if (result?.status !== statusCodes.accepted) {
+    errors.summary.push({ text: apiCommsErrorMessage })
+    return renderPage(h, featureControl, errors, note)
+  }
+
+  return h.redirect(`/feature-control/detail?name=${name}`)
 }
 
 const apiCommsErrorMessage = 'There was a problem communicating with the API. Please try again later.'
