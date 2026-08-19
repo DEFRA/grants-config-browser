@@ -5,8 +5,10 @@ export const getBreadcrumbs = (displayName, name, amendType = null) => {
   const breadcrumbs = [buildBreadcrumb('Home', '/'), buildBreadcrumb('Features', '/features')]
 
   if (amendType) {
-    breadcrumbs.push(buildBreadcrumb(displayName, `/feature-control/detail?name=${name}`))
-    breadcrumbs.push(buildBreadcrumb(amendTypeLabels[amendType]))
+    breadcrumbs.push(
+      buildBreadcrumb(displayName, `/feature-control/detail?name=${name}`),
+      buildBreadcrumb(amendTypeLabels[amendType])
+    )
   } else {
     breadcrumbs.push(buildBreadcrumb(displayName))
   }
