@@ -1,4 +1,12 @@
-import { detailHandler, updateHandler, processUpdateHandler } from './handlers.js'
+import {
+  detailHandler,
+  updateHandler,
+  processUpdateHandler,
+  withdrawHandler,
+  processWithdrawHandler,
+  reactivateHandler,
+  processReactivateHandler
+} from './handlers.js'
 
 export const featureControlController = {
   detail: {
@@ -9,5 +17,17 @@ export const featureControlController = {
   },
   processUpdate: {
     handler: processUpdateHandler
+  },
+  withdraw: {
+    handler: withdrawHandler
+  },
+  processWithdraw: {
+    handler: processWithdrawHandler
+  },
+  reactivate: {
+    handler: reactivateHandler
+  },
+  processReactivate: {
+    handler: processReactivateHandler
   }
 }

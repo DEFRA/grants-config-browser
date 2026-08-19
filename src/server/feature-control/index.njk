@@ -30,7 +30,7 @@
             },
             value: {
               html: govukTag({
-                text: featureControl.status | upper,
+                text: "WITHDRAWN" if featureControl.status === "removed" else featureControl.status | upper,
                 classes: "govuk-tag--grey" if featureControl.status !== "active"
               })
             }
@@ -98,6 +98,16 @@
         {% if canUpdate and featureControl.status === 'active' and (featureControl.type === 'boolean' or featureControl.type === 'string' or featureControl.type === 'number' or featureControl.type === 'list-string' or featureControl.type === 'list-number') %}
           <a href="/feature-control/update?name={{ technicalName }}" class="govuk-button" data-module="govuk-button">
             Update
+          </a>
+        {% endif %}
+        {% if canUpdate and featureControl.status === 'active' %}
+          <a href="/feature-control/withdraw?name={{ technicalName }}" class="govuk-button govuk-button--warning" data-module="govuk-button">
+            Withdraw
+          </a>
+        {% endif %}
+        {% if canUpdate and featureControl.status === 'withdrawn' %}
+          <a href="/feature-control/reactivate?name={{ technicalName }}" class="govuk-button" data-module="govuk-button">
+            Reactivate
           </a>
         {% endif %}
       </div>
