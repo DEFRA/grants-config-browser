@@ -29,9 +29,7 @@ vi.mock('node:fs', () => ({
 }))
 
 vi.mock('js-yaml', () => ({
-  default: {
-    load: vi.fn().mockReturnValue({})
-  }
+  load: vi.fn().mockReturnValue({})
 }))
 
 describe('router', () => {

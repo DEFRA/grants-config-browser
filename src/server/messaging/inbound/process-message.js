@@ -1,5 +1,6 @@
 import { config } from '../../../config/config.js'
 import { buildRedisClient } from '../../common/helpers/redis-client.js'
+import { subMonths } from 'date-fns'
 
 const REDIS_MESSAGES_KEY = 'sqs-messages'
 let redisClient
@@ -19,8 +20,13 @@ export const processInputMessage = async (message, logger, attributes, sentTimes
 
     const client = await getRedisClient()
     const existingMessagesJson = await client.get(REDIS_MESSAGES_KEY)
-    const messages = existingMessagesJson ? JSON.parse(existingMessagesJson) : []
+    let messages = existingMessagesJson ? JSON.parse(existingMessagesJson) : []
     messages.push({ attributes, body: message, sentTimestamp })
+    //remove any messages that don't have a sentTimestamp (the very oldest ones, no longer relevant)
+    messages = messages.filter((msg) => msg.sentTimestamp)
+    //remove any messages that are older than 1 month
+    const oneMonthAgo = subMonths(new Date(), 1).getTime()
+    messages = messages.filter((msg) => msg.sentTimestamp > oneMonthAgo)
     await client.set(REDIS_MESSAGES_KEY, JSON.stringify(messages))
   } catch (err) {
     logger.error(err, 'Unable to process Input request:')

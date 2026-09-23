@@ -10,8 +10,8 @@ import { version } from './version/index.js'
 import { viewfile } from './viewfile/index.js'
 import { notifications } from './notifications/index.js'
 import { api } from './api/index.js'
+import { load } from 'js-yaml'
 import Scalar from 'hapi-scalar'
-import yaml from 'js-yaml'
 import fs from 'node:fs'
 import path from 'node:path'
 import { signInController } from './auth/login.js'
@@ -59,7 +59,7 @@ export const router = {
 
       const swaggerPath = path.resolve(process.cwd(), 'src/docs/swagger.yaml')
       const swaggerFile = fs.readFileSync(swaggerPath, 'utf8')
-      const swaggerDocument = yaml.load(swaggerFile)
+      const swaggerDocument = load(swaggerFile)
 
       await server.register([
         {
