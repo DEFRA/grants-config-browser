@@ -62,17 +62,17 @@
     "brace-expansion": "5.0.9",
     "convict": "6.2.5",
     "convict-format-with-validator": "6.2.0",
-    "cssnano": "8.0.8",
-    "cssnano-preset-default": "8.0.8",
+    "cssnano": "9.0.4",
+    "cssnano-preset-default": "9.0.4",
     "date-fns": "4.4.0",
     "govuk-frontend": "6.4.0",
     "hapi-pino": "13.0.0",
-    "hapi-pulse": "3.0.1",
+    "hapi-pulse": "4.0.0",
     "hapi-scalar": "1.1.0",
-    "ioredis": "5.11.0",
+    "ioredis": "6.0.0",
     "joi": "18.2.5",
     "jose": "6.2.10",
-    "js-yaml": "4.3.1",
+    "js-yaml": "5.4.2",
     "lodash": "4.18.1",
     "mermaid": "11.17.0",
     "node-fetch": "3.3.2",
@@ -102,8 +102,8 @@
     "sass-embedded": "1.103.1",
     "sass-loader": "17.0.0",
     "source-map-loader": "5.0.0",
-    "stylelint": "16.26.1",
-    "stylelint-config-gds": "2.0.0",
+    "stylelint": "17.15.0",
+    "stylelint-config-gds": "3.0.0",
     "terser-webpack-plugin": "5.6.1",
     "vitest": "4.1.11",
     "vitest-fetch-mock": "0.4.5",
@@ -113,7 +113,6 @@
   },
   "overrides": {
     "tmp": "0.2.5",
-    "joi": "18.2.5",
-    "fast-uri": "3.1.5"
+    "joi": "18.2.5"
   }
 }

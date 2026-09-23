@@ -1,4 +1,4 @@
-import yaml from 'js-yaml'
+import { load } from 'js-yaml'
 import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { createTooltipData } from './tooltip/tooltip.js'
@@ -10,7 +10,7 @@ const loadConfig = async (filename, bucket) => {
   } else {
     throw new Error('No bucket or filename provided')
   }
-  return yaml.load(fileContent)
+  return load(fileContent)
 }
 
 export const visualiseJourneyController = {

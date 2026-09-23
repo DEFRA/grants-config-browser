@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { visualiseJourneyController } from './controller.js'
-import yaml from 'js-yaml'
+import { load } from 'js-yaml'
 import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
 import { createTooltipData } from './tooltip/tooltip.js'
 
@@ -37,7 +37,7 @@ describe('visualiseJourneyController', () => {
     }
 
     getS3FileContent.mockResolvedValue('mock yaml')
-    yaml.load.mockReturnValue(mockConfig)
+    load.mockReturnValue(mockConfig)
 
     const request = {
       query: { bucket: 'b', filename: 'f' }
@@ -117,7 +117,7 @@ describe('visualiseJourneyController', () => {
     }
 
     getS3FileContent.mockResolvedValue('mock yaml content')
-    yaml.load.mockReturnValue(mockConfig)
+    load.mockReturnValue(mockConfig)
 
     const request = { query: { bucket: 'b', filename: 'f' } }
     const h = {
@@ -166,7 +166,7 @@ describe('visualiseJourneyController', () => {
     }
 
     getS3FileContent.mockResolvedValue('mock yaml')
-    yaml.load.mockReturnValue(mockConfig)
+    load.mockReturnValue(mockConfig)
 
     const request = { query: { bucket: 'b', filename: 'f' } }
     const h = { view: vi.fn() }
@@ -187,7 +187,7 @@ describe('visualiseJourneyController', () => {
     }
 
     getS3FileContent.mockResolvedValue('mock yaml')
-    yaml.load.mockReturnValue(mockConfig)
+    load.mockReturnValue(mockConfig)
 
     const request = { query: { bucket: 'b', filename: 'f', showComponents: 'true' } }
     const h = { view: vi.fn() }
@@ -214,7 +214,7 @@ describe('visualiseJourneyController', () => {
     }
 
     getS3FileContent.mockResolvedValue('mock yaml')
-    yaml.load.mockReturnValue(mockConfig)
+    load.mockReturnValue(mockConfig)
 
     const request = { query: { bucket: 'b', filename: 'f' } }
     const h = { view: vi.fn() }
@@ -238,7 +238,7 @@ describe('visualiseJourneyController', () => {
     }
 
     getS3FileContent.mockResolvedValue('mock yaml')
-    yaml.load.mockReturnValue(mockConfig)
+    load.mockReturnValue(mockConfig)
 
     const request = { query: { bucket: 'b', filename: 'f' } }
     const h = { view: vi.fn() }
