@@ -31,52 +31,72 @@ async function run() {
   const tooltipData = tooltipDataElement ? JSON.parse(tooltipDataElement.textContent) : {}
 
   await mermaid.run()
+  const containers = document.querySelectorAll('.journey-visualisation-container')
 
-  document.querySelectorAll('pre.mermaid').forEach((pre) => {
-    pre.style.visibility = 'visible'
-  })
-
-  document.querySelectorAll('pre.mermaid--pan-zoom > svg').forEach((svg) => {
-    if (!svg.getAttribute('viewBox')) {
-      return
-    }
-
-    const panZoom = svgPanZoom(svg, {
-      controlIconsEnabled: false,
-      mouseWheelZoomEnabled: true,
-      zoomScaleSensitivity: 0.2,
-      minZoom: 0.01,
-      maxZoom: 100,
-      fit: true,
-      center: true
+  containers.forEach((container) => {
+    // Show all children (Mermaid v11 replaces the pre tag with an svg or div)
+    Array.from(container.children).forEach((el) => {
+      el.style.visibility = 'visible'
     })
 
-    const smartZoom = () => {
-      panZoom.fit()
-      panZoom.center()
-
-      const sizes = panZoom.getSizes()
-      const containerRatio = sizes.width / sizes.height
-      const graphRatio = sizes.viewBox.width / sizes.viewBox.height
-
-      // If the graph is much taller than the container ratio, fit to width instead of height
-      if (graphRatio < containerRatio) {
-        const newZoom = sizes.width / sizes.viewBox.width
-        panZoom.zoom(newZoom)
-        panZoom.center()
-        const currentPan = panZoom.getPan()
-        panZoom.pan({ x: currentPan.x, y: 0 })
+    if (container.classList.contains('mermaid--pan-zoom')) {
+      const svg = container.querySelector('svg')
+      if (!svg?.getAttribute('viewBox')) {
+        return
       }
-    }
 
-    smartZoom()
-
-    const resetZoomButton = document.getElementById('reset-zoom')
-    if (resetZoomButton) {
-      resetZoomButton.addEventListener('click', (e) => {
-        e.preventDefault()
-        smartZoom()
+      const panZoom = svgPanZoom(svg, {
+        controlIconsEnabled: false,
+        mouseWheelZoomEnabled: true,
+        zoomScaleSensitivity: 0.2,
+        minZoom: 0.01,
+        maxZoom: 100,
+        fit: true,
+        center: true
       })
+
+      const smartZoom = () => {
+        // const orientation = container.dataset.orientation
+        //
+        // panZoom.fit()
+        // panZoom.center()
+        //
+        // if (orientation === 'TD') {
+        //   // For top-to-bottom graphs, start at the top
+        //   const currentPan = panZoom.getPan()
+        //   panZoom.pan({ x: currentPan.x, y: 0 })
+        // }
+        console.log('BEFORE', panZoom.getSizes())
+        panZoom.resize()
+        panZoom.fit()
+        panZoom.center()
+        console.log('AFTER', panZoom.getSizes())
+
+        // const sizes = panZoom.getSizes()
+        // console.log(sizes)
+        // console.log(panZoom.getZoom())
+        // const containerRatio = sizes.width / sizes.height
+        // const graphRatio = sizes.viewBox.width / sizes.viewBox.height
+        //
+        // // If the graph is much taller than the container ratio, fit to width instead of height
+        // if (graphRatio < containerRatio) {
+        //   const newZoom = sizes.height / sizes.viewBox.height
+        //   panZoom.zoom(newZoom)
+        //   panZoom.center()
+        //   const currentPan = panZoom.getPan()
+        //   panZoom.pan({ x: currentPan.x, y: 0 })
+        // }
+      }
+
+      smartZoom()
+
+      const resetZoomButton = document.getElementById('reset-zoom')
+      if (resetZoomButton) {
+        resetZoomButton.addEventListener('click', (e) => {
+          e.preventDefault()
+          smartZoom()
+        })
+      }
     }
   })
 
@@ -107,10 +127,10 @@ async function run() {
       // Mermaid sometimes uses ids like flowchart-nodeId-index
       const keys = Object.keys(tooltipData)
       // Sort keys by length descending to match the longest (most specific) key first
-      const sortedKeys = keys.sort((a, b) => b.length - a.length)
+      const sortedKeys = keys.toSorted((a, b) => b.length - a.length)
 
       const matchingKey = sortedKeys.find((key) => {
-        const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)
         const regex = new RegExp(`(^|[-])${escapedKey}([-]|$)`)
         return regex.test(id)
       })
@@ -126,4 +146,4 @@ async function run() {
   })
 }
 
-run()
+await run()

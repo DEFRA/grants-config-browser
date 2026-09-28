@@ -31,6 +31,8 @@ const createRowsForTable = (bucket, manifestEntries, grant, version) => {
       visualizeLink = getVisualiseLink(manifestEntry, bucket, grant, version, 'journey')
     } else if (isGasConfig(manifestEntry)) {
       visualizeLink = getVisualiseLink(manifestEntry, bucket, grant, version, 'gas')
+    } else if (isCwConfig(manifestEntry)) {
+      visualizeLink = getVisualiseLink(manifestEntry, bucket, grant, version, 'cw')
     } else {
       visualizeLink = '&nbsp;'
     }
@@ -89,3 +91,4 @@ export const versionController = {
 const isGrantsUiJourneyConfig = (filename) =>
   filename.includes('grants-ui') && filename.endsWith('.yaml') && !filename.toLowerCase().includes('allowlist')
 const isGasConfig = (filename) => filename.includes('gas') && filename.endsWith('.json')
+const isCwConfig = (filename) => filename.endsWith('cw.json')

@@ -3,22 +3,15 @@
 {% block content %}
 <div class="govuk-grid-row">
   <div class="govuk-grid-column-full">
-    <span class="govuk-caption-l">Journey Visualisation</span>
+    <span class="govuk-caption-l">CW Visualisation</span>
     <div class="govuk-button-group">
       <h1 class="govuk-heading-l govuk-!-static-padding-right-5">{{ configName }}</h1>
       <button id="reset-zoom" class="govuk-button govuk-button--secondary" data-module="govuk-button">
         Reset Zoom
       </button>
-      <a href="/visualise-journey?bucket={{ bucket }}&filename={{ filename }}&showComponents={{ 'false' if showComponents else 'true' }}&grant={{ grant }}&version={{ version }}" id="show-components" class="govuk-button govuk-button--secondary" data-module="govuk-button">
-                  {% if showComponents %}
-                    Hide components
-                  {% else %}
-                    Show components
-                  {% endif %}
-          </a>
     </div>
 
-    <div class="journey-visualisation-container mermaid--pan-zoom govuk-!-margin-top-6" data-orientation="TD" style="border: 1px solid #b1b4b6;">
+    <div class="journey-visualisation-container mermaid--pan-zoom govuk-!-margin-top-6" data-orientation="LR" style="border: 1px solid #b1b4b6;">
       <pre class="mermaid">
         {{ mermaidGraph | safe }}
       </pre>
