@@ -3,7 +3,9 @@ import { loadJsonFromS3 } from '../common/helpers/s3/s3-config-loader.js'
 export const visualiseGasController = {
   async handler(request, h) {
     const { config, bucket, filename, grant, version, errorResponse } = await loadJsonFromS3(request, h)
-    if (errorResponse) return errorResponse
+    if (errorResponse) {
+      return errorResponse
+    }
 
     const phases = config.phases || []
     // const externalStatusMap = config.externalStatusMap || []
