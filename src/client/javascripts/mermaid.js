@@ -56,36 +56,9 @@ async function run() {
       })
 
       const smartZoom = () => {
-        // const orientation = container.dataset.orientation
-        //
-        // panZoom.fit()
-        // panZoom.center()
-        //
-        // if (orientation === 'TD') {
-        //   // For top-to-bottom graphs, start at the top
-        //   const currentPan = panZoom.getPan()
-        //   panZoom.pan({ x: currentPan.x, y: 0 })
-        // }
-        console.log('BEFORE', panZoom.getSizes())
         panZoom.resize()
         panZoom.fit()
         panZoom.center()
-        console.log('AFTER', panZoom.getSizes())
-
-        // const sizes = panZoom.getSizes()
-        // console.log(sizes)
-        // console.log(panZoom.getZoom())
-        // const containerRatio = sizes.width / sizes.height
-        // const graphRatio = sizes.viewBox.width / sizes.viewBox.height
-        //
-        // // If the graph is much taller than the container ratio, fit to width instead of height
-        // if (graphRatio < containerRatio) {
-        //   const newZoom = sizes.height / sizes.viewBox.height
-        //   panZoom.zoom(newZoom)
-        //   panZoom.center()
-        //   const currentPan = panZoom.getPan()
-        //   panZoom.pan({ x: currentPan.x, y: 0 })
-        // }
       }
 
       smartZoom()
@@ -98,51 +71,51 @@ async function run() {
         })
       }
     }
-  })
 
-  tippy('.node', {
-    content: (reference) => {
-      let id = reference.id
+    tippy(container.querySelectorAll('.node'), {
+      content: (reference) => {
+        let id = reference.id
 
-      // Mermaid v11 might put the ID on a child or parent
-      if (!id) {
-        const withId = reference.querySelector('[id]')
-        if (withId) {
-          id = withId.id
+        // Mermaid v11 might put the ID on a child or parent
+        if (!id) {
+          const withId = reference.querySelector('[id]')
+          if (withId) {
+            id = withId.id
+          }
         }
-      }
 
-      if (!id && reference.parentElement?.id) {
-        id = reference.parentElement.id
-      }
+        if (!id && reference.parentElement?.id) {
+          id = reference.parentElement.id
+        }
 
-      if (!id || !tooltipData) {
-        return null
-      }
+        if (!id || !tooltipData) {
+          return null
+        }
 
-      if (tooltipData[id]) {
-        return tooltipData[id]
-      }
+        if (tooltipData[id]) {
+          return tooltipData[id]
+        }
 
-      // Mermaid sometimes uses ids like flowchart-nodeId-index
-      const keys = Object.keys(tooltipData)
-      // Sort keys by length descending to match the longest (most specific) key first
-      const sortedKeys = keys.toSorted((a, b) => b.length - a.length)
+        // Mermaid sometimes uses ids like flowchart-nodeId-index
+        const keys = Object.keys(tooltipData)
+        // Sort keys by length descending to match the longest (most specific) key first
+        const sortedKeys = keys.toSorted((a, b) => b.length - a.length)
 
-      const matchingKey = sortedKeys.find((key) => {
-        const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)
-        const regex = new RegExp(`(^|[-])${escapedKey}([-]|$)`)
-        return regex.test(id)
-      })
+        const matchingKey = sortedKeys.find((key) => {
+          const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)
+          const regex = new RegExp(`(^|[-])${escapedKey}([-]|$)`)
+          return regex.test(id)
+        })
 
-      return matchingKey ? tooltipData[matchingKey] : null
-    },
-    allowHTML: true,
-    interactive: true,
-    placement: 'left',
-    theme: 'white-bg',
-    maxWidth: 800,
-    appendTo: () => document.body
+        return matchingKey ? tooltipData[matchingKey] : null
+      },
+      allowHTML: true,
+      interactive: true,
+      placement: 'left',
+      theme: `white-bg ${container.dataset.type === 'cw' ? 'cw-tooltip' : ''}`,
+      maxWidth: 800,
+      appendTo: () => document.body
+    })
   })
 }
 

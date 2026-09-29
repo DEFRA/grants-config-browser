@@ -1,21 +1,11 @@
-import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
-import { statusCodes } from '../common/constants/status-codes.js'
+import { loadJsonFromS3 } from '../common/helpers/s3/s3-config-loader.js'
+import { createCwTaskTooltipData } from './tooltip/cw-tooltip.js'
 
 export const visualiseCwController = {
   async handler(request, h) {
-    const { bucket, filename, grant, version } = request.query || {}
-
-    let config
-    try {
-      let fileContent
-      if (bucket && filename) {
-        fileContent = await getS3FileContent(bucket, filename)
-      } else {
-        throw new Error('No bucket or filename provided')
-      }
-      config = JSON.parse(fileContent)
-    } catch (e) {
-      return h.response(`Error loading JSON: ${e.message}`).code(statusCodes.internalServerError)
+    const { config, bucket, filename, grant, version, errorResponse } = await loadJsonFromS3(request, h)
+    if (errorResponse) {
+      return errorResponse
     }
 
     const phases = config.phases || []
@@ -27,6 +17,7 @@ export const visualiseCwController = {
       const stages = phase.stages || []
       stages.forEach((stage) => {
         generateStatusNodes(stage.statuses, nodes, links, tooltipData, phase, stage)
+        generateTaskNodes(stage, nodes, links, tooltipData, phase)
       })
     })
 
@@ -34,7 +25,9 @@ export const visualiseCwController = {
     let mermaidGraph = 'flowchart LR\n'
 
     const renderNode = (node) => {
-      return `        ${node.nodeId}["${node.name}"]\n`
+      const shapeStart = node.type === 'task' ? '[[' : '["'
+      const shapeEnd = node.type === 'task' ? ']]' : '"]'
+      return `        ${node.nodeId}${shapeStart}${node.name}${shapeEnd}\n`
     }
 
     // Group by Phase and Stage
@@ -57,11 +50,14 @@ export const visualiseCwController = {
       const source = link.source.replaceAll(':', '_')
       const target = link.target.replaceAll(':', '_')
       const label = link.action ? `|${link.action}|` : ''
-      mermaidGraph += `  ${source} -->${label} ${target}\n`
+      mermaidGraph += `  ${source} ${link.type === 'task-link' ? '-.->' : '-->'}${label} ${target}\n`
     })
 
-    // Add click handlers for tooltips
+    // Add styling
     nodes.forEach((node) => {
+      if (node.type === 'task') {
+        mermaidGraph += `  style ${node.nodeId} fill:#e7f3ff,stroke:#005ea5,stroke-width:2px\n`
+      }
       mermaidGraph += `  click ${node.nodeId} noop\n`
     })
 
@@ -88,10 +84,36 @@ const generateStatusNodes = (statuses, nodes, links, tooltipData, phase, stage) 
       name: status.name || status.code.replace('STATUS_', '').replaceAll('_', ' '),
       phase: phase.code,
       stage: stage.code,
-      stageName: stage.name
+      stageName: stage.name,
+      type: 'status'
     })
 
     createTooltipData(nodeId, tooltipData, phase, stage, status)
+
+    // Check for tasks inside status (if any)
+    if (status.taskGroups) {
+      status.taskGroups.forEach((tg) => {
+        tg.tasks?.forEach((task) => {
+          const taskFullId = `${fullId}:${task.code}`
+          const taskNodeId = taskFullId.replaceAll(':', '_')
+          nodes.push({
+            id: taskFullId,
+            nodeId: taskNodeId,
+            code: task.code,
+            name: task.name,
+            phase: phase.code,
+            stage: stage.code,
+            type: 'task'
+          })
+          tooltipData[taskNodeId] = createCwTaskTooltipData(task, phase, stage)
+          links.push({
+            source: fullId,
+            target: taskFullId,
+            type: 'task-link'
+          })
+        })
+      })
+    }
 
     const transitions = status.transitions || []
     transitions.forEach((transition) => {
@@ -104,6 +126,42 @@ const generateStatusNodes = (statuses, nodes, links, tooltipData, phase, stage) 
       }
     })
   })
+}
+
+const generateTaskNodes = (stage, nodes, links, tooltipData, phase) => {
+  if (stage.taskGroups) {
+    stage.taskGroups.forEach((tg) => {
+      tg.tasks?.forEach((task) => {
+        const taskFullId = `${phase.code}:${stage.code}:${task.code}`
+        const taskNodeId = taskFullId.replaceAll(':', '_')
+
+        // Avoid duplicates if already added via status (though in cw.json they are at stage level)
+        if (!nodes.some((n) => n.id === taskFullId)) {
+          nodes.push({
+            id: taskFullId,
+            nodeId: taskNodeId,
+            code: task.code,
+            name: task.name,
+            phase: phase.code,
+            stage: stage.code,
+            type: 'task'
+          })
+          tooltipData[taskNodeId] = createCwTaskTooltipData(task, phase, stage)
+
+          // Link from all interactive statuses in this stage to this task
+          const stageStatuses = stage.statuses || []
+          stageStatuses.forEach((status) => {
+            const statusFullId = `${phase.code}:${stage.code}:${status.code}`
+            links.push({
+              source: statusFullId,
+              target: taskFullId,
+              type: 'task-link'
+            })
+          })
+        }
+      })
+    })
+  }
 }
 
 const createBreadCrumbs = (filename, grant, version) => {
@@ -131,19 +189,25 @@ const createTooltipData = (nodeId, tooltipData, phase, stage, status) => {
   if (stage.taskGroups && stage.taskGroups.length > 0) {
     stage.taskGroups.forEach((tg) => {
       if (tg.tasks && tg.tasks.length > 0) {
-        tasksHtml += `<br/><strong>${tg.name}:</strong><ul>`
+        tasksHtml += `<div class="govuk-!-margin-top-4">
+          <strong class="govuk-body">${tg.name}:</strong>
+          <ul class="govuk-list govuk-list--bullet govuk-body">`
         tg.tasks.forEach((t) => {
           tasksHtml += `<li>${t.name} (${t.mandatory ? 'Mandatory' : 'Optional'})</li>`
         })
-        tasksHtml += `</ul>`
+        tasksHtml += `</ul></div>`
       }
     })
   }
 
+  const statusName = status.name || status.code.replace('STATUS_', '').replaceAll('_', ' ')
+
   tooltipData[nodeId] = `
-            <strong>Phase:</strong> ${phase.name} (${phase.code})<br/>
-            <strong>Stage:</strong> ${stage.name} (${stage.code})<br/>
-            <strong>Status:</strong> ${status.name || status.code} (${status.code})
+            <span class="govuk-caption-m">${phase.name} - ${stage.name}</span>
+            <h2 class="govuk-heading-m govuk-!-margin-bottom-2">${statusName}</h2>
+            <p class="govuk-body govuk-!-margin-bottom-0"><strong>Phase:</strong> ${phase.code}</p>
+            <p class="govuk-body govuk-!-margin-bottom-0"><strong>Stage:</strong> ${stage.code}</p>
+            <p class="govuk-body govuk-!-margin-bottom-0"><strong>Status:</strong> ${status.code}</p>
             ${tasksHtml}
           `.trim()
 }

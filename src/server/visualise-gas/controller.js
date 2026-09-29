@@ -1,22 +1,9 @@
-import { getS3FileContent } from '../common/helpers/s3/s3-interactions.js'
-import { statusCodes } from '../common/constants/status-codes.js'
+import { loadJsonFromS3 } from '../common/helpers/s3/s3-config-loader.js'
 
 export const visualiseGasController = {
   async handler(request, h) {
-    const { bucket, filename, grant, version } = request.query || {}
-
-    let config
-    try {
-      let fileContent
-      if (bucket && filename) {
-        fileContent = await getS3FileContent(bucket, filename)
-      } else {
-        throw new Error('No bucket or filename provided')
-      }
-      config = JSON.parse(fileContent)
-    } catch (e) {
-      return h.response(`Error loading JSON: ${e.message}`).code(statusCodes.internalServerError)
-    }
+    const { config, bucket, filename, grant, version, errorResponse } = await loadJsonFromS3(request, h)
+    if (errorResponse) return errorResponse
 
     const phases = config.phases || []
     // const externalStatusMap = config.externalStatusMap || []

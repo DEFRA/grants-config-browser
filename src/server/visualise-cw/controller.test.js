@@ -23,7 +23,7 @@ describe('visualiseCwController', () => {
               taskGroups: [
                 {
                   name: 'Tasks',
-                  tasks: [{ name: 'Task 1', mandatory: true }]
+                  tasks: [{ code: 'TASK_1', name: 'Task 1', mandatory: true }]
                 }
               ],
               statuses: [
@@ -84,6 +84,14 @@ describe('visualiseCwController', () => {
     expect(callArgs.mermaidGraph).toContain(
       'PHASE_PRE_AWARD_STAGE_REVIEWING_APPLICATION_STATUS_APPLICATION_RECEIVED -->|Start| PHASE_PRE_AWARD_STAGE_REVIEWING_APPLICATION_STATUS_APPLICATION_IN_REVIEW'
     )
+    expect(callArgs.mermaidGraph).toContain('PHASE_PRE_AWARD_STAGE_REVIEWING_APPLICATION_TASK_1[[Task 1]]')
+    expect(callArgs.mermaidGraph).toContain(
+      'PHASE_PRE_AWARD_STAGE_REVIEWING_APPLICATION_STATUS_APPLICATION_RECEIVED -.-> PHASE_PRE_AWARD_STAGE_REVIEWING_APPLICATION_TASK_1'
+    )
+    expect(callArgs.tooltipData.PHASE_PRE_AWARD_STAGE_REVIEWING_APPLICATION_TASK_1).toContain(
+      'Pre-award - Application received'
+    )
+    expect(callArgs.tooltipData.PHASE_PRE_AWARD_STAGE_REVIEWING_APPLICATION_TASK_1).toContain('Task 1')
     expect(callArgs.tooltipData.PHASE_PRE_AWARD_STAGE_REVIEWING_APPLICATION_STATUS_APPLICATION_RECEIVED).toContain(
       'Task 1'
     )
