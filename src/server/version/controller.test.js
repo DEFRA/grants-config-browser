@@ -15,7 +15,7 @@ describe('#versionController', () => {
       response: {
         grant: 'some-grant',
         version: '1.2.3',
-        manifest: ['file1', 'grants-ui-file.yaml', 'some-gas-file.json', 'grants-ui/allowlist.yaml'],
+        manifest: ['file1', 'grants-ui-file.yaml', 'some-gas-file.json', 'grants-ui/allowlist.yaml', 'some-cw.json'],
         status: 'active',
         path: 'some-bucket'
       }
@@ -89,6 +89,16 @@ describe('#versionController', () => {
     const fourthRowCells = rows.eq(3).find('td')
     expect(fourthRowCells.eq(0).text().trim()).toBe('grants-ui/allowlist.yaml')
     expect(fourthRowCells.eq(1).text().trim()).toBe('')
+
+    // Check fifth file (with visualise-cw link)
+    const fifthRowCells = rows.eq(4).find('td')
+    expect(fifthRowCells.eq(0).text().trim()).toBe('some-cw.json')
+    expect(fifthRowCells.eq(1).text().trim()).toContain('Visualise')
+
+    const visualiseCwLink = fifthRowCells.eq(1).find('a.visualise-link')
+    expect(visualiseCwLink.attr('href')).toBe(
+      '/visualise-cw?filename=some-cw.json&bucket=some-bucket&grant=some-grant&version=1.2.3'
+    )
 
     expect(statusCode).toBe(statusCodes.ok)
   })
