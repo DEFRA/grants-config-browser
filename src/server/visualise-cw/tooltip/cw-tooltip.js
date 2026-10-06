@@ -35,46 +35,15 @@ export const createCwTaskTooltipData = (task, phase, stage) => {
 }
 
 export const createCwStatusTooltipData = (status, phase, stage) => {
-  const beforeItems = getContentForStatus(
-    status?.beforeContent,
-    stage?.beforeContent,
-    phase?.beforeContent,
-    status,
-    stage,
-    phase
+  const beforeHtml = renderStatusSection(
+    getContentForStatus(status?.beforeContent, stage?.beforeContent, phase?.beforeContent, status, stage, phase)
   )
-  let beforeHtml = ''
-  const beforeRendered = renderDescription(beforeItems)
-  if (beforeRendered) {
-    beforeHtml = `<div class="govuk-!-margin-top-4">${beforeRendered}</div>`
-  }
 
-  let tasksHtml = ''
-  const taskGroups = stage?.taskGroups || status?.taskGroups || []
-  if (taskGroups.length > 0) {
-    taskGroups.forEach((tg) => {
-      if (tg.tasks && tg.tasks.length > 0) {
-        tasksHtml += `<div class="govuk-!-margin-top-4">
-          ${tg.name ? `<h3 class="govuk-heading-m">${tg.name}</h3>` : ''}
-          ${generateTaskList(tg.tasks)}
-        </div>`
-      }
-    })
-  }
+  const tasksHtml = renderStatusTasks(stage?.taskGroups || status?.taskGroups || [])
 
-  const afterItems = getContentForStatus(
-    status?.afterContent,
-    stage?.afterContent,
-    phase?.afterContent,
-    status,
-    stage,
-    phase
+  const afterHtml = renderStatusSection(
+    getContentForStatus(status?.afterContent, stage?.afterContent, phase?.afterContent, status, stage, phase)
   )
-  let afterHtml = ''
-  const afterRendered = renderDescription(afterItems)
-  if (afterRendered) {
-    afterHtml = `<div class="govuk-!-margin-top-4">${afterRendered}</div>`
-  }
 
   const statusName = status?.name || status?.code?.replace('STATUS_', '').replaceAll('_', ' ') || ''
 
@@ -83,8 +52,9 @@ export const createCwStatusTooltipData = (status, phase, stage) => {
     caption = `<span class="govuk-caption-m">${phase.name} - ${stage.name}</span>\n`
   }
 
+  let finalBeforeHtml = beforeHtml
   if (!beforeHtml.length && !tasksHtml.length && !afterHtml.length) {
-    beforeHtml = '<p class="govuk-body">There are no tasks to complete.</p>'
+    finalBeforeHtml = '<p class="govuk-body">There are no tasks to complete.</p>'
   }
 
   return `
@@ -92,67 +62,93 @@ export const createCwStatusTooltipData = (status, phase, stage) => {
     <p class="govuk-body govuk-!-margin-bottom-0"><strong>Phase:</strong> ${phase?.code || ''}</p>
     <p class="govuk-body govuk-!-margin-bottom-0"><strong>Stage:</strong> ${stage?.code || ''}</p>
     <p class="govuk-body govuk-!-margin-bottom-5"><strong>Status:</strong> ${status?.code || ''}</p>
-    ${beforeHtml}
+    ${finalBeforeHtml}
     ${tasksHtml}
     ${afterHtml}
   `.trim()
 }
 
-const matchesCondition = (renderIf, status, stage, phase) => {
-  if (renderIf === undefined || renderIf === null) {
-    return true
+const renderStatusSection = (items) => {
+  const rendered = renderDescription(items)
+  return rendered ? `<div class="govuk-!-margin-top-4">${rendered}</div>` : ''
+}
+
+const renderStatusTasks = (taskGroups) => {
+  let html = ''
+  if (taskGroups.length > 0) {
+    taskGroups.forEach((tg) => {
+      if (tg.tasks && tg.tasks.length > 0) {
+        html += `<div class="govuk-!-margin-top-4">
+          ${tg.name ? `<h3 class="govuk-heading-m">${tg.name}</h3>` : ''}
+          ${generateTaskList(tg.tasks)}
+        </div>`
+      }
+    })
   }
-  if (renderIf === true || renderIf === 'true') {
+  return html
+}
+
+const matchesCondition = (renderIf, status, stage, phase) => {
+  if (renderIf === undefined || renderIf === null || renderIf === true || renderIf === 'true') {
     return true
   }
   if (renderIf === false || renderIf === 'false') {
     return false
   }
 
-  const statusCode = status?.code || ''
-  const stageCode = stage?.code || ''
-  const phaseCode = phase?.code || ''
-
   if (Array.isArray(renderIf)) {
     return renderIf.some((r) => matchesCondition(r, status, stage, phase))
   }
 
   if (typeof renderIf === 'object') {
-    if (renderIf.statusCode && !matchesCode(renderIf.statusCode, statusCode, 'STATUS_')) {
-      return false
-    }
-    if (renderIf.status && !matchesCode(renderIf.status, statusCode, 'STATUS_')) {
-      return false
-    }
-    if (renderIf.stageCode && !matchesCode(renderIf.stageCode, stageCode, 'STAGE_')) {
-      return false
-    }
-    if (renderIf.phaseCode && !matchesCode(renderIf.phaseCode, phaseCode, 'PHASE_')) {
-      return false
-    }
-    return true
+    return matchesObjectCondition(renderIf, status, stage, phase)
   }
 
-  if (typeof renderIf !== 'string') {
+  if (typeof renderIf === 'string') {
+    return matchesStringCondition(renderIf, status, stage, phase)
+  }
+
+  return false
+}
+
+const matchesObjectCondition = (renderIf, status, stage, phase) => {
+  const statusCode = status?.code || ''
+  const stageCode = stage?.code || ''
+  const phaseCode = phase?.code || ''
+
+  if (renderIf.statusCode && !matchesCode(renderIf.statusCode, statusCode, 'STATUS_')) {
     return false
   }
+  if (renderIf.status && !matchesCode(renderIf.status, statusCode, 'STATUS_')) {
+    return false
+  }
+  if (renderIf.stageCode && !matchesCode(renderIf.stageCode, stageCode, 'STAGE_')) {
+    return false
+  }
+  if (renderIf.phaseCode && !matchesCode(renderIf.phaseCode, phaseCode, 'PHASE_')) {
+    return false
+  }
+  return true
+}
 
+const matchesStringCondition = (renderIf, status, stage, phase) => {
   const trimmed = renderIf.trim()
   if (!trimmed) {
     return true
   }
 
-  // Check status code matching
+  const statusCode = status?.code || ''
   if (statusCode && matchesCodeInExpression(trimmed, statusCode, 'STATUS_')) {
     return true
   }
 
-  // If the expression doesn't mention status-related keywords, check if it matches stage or phase
   const mentionsStatus = /(status|statusCode|position\.status)/i.test(trimmed)
   if (!mentionsStatus) {
+    const stageCode = stage?.code || ''
     if (stageCode && matchesCodeInExpression(trimmed, stageCode, 'STAGE_')) {
       return true
     }
+    const phaseCode = phase?.code || ''
     if (phaseCode && matchesCodeInExpression(trimmed, phaseCode, 'PHASE_')) {
       return true
     }
@@ -217,41 +213,30 @@ const extractContent = (contentDef, status, stage, phase) => {
     }
     if (typeof entry === 'string') {
       items.push(entry)
-    } else if (entry.renderIf !== undefined && entry.renderIf !== null) {
-      if (matchesCondition(entry.renderIf, status, stage, phase)) {
-        if (entry.content) {
-          if (Array.isArray(entry.content)) {
-            items.push(...entry.content)
-          } else {
-            items.push(entry.content)
-          }
-        } else if (entry.items && !entry.component && !entry.type) {
-          if (Array.isArray(entry.items)) {
-            items.push(...entry.items)
-          } else {
-            items.push(entry.items)
-          }
-        } else if (entry.component || entry.type || entry.text || entry.html) {
-          items.push(entry)
-        }
-      }
-    } else if (entry.content) {
-      if (Array.isArray(entry.content)) {
-        items.push(...entry.content)
-      } else {
-        items.push(entry.content)
-      }
-    } else if (entry.items && !entry.component && !entry.type) {
-      if (Array.isArray(entry.items)) {
-        items.push(...entry.items)
-      } else {
-        items.push(entry.items)
-      }
-    } else if (entry.component || entry.type || entry.text || entry.html) {
-      items.push(entry)
+      continue
+    }
+
+    const hasRenderIf = entry.renderIf !== undefined && entry.renderIf !== null
+    const shouldRender = !hasRenderIf || matchesCondition(entry.renderIf, status, stage, phase)
+
+    if (shouldRender) {
+      items.push(...extractItemsFromEntry(entry))
     }
   }
   return items
+}
+
+const extractItemsFromEntry = (entry) => {
+  if (entry.content) {
+    return Array.isArray(entry.content) ? entry.content : [entry.content]
+  }
+  if (entry.items && !entry.component && !entry.type) {
+    return Array.isArray(entry.items) ? entry.items : [entry.items]
+  }
+  if (entry.component || entry.type || entry.text || entry.html) {
+    return [entry]
+  }
+  return []
 }
 
 const getContentForStatus = (statusContentDef, stageContentDef, phaseContentDef, status, stage, phase) => {
@@ -353,65 +338,81 @@ const renderComponent = (c) => {
   return renderDetails(c, compType, level)
 }
 
+const renderHeading = (c, type, level, classes) => {
+  const headingLevel = type.startsWith('h') && type.length === 2 ? Number(type[1]) : level
+  const tag = `h${headingLevel}`
+  const headingClass = `govuk-heading-${levelToHeadingClass(headingLevel)}`
+  return `<${tag} class="${buildClasses(headingClass, classes)}">${renderText(c.text || c.content || c.title)}</${tag}>`
+}
+
+const COMPONENT_RENDERERS = {
+  heading: renderHeading,
+  header: renderHeading,
+  h1: renderHeading,
+  h2: renderHeading,
+  h3: renderHeading,
+  h4: renderHeading,
+  h5: renderHeading,
+  h6: renderHeading,
+  paragraph: (c, type, level, classes) =>
+    `<p class="${buildClasses('govuk-body', classes)}">${renderText(c.text || c.content)}</p>`,
+  p: (c, type, level, classes) =>
+    `<p class="${buildClasses('govuk-body', classes)}">${renderText(c.text || c.content)}</p>`,
+  'unordered-list': (c, type, level, classes) =>
+    `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`,
+  'bullet-list': (c, type, level, classes) =>
+    `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`,
+  list: (c, type, level, classes) =>
+    `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`,
+  ul: (c, type, level, classes) =>
+    `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`,
+  'ordered-list': (c, type, level, classes) =>
+    `<ol class="${buildClasses('govuk-list govuk-list--number', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ol>`,
+  ol: (c, type, level, classes) =>
+    `<ol class="${buildClasses('govuk-list govuk-list--number', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ol>`,
+  container: (c, type, level, classes) =>
+    `<div class="${buildClasses('', classes)}">${(c.items || c.content || []).map(renderComponent).join('')}</div>`,
+  div: (c, type, level, classes) =>
+    `<div class="${buildClasses('', classes)}">${(c.items || c.content || []).map(renderComponent).join('')}</div>`,
+  group: (c, type, level, classes) =>
+    `<div class="${buildClasses('', classes)}">${(c.items || c.content || []).map(renderComponent).join('')}</div>`,
+  text: (c) => renderText(c.text || c.content),
+  span: (c) => renderText(c.text || c.content),
+  url: (c, type, level, classes) =>
+    `<a href="#" class="${buildClasses('govuk-link', classes)}">${renderText(c.text || c.content || c.title)}</a>`,
+  link: (c, type, level, classes) =>
+    `<a href="#" class="${buildClasses('govuk-link', classes)}">${renderText(c.text || c.content || c.title)}</a>`,
+  a: (c, type, level, classes) =>
+    `<a href="#" class="${buildClasses('govuk-link', classes)}">${renderText(c.text || c.content || c.title)}</a>`,
+  'line-break': () => '<br/>',
+  br: () => '<br/>',
+  'inset-text': (c, type, level, classes) =>
+    `<div class="${buildClasses('govuk-inset-text', classes)}">${renderText(c.text || c.content)}</div>`,
+  inset: (c, type, level, classes) =>
+    `<div class="${buildClasses('govuk-inset-text', classes)}">${renderText(c.text || c.content)}</div>`,
+  'warning-text': (c, type, level, classes) =>
+    `<div class="${buildClasses('govuk-warning-text', classes)}"><span class="govuk-warning-text__icon" aria-hidden="true">!</span><strong class="govuk-warning-text__text"><span class="govuk-visually-hidden">Warning</span>${renderText(c.text || c.content)}</strong></div>`,
+  warning: (c, type, level, classes) =>
+    `<div class="${buildClasses('govuk-warning-text', classes)}"><span class="govuk-warning-text__icon" aria-hidden="true">!</span><strong class="govuk-warning-text__text"><span class="govuk-visually-hidden">Warning</span>${renderText(c.text || c.content)}</strong></div>`,
+  details: (c, type, level, classes) =>
+    `<details class="${buildClasses('govuk-details', classes)}"><summary class="govuk-details__summary"><span class="govuk-details__summary-text">${renderText(c.title || c.summary || c.heading || 'Details')}</span></summary><div class="govuk-details__text">${renderText(c.text || c.content)}</div></details>`,
+  'notification-banner': (c, type, level, classes) =>
+    `<div class="${buildClasses('govuk-notification-banner', classes)}"><div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">${renderText(c.title || 'Important')}</h2></div><div class="govuk-notification-banner__content">${renderText(c.text || c.content)}</div></div>`,
+  button: (c, type, level, classes) =>
+    `<button class="${buildClasses('govuk-button', classes)}">${renderText(c.text || c.content)}</button>`,
+  tag: (c, type, level, classes) =>
+    `<strong class="${buildClasses('govuk-tag', classes)}">${renderText(c.text || c.content)}</strong>`,
+  html: (c) => c.html || c.text || c.content || '',
+  raw: (c) => c.html || c.text || c.content || ''
+}
+
 const renderDetails = (c, compType, level) => {
   const classes = c.classes || c.className || ''
-  switch (compType) {
-    case 'heading':
-    case 'header':
-    case 'h1':
-    case 'h2':
-    case 'h3':
-    case 'h4':
-    case 'h5':
-    case 'h6': {
-      const headingLevel = compType.startsWith('h') && compType.length === 2 ? Number(compType[1]) : level
-      return `<h${headingLevel} class="${buildClasses('govuk-heading-' + levelToHeadingClass(headingLevel), classes)}">${renderText(c.text || c.content || c.title)}</h${headingLevel}>`
-    }
-    case 'paragraph':
-    case 'p':
-      return `<p class="${buildClasses('govuk-body', classes)}">${renderText(c.text || c.content)}</p>`
-    case 'unordered-list':
-    case 'bullet-list':
-    case 'list':
-    case 'ul':
-      return `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map((item) => wrapComponentIntoListItem(item)).join('')}</ul>`
-    case 'ordered-list':
-    case 'ol':
-      return `<ol class="${buildClasses('govuk-list govuk-list--number', classes)}">${(c.items || []).map((item) => wrapComponentIntoListItem(item)).join('')}</ol>`
-    case 'container':
-    case 'div':
-    case 'group':
-      return `<div class="${buildClasses('', classes)}">${(c.items || c.content || []).map((item) => renderComponent(item)).join('')}</div>`
-    case 'text':
-    case 'span':
-      return renderText(c.text || c.content)
-    case 'url':
-    case 'link':
-    case 'a':
-      return `<a href="#" class="${buildClasses('govuk-link', classes)}">${renderText(c.text || c.content || c.title)}</a>`
-    case 'line-break':
-    case 'br':
-      return '<br/>'
-    case 'inset-text':
-    case 'inset':
-      return `<div class="${buildClasses('govuk-inset-text', classes)}">${renderText(c.text || c.content)}</div>`
-    case 'warning-text':
-    case 'warning':
-      return `<div class="${buildClasses('govuk-warning-text', classes)}"><span class="govuk-warning-text__icon" aria-hidden="true">!</span><strong class="govuk-warning-text__text"><span class="govuk-visually-hidden">Warning</span>${renderText(c.text || c.content)}</strong></div>`
-    case 'details':
-      return `<details class="${buildClasses('govuk-details', classes)}"><summary class="govuk-details__summary"><span class="govuk-details__summary-text">${renderText(c.title || c.summary || c.heading || 'Details')}</span></summary><div class="govuk-details__text">${renderText(c.text || c.content)}</div></details>`
-    case 'notification-banner':
-      return `<div class="${buildClasses('govuk-notification-banner', classes)}"><div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">${renderText(c.title || 'Important')}</h2></div><div class="govuk-notification-banner__content">${renderText(c.text || c.content)}</div></div>`
-    case 'button':
-      return `<button class="${buildClasses('govuk-button', classes)}">${renderText(c.text || c.content)}</button>`
-    case 'tag':
-      return `<strong class="${buildClasses('govuk-tag', classes)}">${renderText(c.text || c.content)}</strong>`
-    case 'html':
-    case 'raw':
-      return c.html || c.text || c.content || ''
-    default:
-      return renderText(c.text || c.content || '')
+  const renderer = COMPONENT_RENDERERS[compType]
+  if (renderer) {
+    return renderer(c, compType, level, classes)
   }
+  return renderText(c.text || c.content || '')
 }
 
 const renderText = (text) => {
