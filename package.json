@@ -19,6 +19,7 @@
     "format:check": "prettier --check \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
     "frontend:watch": "NODE_ENV=development webpack --watch",
     "git:pre-commit-hook": "npm run security-audit && npm run format:check && npm run lint && npm test",
+    "git:pre-commit-hook-temp": "npm run format:check && npm run lint && npm test",
     "postinstall": "npm run setup:husky",
     "lint": "run-s lint:js lint:scss",
     "lint:js": "eslint .",
@@ -43,7 +44,7 @@
     "@aws-sdk/s3-request-presigner": "3.1116.0",
     "@defra/cdp-auditing": "0.6.1",
     "@defra/cdp-metrics": "0.6.0",
-    "@defra/grants-config-utils": "1.3.0",
+    "@defra/grants-config-utils": "1.4.0",
     "@defra/hapi-auth-oidc": "0.5.6",
     "@defra/hapi-secure-context": "0.4.0",
     "@defra/hapi-tracing": "1.30.0",
@@ -57,9 +58,9 @@
     "@hapi/scooter": "8.0.0",
     "@hapi/vision": "7.0.3",
     "@hapi/yar": "11.0.3",
-    "@ministryofjustice/frontend": "9.0.0",
+    "@ministryofjustice/frontend": "11.1.0",
     "blankie": "5.0.0",
-    "brace-expansion": "5.0.9",
+    "brace-expansion": "5.0.12",
     "convict": "6.2.5",
     "convict-format-with-validator": "6.2.0",
     "cssnano": "9.0.4",
@@ -70,11 +71,11 @@
     "hapi-pulse": "4.0.0",
     "hapi-scalar": "1.1.0",
     "ioredis": "6.0.0",
-    "joi": "18.2.5",
+    "joi": "18.2.9",
     "jose": "6.2.10",
     "js-yaml": "5.4.2",
     "lodash": "4.18.1",
-    "mermaid": "11.17.0",
+    "mermaid": "12.0.0",
     "node-fetch": "3.3.2",
     "nunjucks": "3.2.4",
     "pino": "10.3.1",
@@ -112,7 +113,9 @@
     "webpack-cli": "7.2.2"
   },
   "overrides": {
+    "brace-expansion": "5.0.12",
+    "source-map-js": "1.2.2",
     "tmp": "0.2.5",
-    "joi": "18.2.5"
+    "joi": "18.2.9"
   }
 }

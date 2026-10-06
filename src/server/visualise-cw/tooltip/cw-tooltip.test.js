@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createCwTaskTooltipData } from './cw-tooltip.js'
+import { createCwTaskTooltipData, createCwStatusTooltipData, generateTaskList } from './cw-tooltip.js'
 
 describe('cw-tooltip', () => {
   const mockPhase = { name: 'Phase 1', code: 'P1' }
@@ -146,5 +146,246 @@ describe('cw-tooltip', () => {
     }
     const html = createCwTaskTooltipData(task)
     expect(html).toContain('<h1 class="govuk-heading-l">T</h1>')
+  })
+
+  describe('generateTaskList', () => {
+    it('should generate a govuk-task-list with mandatory and optional tasks', () => {
+      const tasks = [
+        { code: 'T1', name: 'Task 1', mandatory: true },
+        { code: 'T2', name: 'Task 2', mandatory: false }
+      ]
+      const html = generateTaskList(tasks)
+      expect(html).toContain('<ul class="govuk-task-list">')
+      expect(html).toContain('<li class="govuk-task-list__item govuk-task-list__item--with-link">')
+      expect(html).toContain('Task 1*')
+      expect(html).toContain('Incomplete')
+      expect(html).toContain('Task 2')
+      expect(html).toContain('Incomplete')
+      expect(html).toContain('<strong class="govuk-tag">')
+    })
+  })
+
+  describe('createCwStatusTooltipData', () => {
+    it('should render status tooltip with phase, stage, and task list', () => {
+      const status = { code: 'STATUS_IN_REVIEW', name: 'In Review' }
+      const stage = {
+        name: 'Stage 1',
+        code: 'S1',
+        taskGroups: [
+          {
+            name: 'Required Tasks',
+            tasks: [{ code: 'T1', name: 'Check documents', mandatory: true }]
+          }
+        ]
+      }
+      const html = createCwStatusTooltipData(status, mockPhase, stage)
+      expect(html).toContain('<span class="govuk-caption-m">Phase 1 - Stage 1</span>')
+      expect(html).toContain('<h2 class="govuk-heading-m govuk-!-margin-bottom-2">In Review</h2>')
+      expect(html).toContain('<strong>Phase:</strong> P1')
+      expect(html).toContain('<strong>Stage:</strong> S1')
+      expect(html).toContain('<strong>Status:</strong> STATUS_IN_REVIEW')
+      expect(html).toContain('Required Tasks:')
+      expect(html).toContain('govuk-task-list')
+      expect(html).toContain('Check documents*')
+      expect(html).toContain('Incomplete')
+    })
+
+    it('should fallback to code-based name if name is missing', () => {
+      const status = { code: 'STATUS_AWAITING_RESPONSE' }
+      const html = createCwStatusTooltipData(status, mockPhase, mockStage)
+      expect(html).toContain('AWAITING RESPONSE')
+    })
+
+    it('should render status tooltip without phase and stage', () => {
+      const status = { code: 'STATUS_AWAITING_RESPONSE', name: 'Awaiting Response' }
+      const html = createCwStatusTooltipData(status, null, null)
+      expect(html).not.toContain('govuk-caption-m')
+      expect(html).toContain('Awaiting Response')
+    })
+
+    it('should render status tooltip when stage has no task groups', () => {
+      const status = { code: 'STATUS_EMPTY', name: 'Empty' }
+      const stage = { name: 'Stage 1', code: 'S1' }
+      const html = createCwStatusTooltipData(status, mockPhase, stage)
+      expect(html).not.toContain('govuk-task-list')
+    })
+
+    it('should render tasks defined on status level if stage has no task groups', () => {
+      const status = {
+        code: 'STATUS_CUSTOM',
+        name: 'Custom',
+        taskGroups: [
+          {
+            name: 'Status Level Tasks',
+            tasks: [{ code: 'T1', name: 'Task at status', mandatory: false }]
+          }
+        ]
+      }
+      const html = createCwStatusTooltipData(status, mockPhase, mockStage)
+      expect(html).toContain('Status Level Tasks:')
+      expect(html).toContain('Task at status')
+      expect(html).toContain('Incomplete')
+    })
+
+    it('should render beforeContent and afterContent in the correct order around the task list', () => {
+      const status = {
+        code: 'STATUS_IN_REVIEW',
+        name: 'In Review',
+        beforeContent: [
+          {
+            component: 'heading',
+            level: 3,
+            text: 'Before Heading'
+          },
+          {
+            component: 'paragraph',
+            text: 'Before Paragraph Text'
+          }
+        ],
+        afterContent: [
+          {
+            component: 'paragraph',
+            text: 'After Paragraph Text'
+          }
+        ]
+      }
+      const stage = {
+        name: 'Stage 1',
+        code: 'S1',
+        taskGroups: [
+          {
+            name: 'Tasks',
+            tasks: [{ code: 'T1', name: 'Task 1', mandatory: true }]
+          }
+        ]
+      }
+
+      const html = createCwStatusTooltipData(status, mockPhase, stage)
+
+      expect(html).toContain('<h3 class="govuk-heading-s">Before Heading</h3>')
+      expect(html).toContain('<p class="govuk-body">Before Paragraph Text</p>')
+      expect(html).toContain('govuk-task-list')
+      expect(html).toContain('Task 1')
+      expect(html).toContain('<p class="govuk-body">After Paragraph Text</p>')
+
+      const beforeIndex = html.indexOf('Before Heading')
+      const taskIndex = html.indexOf('Task 1')
+      const afterIndex = html.indexOf('After Paragraph Text')
+
+      expect(beforeIndex).toBeGreaterThan(-1)
+      expect(taskIndex).toBeGreaterThan(-1)
+      expect(afterIndex).toBeGreaterThan(-1)
+      expect(beforeIndex).toBeLessThan(taskIndex)
+      expect(taskIndex).toBeLessThan(afterIndex)
+    })
+
+    it('should resolve beforeContent from stage when matched by renderIf', () => {
+      const status1 = { code: 'STATUS_MATCHED', name: 'Matched Status' }
+      const status2 = { code: 'STATUS_OTHER', name: 'Other Status' }
+      const stage = {
+        name: 'Stage 1',
+        code: 'S1',
+        beforeContent: [
+          {
+            renderIf: "jsonata:$.position.statusCode = 'STATUS_MATCHED'",
+            content: [
+              {
+                component: 'paragraph',
+                text: 'Stage-level before content for matched status'
+              }
+            ]
+          },
+          {
+            renderIf: "jsonata:$.position.statusCode = 'STATUS_UNMATCHED'",
+            content: [
+              {
+                component: 'paragraph',
+                text: 'Stage-level before content for unmatched status'
+              }
+            ]
+          }
+        ],
+        afterContent: [
+          {
+            renderIf: "jsonata:$.position.statusCode = 'STATUS_MATCHED'",
+            content: [
+              {
+                component: 'paragraph',
+                text: 'Stage-level after content for matched status'
+              }
+            ]
+          }
+        ]
+      }
+
+      const htmlMatched = createCwStatusTooltipData(status1, mockPhase, stage)
+      expect(htmlMatched).toContain('Stage-level before content for matched status')
+      expect(htmlMatched).toContain('Stage-level after content for matched status')
+      expect(htmlMatched).not.toContain('Stage-level before content for unmatched status')
+
+      const htmlOther = createCwStatusTooltipData(status2, mockPhase, stage)
+      expect(htmlOther).not.toContain('Stage-level before content for matched status')
+      expect(htmlOther).not.toContain('Stage-level after content for matched status')
+      expect(htmlOther).not.toContain('Stage-level before content for unmatched status')
+    })
+
+    it('should resolve unconditional beforeContent and afterContent from stage', () => {
+      const status = { code: 'STATUS_SIMPLE', name: 'Simple' }
+      const stage = {
+        name: 'Stage 1',
+        code: 'S1',
+        beforeContent: [
+          {
+            content: [
+              {
+                component: 'paragraph',
+                text: 'General before content'
+              }
+            ]
+          }
+        ],
+        afterContent: [
+          {
+            content: [
+              {
+                component: 'paragraph',
+                text: 'General after content'
+              }
+            ]
+          }
+        ]
+      }
+
+      const html = createCwStatusTooltipData(status, mockPhase, stage)
+      expect(html).toContain('General before content')
+      expect(html).toContain('General after content')
+    })
+
+    it('should render string beforeContent and afterContent', () => {
+      const status = {
+        code: 'STATUS_STRINGS',
+        name: 'String Content',
+        beforeContent: 'Simple string before',
+        afterContent: 'Simple string after'
+      }
+
+      const html = createCwStatusTooltipData(status, mockPhase, mockStage)
+      expect(html).toContain('<p class="govuk-body">Simple string before</p>')
+      expect(html).toContain('<p class="govuk-body">Simple string after</p>')
+    })
+
+    it('should render beforeContent and afterContent when no tasks exist', () => {
+      const status = {
+        code: 'STATUS_NO_TASKS',
+        name: 'No Tasks',
+        beforeContent: [{ component: 'paragraph', text: 'Just before' }],
+        afterContent: [{ component: 'paragraph', text: 'Just after' }]
+      }
+
+      const html = createCwStatusTooltipData(status, mockPhase, mockStage)
+      expect(html).toContain('Just before')
+      expect(html).toContain('Just after')
+      expect(html).not.toContain('govuk-task-list')
+    })
   })
 })

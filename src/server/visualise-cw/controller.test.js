@@ -93,10 +93,13 @@ describe('visualiseCwController', () => {
     )
     expect(callArgs.tooltipData.PHASE_PRE_AWARD_STAGE_REVIEWING_APPLICATION_TASK_1).toContain('Task 1')
     expect(callArgs.tooltipData.PHASE_PRE_AWARD_STAGE_REVIEWING_APPLICATION_STATUS_APPLICATION_RECEIVED).toContain(
-      'Task 1'
+      'Task 1*'
     )
     expect(callArgs.tooltipData.PHASE_PRE_AWARD_STAGE_REVIEWING_APPLICATION_STATUS_APPLICATION_RECEIVED).toContain(
-      '(Mandatory)'
+      'Incomplete'
+    )
+    expect(callArgs.tooltipData.PHASE_PRE_AWARD_STAGE_REVIEWING_APPLICATION_STATUS_APPLICATION_RECEIVED).toContain(
+      'govuk-task-list'
     )
     expect(result).toBe('rendered view')
   })
@@ -303,6 +306,45 @@ describe('visualiseCwController', () => {
 
     const callArgs = h.view.mock.calls[0][1]
     expect(callArgs.tooltipData.P1_S1_ST1).not.toContain('govuk-list')
+  })
+
+  it('should include beforeContent and afterContent in status tooltips when present in config', async () => {
+    const mockConfig = {
+      phases: [
+        {
+          code: 'P1',
+          name: 'Phase 1',
+          stages: [
+            {
+              code: 'S1',
+              name: 'Stage 1',
+              beforeContent: [
+                {
+                  renderIf: "jsonata:$.position.statusCode = 'ST1'",
+                  content: [{ component: 'heading', level: 3, text: 'Stage Before' }]
+                }
+              ],
+              afterContent: [
+                {
+                  renderIf: "jsonata:$.position.statusCode = 'ST1'",
+                  content: [{ component: 'paragraph', text: 'Stage After' }]
+                }
+              ],
+              statuses: [{ code: 'ST1', name: 'Status 1' }]
+            }
+          ]
+        }
+      ]
+    }
+
+    getS3FileContent.mockResolvedValue(JSON.stringify(mockConfig))
+    const h = { view: vi.fn() }
+    await visualiseCwController.handler({ query: { bucket: 'b', filename: 'f' } }, h)
+
+    const callArgs = h.view.mock.calls[0][1]
+    const tooltip = callArgs.tooltipData.P1_S1_ST1
+    expect(tooltip).toContain('Stage Before')
+    expect(tooltip).toContain('Stage After')
   })
 
   it('should ignore transitions without targetPosition', async () => {

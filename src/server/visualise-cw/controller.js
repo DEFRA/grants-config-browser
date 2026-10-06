@@ -1,5 +1,5 @@
 import { loadJsonFromS3 } from '../common/helpers/s3/s3-config-loader.js'
-import { createCwTaskTooltipData } from './tooltip/cw-tooltip.js'
+import { createCwTaskTooltipData, createCwStatusTooltipData } from './tooltip/cw-tooltip.js'
 
 export const visualiseCwController = {
   async handler(request, h) {
@@ -88,7 +88,7 @@ const generateStatusNodes = (statuses, nodes, links, tooltipData, phase, stage) 
       type: 'status'
     })
 
-    createTooltipData(nodeId, tooltipData, phase, stage, status)
+    tooltipData[nodeId] = createCwStatusTooltipData(status, phase, stage)
 
     // Check for tasks inside status (if any)
     if (status.taskGroups) {
@@ -182,32 +182,4 @@ const createBreadCrumbs = (filename, grant, version) => {
       text: `Visualise CW config - ${filename}`
     }
   ]
-}
-
-const createTooltipData = (nodeId, tooltipData, phase, stage, status) => {
-  let tasksHtml = ''
-  if (stage.taskGroups && stage.taskGroups.length > 0) {
-    stage.taskGroups.forEach((tg) => {
-      if (tg.tasks && tg.tasks.length > 0) {
-        tasksHtml += `<div class="govuk-!-margin-top-4">
-          <strong class="govuk-body">${tg.name}:</strong>
-          <ul class="govuk-list govuk-list--bullet govuk-body">`
-        tg.tasks.forEach((t) => {
-          tasksHtml += `<li>${t.name} (${t.mandatory ? 'Mandatory' : 'Optional'})</li>`
-        })
-        tasksHtml += `</ul></div>`
-      }
-    })
-  }
-
-  const statusName = status.name || status.code.replace('STATUS_', '').replaceAll('_', ' ')
-
-  tooltipData[nodeId] = `
-            <span class="govuk-caption-m">${phase.name} - ${stage.name}</span>
-            <h2 class="govuk-heading-m govuk-!-margin-bottom-2">${statusName}</h2>
-            <p class="govuk-body govuk-!-margin-bottom-0"><strong>Phase:</strong> ${phase.code}</p>
-            <p class="govuk-body govuk-!-margin-bottom-0"><strong>Stage:</strong> ${stage.code}</p>
-            <p class="govuk-body govuk-!-margin-bottom-0"><strong>Status:</strong> ${status.code}</p>
-            ${tasksHtml}
-          `.trim()
 }
