@@ -517,5 +517,240 @@ describe('cw-tooltip', () => {
       expect(html).toContain('Task description')
       expect(html).toContain('Task after text')
     })
+
+    it('should handle missing and empty status info gracefully', () => {
+      const html = createCwStatusTooltipData(null, null, null)
+      expect(html).toContain('There are no tasks to complete.')
+    })
+
+    it('should match multiple conditions in an array for renderIf', () => {
+      const status = { code: 'STATUS_MATCH' }
+      const stage = {
+        beforeContent: [
+          {
+            renderIf: ["jsonata:$.position.statusCode = 'UNKNOWN'", "jsonata:$.position.statusCode = 'MATCH'"],
+            content: 'Matched by array'
+          }
+        ]
+      }
+      const html = createCwStatusTooltipData(status, null, stage)
+      expect(html).toContain('Matched by array')
+    })
+
+    it('should match renderIf when provided as an object', () => {
+      const status = { code: 'STATUS_A' }
+      const stage = { code: 'STAGE_B' }
+      const phase = { code: 'PHASE_C' }
+      const content = {
+        renderIf: { statusCode: 'A', stageCode: 'B', phaseCode: 'C' },
+        content: 'Matched object'
+      }
+      const stageMatched = {
+        ...stage,
+        beforeContent: [content]
+      }
+      const html = createCwStatusTooltipData(status, phase, stageMatched)
+      expect(html).toContain('Matched object')
+
+      const statusUnmatched = {
+        ...stage,
+        beforeContent: [{ ...content, renderIf: { status: 'X' } }]
+      }
+      const html2 = createCwStatusTooltipData(status, phase, statusUnmatched)
+      expect(html2).not.toContain('Matched object')
+    })
+
+    it('should handle non-string and empty renderIf safely', () => {
+      const status = { code: 'STATUS_A' }
+      const stage = {
+        beforeContent: [
+          { renderIf: 123, content: 'Not rendered' },
+          { renderIf: '   ', content: 'Empty string rendered' }
+        ]
+      }
+      const html = createCwStatusTooltipData(status, null, stage)
+      expect(html).not.toContain('Not rendered')
+      expect(html).toContain('Empty string rendered')
+    })
+
+    it('should match boolean renderIf', () => {
+      const status = { code: 'STATUS_A' }
+      const stage = {
+        beforeContent: [
+          { renderIf: true, content: 'True rendered' },
+          { renderIf: false, content: 'False not rendered' },
+          { renderIf: 'true', content: 'String true rendered' },
+          { renderIf: 'false', content: 'String false not rendered' }
+        ]
+      }
+      const html = createCwStatusTooltipData(status, null, stage)
+      expect(html).toContain('True rendered')
+      expect(html).not.toContain('False not rendered')
+      expect(html).toContain('String true rendered')
+      expect(html).not.toContain('String false not rendered')
+    })
+
+    it('should render html, content, and items when component type is missing', () => {
+      const task = {
+        name: 'T',
+        description: [
+          { html: '<strong>Raw HTML</strong>' },
+          { content: 'Nested string content' },
+          { items: [{ component: 'text', text: 'Item in div' }] }
+        ]
+      }
+      const html = createCwTaskTooltipData(task)
+      expect(html).toContain('<strong>Raw HTML</strong>')
+      expect(html).toContain('Nested string content')
+      expect(html).toContain('<div>Item in div</div>')
+    })
+
+    it('should render various component aliases', () => {
+      const task = {
+        name: 'T',
+        description: [
+          { type: 'header', text: 'Header', level: 3 },
+          { type: 'h4', text: 'H4' },
+          { component: 'p', text: 'Paragraph' },
+          { component: 'bullet-list', items: ['Item'] },
+          { component: 'list', items: ['Item'] },
+          { component: 'ul', items: ['Item'] },
+          { component: 'ol', items: ['Item'] },
+          { component: 'group', items: [{ component: 'text', text: 'Group' }] },
+          { component: 'span', text: 'Span' },
+          { component: 'link', text: 'Link' },
+          { component: 'a', text: 'A' },
+          { component: 'br' },
+          { component: 'inset', text: 'Inset' },
+          { component: 'warning', text: 'Warning' },
+          { component: 'raw', html: 'Raw' }
+        ]
+      }
+      const html = createCwTaskTooltipData(task)
+      expect(html).toContain('<h3 class="govuk-heading-s">Header</h3>')
+      expect(html).toContain('<h4 class="govuk-heading-s">H4</h4>')
+      expect(html).toContain('<p class="govuk-body">Paragraph</p>')
+      expect(html).toContain('<ul class="govuk-list govuk-list--bullet"><li>Item</li></ul>')
+      expect(html).toContain('<ol class="govuk-list govuk-list--number"><li>Item</li></ol>')
+      expect(html).toContain('<div class="">Group</div>')
+      expect(html).toContain('Span')
+      expect(html).toContain('<a href="#" class="govuk-link">Link</a>')
+      expect(html).toContain('<br/>')
+      expect(html).toContain('<div class="govuk-inset-text">Inset</div>')
+      expect(html).toContain('govuk-warning-text')
+      expect(html).toContain('Raw')
+    })
+
+    it('should handle edge cases in renderText', () => {
+      const task = {
+        name: 'T',
+        description: [
+          { component: 'text', text: null },
+          { component: 'text', text: 12345 },
+          { component: 'text', text: { type: 'span', text: 'Nested obj' } }
+        ]
+      }
+      const html = createCwTaskTooltipData(task)
+      expect(html).toContain('12345')
+      expect(html).toContain('Nested obj')
+    })
+
+    it('should render input without type or label/hint', () => {
+      const task = {
+        name: 'T',
+        input: {}
+      }
+      const html = createCwTaskTooltipData(task)
+      expect(html).toContain('<div class="govuk-form-group"></div>')
+    })
+
+    it('should cover remaining branches in renderDescription and renderComponent', () => {
+      const task = {
+        name: 'T',
+        description: [
+          { content: null }, // hits renderDescription(null) -> line 289
+          { text: 'Plain text component' }, // hits line 338 in renderComponent
+          { something: 'else' } // hits line 349 in renderComponent
+        ]
+      }
+      const html = createCwTaskTooltipData(task)
+      expect(html).toContain('Plain text component')
+    })
+
+    it('should hit object branch in renderDescription', () => {
+      const task = {
+        name: 'T',
+        description: { component: 'text', text: 'Object description' } // hits line 301 in renderDescription
+      }
+      const html = createCwTaskTooltipData(task)
+      expect(html).toContain('Object description')
+    })
+
+    it('should handle number level in heading', () => {
+      const task = {
+        name: 'T',
+        description: [{ component: 'h5', text: 'H5 header' }]
+      }
+      const html = createCwTaskTooltipData(task)
+      expect(html).toContain('<h5 class="govuk-heading-s">H5 header</h5>')
+    })
+
+    it('should cover additional extractContent branches', () => {
+      const status = { code: 'STATUS_A' }
+      const stage = {
+        beforeContent: [
+          null, // hits line 215
+          'String entry', // hits line 218
+          { renderIf: true, items: ['Item 1'], name: 'Group' }, // hits line 228-233
+          { renderIf: true, items: 'Single item' }, // hits line 232
+          { content: ['Content 1'] }, // hits line 239-240
+          { content: 'Single content' }, // hits line 242
+          { items: ['Item 2'] }, // hits line 244-246
+          { items: 'Single item 2' }, // hits line 248
+          { something: 'else' } // hits nothing in loop, but loop continues
+        ]
+      }
+      const html = createCwStatusTooltipData(status, null, stage)
+      expect(html).toContain('String entry')
+      expect(html).toContain('Item 1')
+      expect(html).toContain('Single item')
+      expect(html).toContain('Content 1')
+      expect(html).toContain('Single content')
+      expect(html).toContain('Item 2')
+      expect(html).toContain('Single item 2')
+    })
+
+    it('should cover fallback in renderDescription with invalid type', () => {
+      const task = {
+        name: 'T',
+        description: 12345 // hits line 303
+      }
+      const html = createCwTaskTooltipData(task)
+      expect(html).toContain('<h1 class="govuk-heading-l">T</h1>') // returns '' for description
+    })
+
+    it('should cover matchesCodeInExpression branches', () => {
+      const status = { code: 'STATUS_MATCH' }
+      const stage = {
+        beforeContent: [
+          {
+            renderIf: 'MATCH', // hits line 197 if 194 is skipped? No.
+            content: 'Direct match'
+          },
+          {
+            renderIf: 'The status is MATCH right now', // hits line 194 (word match)
+            content: 'Word match'
+          },
+          {
+            renderIf: { statusCode: 'STATUS_MATCH' }, // hits line 170-171 in matchesCode
+            content: 'Exact match'
+          }
+        ]
+      }
+      const html = createCwStatusTooltipData(status, null, stage)
+      expect(html).toContain('Direct match')
+      expect(html).toContain('Word match')
+      expect(html).toContain('Exact match')
+    })
   })
 })
