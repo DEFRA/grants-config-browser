@@ -1,5 +1,14 @@
+import { possibleContentOrEmptyString } from '../../helpers/visualise-helpers.js'
+
 const GOVUK_LINK_CLASS = 'govuk-link'
 const GOVUK_LIST_BULLET_CLASSES = 'govuk-list govuk-list--bullet'
+
+export const ensureArray = (value) => {
+  if (value === undefined || value === null) {
+    return []
+  }
+  return Array.isArray(value) ? value : [value]
+}
 
 export const createCwTaskTooltipData = (task, phase, stage) => {
   let html = ''
@@ -48,7 +57,8 @@ export const createCwStatusTooltipData = (status, phase, stage) => {
     getContentForStatus(status?.afterContent, stage?.afterContent, phase?.afterContent, status, stage, phase)
   )
 
-  const statusName = status?.name || status?.code?.replace('STATUS_', '').replaceAll('_', ' ') || ''
+  const statusName =
+    status?.name || possibleContentOrEmptyString(status?.code?.replace('STATUS_', '').replaceAll('_', ' '))
 
   let caption = ''
   if (phase && stage) {
@@ -62,9 +72,9 @@ export const createCwStatusTooltipData = (status, phase, stage) => {
 
   return `
     ${caption}<h2 class="govuk-heading-m govuk-!-margin-bottom-2">${statusName}</h2>
-    <p class="govuk-body govuk-!-margin-bottom-0"><strong>Phase:</strong> ${phase?.code || ''}</p>
-    <p class="govuk-body govuk-!-margin-bottom-0"><strong>Stage:</strong> ${stage?.code || ''}</p>
-    <p class="govuk-body govuk-!-margin-bottom-5"><strong>Status:</strong> ${status?.code || ''}</p>
+    <p class="govuk-body govuk-!-margin-bottom-0"><strong>Phase:</strong> ${possibleContentOrEmptyString(phase?.code)}</p>
+    <p class="govuk-body govuk-!-margin-bottom-0"><strong>Stage:</strong> ${possibleContentOrEmptyString(stage?.code)}</p>
+    <p class="govuk-body govuk-!-margin-bottom-5"><strong>Status:</strong> ${possibleContentOrEmptyString(status?.code)}</p>
     ${finalBeforeHtml}
     ${tasksHtml}
     ${afterHtml}
@@ -115,9 +125,9 @@ const matchesCondition = (renderIf, status, stage, phase) => {
 }
 
 const matchesObjectCondition = (renderIf, status, stage, phase) => {
-  const statusCode = status?.code || ''
-  const stageCode = stage?.code || ''
-  const phaseCode = phase?.code || ''
+  const statusCode = possibleContentOrEmptyString(status?.code)
+  const stageCode = possibleContentOrEmptyString(stage?.code)
+  const phaseCode = possibleContentOrEmptyString(phase?.code)
 
   if (renderIf.statusCode && !matchesCode(renderIf.statusCode, statusCode, 'STATUS_')) {
     return false
@@ -144,11 +154,11 @@ const matchesStringCondition = (renderIf, status, stage, phase) => {
 
   const mentionsStatus = /(status|statusCode|position\.status)/i.test(trimmed)
   if (!mentionsStatus) {
-    const stageCode = stage?.code || ''
+    const stageCode = possibleContentOrEmptyString(stage?.code)
     if (stageCode && matchesCodeInExpression(trimmed, stageCode, 'STAGE_')) {
       return true
     }
-    const phaseCode = phase?.code || ''
+    const phaseCode = possibleContentOrEmptyString(phase?.code)
     if (phaseCode && matchesCodeInExpression(trimmed, phaseCode, 'PHASE_')) {
       return true
     }
@@ -204,15 +214,14 @@ const extractContent = (contentDef, status, stage, phase) => {
     return [contentDef]
   }
 
-  const entries = Array.isArray(contentDef) ? contentDef : [contentDef]
+  const entries = ensureArray(contentDef)
   const items = []
 
   for (const entry of entries.filter((e) => !!e)) {
     if (typeof entry === 'string') {
       items.push(entry)
     } else {
-      const shouldRender =
-        entry.renderIf === 'true' || entry.renderIf === true || matchesCondition(entry.renderIf, status, stage, phase)
+      const shouldRender = matchesCondition(entry.renderIf, status, stage, phase)
 
       if (shouldRender) {
         items.push(...extractItemsFromEntry(entry))
@@ -224,10 +233,10 @@ const extractContent = (contentDef, status, stage, phase) => {
 
 const extractItemsFromEntry = (entry) => {
   if (entry.content) {
-    return Array.isArray(entry.content) ? entry.content : [entry.content]
+    return ensureArray(entry.content)
   }
   if (entry.items && !entry.component && !entry.type) {
-    return Array.isArray(entry.items) ? entry.items : [entry.items]
+    return ensureArray(entry.items)
   }
   if (entry.component || entry.type || entry.text || entry.html) {
     return [entry]
@@ -313,7 +322,7 @@ const renderComponent = (c) => {
     return `<p class="govuk-body">${c}</p>`
   }
 
-  const compType = (c.component || c.type || '').toLowerCase()
+  const compType = possibleContentOrEmptyString(c.component || c.type).toLowerCase()
   if (!compType) {
     if (c.text) {
       return `<p class="govuk-body">${renderText(c.text)}</p>`
@@ -325,7 +334,9 @@ const renderComponent = (c) => {
       return renderDescription(c.content)
     }
     if (c.items) {
-      return `<div>${(c.items || []).map((item) => renderComponent(item)).join('')}</div>`
+      return `<div>${ensureArray(c.items)
+        .map((item) => renderComponent(item))
+        .join('')}</div>`
     }
     return ''
   }

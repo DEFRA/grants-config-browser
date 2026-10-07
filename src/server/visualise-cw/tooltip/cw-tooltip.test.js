@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createCwTaskTooltipData, createCwStatusTooltipData, generateTaskList } from './cw-tooltip.js'
+import { createCwTaskTooltipData, createCwStatusTooltipData, generateTaskList, ensureArray } from './cw-tooltip.js'
 
 describe('cw-tooltip', () => {
   const mockPhase = { name: 'Phase 1', code: 'P1' }
@@ -751,6 +751,27 @@ describe('cw-tooltip', () => {
       expect(html).toContain('Direct match')
       expect(html).toContain('Word match')
       expect(html).toContain('Exact match')
+    })
+
+    describe('ensureArray', () => {
+      it('should return the same array if already an array', () => {
+        const arr = ['a', 'b', 123]
+        expect(ensureArray(arr)).toBe(arr)
+      })
+
+      it('should return a single-item array if input is a single item', () => {
+        expect(ensureArray('test')).toEqual(['test'])
+        expect(ensureArray({ foo: 'bar' })).toEqual([{ foo: 'bar' }])
+        expect(ensureArray(42)).toEqual([42])
+        expect(ensureArray(0)).toEqual([0])
+        expect(ensureArray(false)).toEqual([false])
+      })
+
+      it('should return an empty array if input is null or undefined', () => {
+        expect(ensureArray(null)).toEqual([])
+        expect(ensureArray(undefined)).toEqual([])
+        expect(ensureArray()).toEqual([])
+      })
     })
   })
 })
