@@ -338,7 +338,7 @@ const renderComponent = (c) => {
   return renderDetails(c, compType, level)
 }
 
-const renderHeading = (c, type, level, classes) => {
+function renderHeading(c, type, level, classes) {
   const headingLevel = type.startsWith('h') && type.length === 2 ? Number(type[1]) : level
   const tag = `h${headingLevel}`
   const headingClass = `govuk-heading-${levelToHeadingClass(headingLevel)}`
@@ -354,56 +354,146 @@ const COMPONENT_RENDERERS = {
   h4: renderHeading,
   h5: renderHeading,
   h6: renderHeading,
-  paragraph: (c, type, level, classes) =>
-    `<p class="${buildClasses('govuk-body', classes)}">${renderText(c.text || c.content)}</p>`,
-  p: (c, type, level, classes) =>
-    `<p class="${buildClasses('govuk-body', classes)}">${renderText(c.text || c.content)}</p>`,
-  'unordered-list': (c, type, level, classes) =>
-    `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`,
-  'bullet-list': (c, type, level, classes) =>
-    `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`,
-  list: (c, type, level, classes) =>
-    `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`,
-  ul: (c, type, level, classes) =>
-    `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`,
-  'ordered-list': (c, type, level, classes) =>
-    `<ol class="${buildClasses('govuk-list govuk-list--number', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ol>`,
-  ol: (c, type, level, classes) =>
-    `<ol class="${buildClasses('govuk-list govuk-list--number', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ol>`,
-  container: (c, type, level, classes) =>
-    `<div class="${buildClasses('', classes)}">${(c.items || c.content || []).map(renderComponent).join('')}</div>`,
-  div: (c, type, level, classes) =>
-    `<div class="${buildClasses('', classes)}">${(c.items || c.content || []).map(renderComponent).join('')}</div>`,
-  group: (c, type, level, classes) =>
-    `<div class="${buildClasses('', classes)}">${(c.items || c.content || []).map(renderComponent).join('')}</div>`,
-  text: (c) => renderText(c.text || c.content),
-  span: (c) => renderText(c.text || c.content),
-  url: (c, type, level, classes) =>
-    `<a href="#" class="${buildClasses('govuk-link', classes)}">${renderText(c.text || c.content || c.title)}</a>`,
-  link: (c, type, level, classes) =>
-    `<a href="#" class="${buildClasses('govuk-link', classes)}">${renderText(c.text || c.content || c.title)}</a>`,
-  a: (c, type, level, classes) =>
-    `<a href="#" class="${buildClasses('govuk-link', classes)}">${renderText(c.text || c.content || c.title)}</a>`,
-  'line-break': () => '<br/>',
-  br: () => '<br/>',
-  'inset-text': (c, type, level, classes) =>
-    `<div class="${buildClasses('govuk-inset-text', classes)}">${renderText(c.text || c.content)}</div>`,
-  inset: (c, type, level, classes) =>
-    `<div class="${buildClasses('govuk-inset-text', classes)}">${renderText(c.text || c.content)}</div>`,
-  'warning-text': (c, type, level, classes) =>
-    `<div class="${buildClasses('govuk-warning-text', classes)}"><span class="govuk-warning-text__icon" aria-hidden="true">!</span><strong class="govuk-warning-text__text"><span class="govuk-visually-hidden">Warning</span>${renderText(c.text || c.content)}</strong></div>`,
-  warning: (c, type, level, classes) =>
-    `<div class="${buildClasses('govuk-warning-text', classes)}"><span class="govuk-warning-text__icon" aria-hidden="true">!</span><strong class="govuk-warning-text__text"><span class="govuk-visually-hidden">Warning</span>${renderText(c.text || c.content)}</strong></div>`,
-  details: (c, type, level, classes) =>
-    `<details class="${buildClasses('govuk-details', classes)}"><summary class="govuk-details__summary"><span class="govuk-details__summary-text">${renderText(c.title || c.summary || c.heading || 'Details')}</span></summary><div class="govuk-details__text">${renderText(c.text || c.content)}</div></details>`,
-  'notification-banner': (c, type, level, classes) =>
-    `<div class="${buildClasses('govuk-notification-banner', classes)}"><div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">${renderText(c.title || 'Important')}</h2></div><div class="govuk-notification-banner__content">${renderText(c.text || c.content)}</div></div>`,
-  button: (c, type, level, classes) =>
-    `<button class="${buildClasses('govuk-button', classes)}">${renderText(c.text || c.content)}</button>`,
-  tag: (c, type, level, classes) =>
-    `<strong class="${buildClasses('govuk-tag', classes)}">${renderText(c.text || c.content)}</strong>`,
-  html: (c) => c.html || c.text || c.content || '',
-  raw: (c) => c.html || c.text || c.content || ''
+  paragraph: renderParagraph,
+  p: renderP,
+  'unordered-list': renderUnorderedList,
+  'bullet-list': renderBulletList,
+  list: renderList,
+  ul: renderUl,
+  'ordered-list': renderOrderedList,
+  ol: renderOl,
+  container: renderContainer,
+  div: renderDiv,
+  group: renderGroup,
+  text: renderTextComponent,
+  span: renderSpan,
+  url: renderUrl,
+  link: renderLink,
+  a: renderA,
+  'line-break': renderLineBreak,
+  br: renderBr,
+  'inset-text': renderInsetText,
+  inset: renderInset,
+  'warning-text': renderWarningText,
+  warning: renderWarning,
+  details: renderDetailsComponent,
+  'notification-banner': renderNotificationBanner,
+  button: renderButton,
+  tag: renderTag,
+  html: renderHtml,
+  raw: renderRaw
+}
+
+function renderP(c, _type, _level, classes) {
+  return `<p class="${buildClasses('govuk-body', classes)}">${renderText(c.text || c.content)}</p>`
+}
+
+function renderParagraph(c, _type, _level, classes) {
+  return `<p class="${buildClasses('govuk-body', classes)}">${renderText(c.text || c.content)}</p>`
+}
+
+function renderUnorderedList(c, _type, _level, classes) {
+  return `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
+}
+
+function renderBulletList(c, _type, _level, classes) {
+  return `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
+}
+
+function renderList(c, _type, _level, classes) {
+  return `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
+}
+
+function renderUl(c, _type, _level, classes) {
+  return `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
+}
+
+function renderOrderedList(c, _type, _level, classes) {
+  return `<ol class="${buildClasses('govuk-list govuk-list--number', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ol>`
+}
+
+function renderOl(c, _type, _level, classes) {
+  return `<ol class="${buildClasses('govuk-list govuk-list--number', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ol>`
+}
+
+function renderContainer(c, _type, _level, classes) {
+  return `<div class="${buildClasses('', classes)}">${(c.items || c.content || []).map(renderComponent).join('')}</div>`
+}
+
+function renderDiv(c, _type, _level, classes) {
+  return `<div class="${buildClasses('', classes)}">${(c.items || c.content || []).map(renderComponent).join('')}</div>`
+}
+
+function renderGroup(c, _type, _level, classes) {
+  return `<div class="${buildClasses('', classes)}">${(c.items || c.content || []).map(renderComponent).join('')}</div>`
+}
+
+function renderTextComponent(c, _type, _level, _classes) {
+  return renderText(c.text || c.content)
+}
+
+function renderSpan(c, _type, _level, _classes) {
+  return renderText(c.text || c.content)
+}
+
+function renderUrl(c, _type, _level, classes) {
+  return `<a href="#" class="${buildClasses('govuk-link', classes)}">${renderText(c.text || c.content || c.title)}</a>`
+}
+
+function renderLink(c, _type, _level, classes) {
+  return `<a href="#" class="${buildClasses('govuk-link', classes)}">${renderText(c.text || c.content || c.title)}</a>`
+}
+
+function renderA(c, _type, _level, classes) {
+  return `<a href="#" class="${buildClasses('govuk-link', classes)}">${renderText(c.text || c.content || c.title)}</a>`
+}
+
+function renderLineBreak(_c, _type, _level, _classes) {
+  return '<br/>'
+}
+
+function renderBr(_c, _type, _level, _classes) {
+  return '<br/>'
+}
+
+function renderInsetText(c, _type, _level, classes) {
+  return `<div class="${buildClasses('govuk-inset-text', classes)}">${renderText(c.text || c.content)}</div>`
+}
+
+function renderInset(c, _type, _level, classes) {
+  return `<div class="${buildClasses('govuk-inset-text', classes)}">${renderText(c.text || c.content)}</div>`
+}
+
+function renderWarningText(c, _type, _level, classes) {
+  return `<div class="${buildClasses('govuk-warning-text', classes)}"><span class="govuk-warning-text__icon" aria-hidden="true">!</span><strong class="govuk-warning-text__text"><span class="govuk-visually-hidden">Warning</span>${renderText(c.text || c.content)}</strong></div>`
+}
+
+function renderWarning(c, _type, _level, classes) {
+  return `<div class="${buildClasses('govuk-warning-text', classes)}"><span class="govuk-warning-text__icon" aria-hidden="true">!</span><strong class="govuk-warning-text__text"><span class="govuk-visually-hidden">Warning</span>${renderText(c.text || c.content)}</strong></div>`
+}
+
+function renderDetailsComponent(c, _type, _level, classes) {
+  return `<details class="${buildClasses('govuk-details', classes)}"><summary class="govuk-details__summary"><span class="govuk-details__summary-text">${renderText(c.title || c.summary || c.heading || 'Details')}</span></summary><div class="govuk-details__text">${renderText(c.text || c.content)}</div></details>`
+}
+
+function renderNotificationBanner(c, _type, _level, classes) {
+  return `<div class="${buildClasses('govuk-notification-banner', classes)}"><div class="govuk-notification-banner__header"><h2 class="govuk-notification-banner__title">${renderText(c.title || 'Important')}</h2></div><div class="govuk-notification-banner__content">${renderText(c.text || c.content)}</div></div>`
+}
+
+function renderButton(c, _type, _level, classes) {
+  return `<button class="${buildClasses('govuk-button', classes)}">${renderText(c.text || c.content)}</button>`
+}
+
+function renderTag(c, _type, _level, classes) {
+  return `<strong class="${buildClasses('govuk-tag', classes)}">${renderText(c.text || c.content)}</strong>`
+}
+
+function renderHtml(c, _type, _level, _classes) {
+  return c.html || c.text || c.content || ''
+}
+
+function renderRaw(c, _type, _level, _classes) {
+  return c.html || c.text || c.content || ''
 }
 
 const renderDetails = (c, compType, level) => {
