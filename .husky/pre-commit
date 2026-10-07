@@ -1,1 +1,6 @@
-npm run git:pre-commit-hook
+# There is a vulnerability with no fix currently, so npm audit will fail. Having looked into it,
+# the maintainer has provided a response that it is a non-issue and it will not be fixed.
+# Currently various parties are trying to push back on CVE body to revoke the vulnerability flag
+# Either way it is not a security issue for us so we will ignore. However we will need to reinstate npm audit
+# as soon as we can
+npm run git:pre-commit-hook-temp

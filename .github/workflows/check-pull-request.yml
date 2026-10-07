@@ -36,8 +36,9 @@ jobs:
           npm run lint
           npm test
 
-      - name: Security audit
-        run: npm run security-audit
+# temporarily disabled security audit
+#      - name: Security audit
+#        run: npm run security-audit
 
       - name: Test Docker Image Build
         run: |
