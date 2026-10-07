@@ -1,3 +1,6 @@
+const GOVUK_LINK_CLASS = 'govuk-link'
+const GOVUK_LIST_BULLET_CLASSES = 'govuk-list govuk-list--bullet'
+
 export const createCwTaskTooltipData = (task, phase, stage) => {
   let html = ''
   if (phase && stage) {
@@ -125,10 +128,7 @@ const matchesObjectCondition = (renderIf, status, stage, phase) => {
   if (renderIf.stageCode && !matchesCode(renderIf.stageCode, stageCode, 'STAGE_')) {
     return false
   }
-  if (renderIf.phaseCode && !matchesCode(renderIf.phaseCode, phaseCode, 'PHASE_')) {
-    return false
-  }
-  return true
+  return !(renderIf.phaseCode && !matchesCode(renderIf.phaseCode, phaseCode, 'PHASE_'))
 }
 
 const matchesStringCondition = (renderIf, status, stage, phase) => {
@@ -207,20 +207,16 @@ const extractContent = (contentDef, status, stage, phase) => {
   const entries = Array.isArray(contentDef) ? contentDef : [contentDef]
   const items = []
 
-  for (const entry of entries) {
-    if (!entry) {
-      continue
-    }
+  for (const entry of entries.filter((e) => !!e)) {
     if (typeof entry === 'string') {
       items.push(entry)
-      continue
-    }
+    } else {
+      const shouldRender =
+        entry.renderIf === 'true' || entry.renderIf === true || matchesCondition(entry.renderIf, status, stage, phase)
 
-    const hasRenderIf = entry.renderIf !== undefined && entry.renderIf !== null
-    const shouldRender = !hasRenderIf || matchesCondition(entry.renderIf, status, stage, phase)
-
-    if (shouldRender) {
-      items.push(...extractItemsFromEntry(entry))
+      if (shouldRender) {
+        items.push(...extractItemsFromEntry(entry))
+      }
     }
   }
   return items
@@ -393,19 +389,19 @@ function renderParagraph(c, _type, _level, classes) {
 }
 
 function renderUnorderedList(c, _type, _level, classes) {
-  return `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
+  return `<ul class="${buildClasses(GOVUK_LIST_BULLET_CLASSES, classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
 }
 
 function renderBulletList(c, _type, _level, classes) {
-  return `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
+  return `<ul class="${buildClasses(GOVUK_LIST_BULLET_CLASSES, classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
 }
 
 function renderList(c, _type, _level, classes) {
-  return `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
+  return `<ul class="${buildClasses(GOVUK_LIST_BULLET_CLASSES, classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
 }
 
 function renderUl(c, _type, _level, classes) {
-  return `<ul class="${buildClasses('govuk-list govuk-list--bullet', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
+  return `<ul class="${buildClasses(GOVUK_LIST_BULLET_CLASSES, classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
 }
 
 function renderOrderedList(c, _type, _level, classes) {
@@ -437,15 +433,15 @@ function renderSpan(c, _type, _level, _classes) {
 }
 
 function renderUrl(c, _type, _level, classes) {
-  return `<a href="#" class="${buildClasses('govuk-link', classes)}">${renderText(c.text || c.content || c.title)}</a>`
+  return `<a href="#" class="${buildClasses(GOVUK_LINK_CLASS, classes)}">${renderText(c.text || c.content || c.title)}</a>`
 }
 
 function renderLink(c, _type, _level, classes) {
-  return `<a href="#" class="${buildClasses('govuk-link', classes)}">${renderText(c.text || c.content || c.title)}</a>`
+  return `<a href="#" class="${buildClasses(GOVUK_LINK_CLASS, classes)}">${renderText(c.text || c.content || c.title)}</a>`
 }
 
 function renderA(c, _type, _level, classes) {
-  return `<a href="#" class="${buildClasses('govuk-link', classes)}">${renderText(c.text || c.content || c.title)}</a>`
+  return `<a href="#" class="${buildClasses(GOVUK_LINK_CLASS, classes)}">${renderText(c.text || c.content || c.title)}</a>`
 }
 
 function renderLineBreak(_c, _type, _level, _classes) {
