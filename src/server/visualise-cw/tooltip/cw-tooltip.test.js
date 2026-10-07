@@ -753,6 +753,187 @@ describe('cw-tooltip', () => {
       expect(html).toContain('Exact match')
     })
 
+    it('should cover additional branches in matchesCode and matchesCodeInExpression', () => {
+      // matchesCode: !expected || !actual
+      expect(
+        createCwStatusTooltipData({ code: 'OTHER' }, null, {
+          beforeContent: { renderIf: { status: 'S' }, content: 'X' }
+        })
+      ).not.toContain('X')
+
+      expect(
+        createCwStatusTooltipData({ code: null }, null, {
+          beforeContent: { renderIf: { status: 'S' }, content: 'X' }
+        })
+      ).not.toContain('X')
+
+      // matchesCodeInExpression: exact match fallback
+      const status = { code: 'A+B' }
+      const stage = {
+        beforeContent: {
+          renderIf: 'A+B',
+          content: 'Plus Match'
+        }
+      }
+      const html = createCwStatusTooltipData(status, null, stage)
+      expect(html).toContain('Plus Match')
+    })
+
+    it('should cover additional component rendering branches', () => {
+      const task = {
+        name: 'T',
+        description: [
+          { component: 'heading', title: 'Title Only' },
+          { component: 'h1', content: 'Content Only' },
+          { component: 'paragraph', content: 'Para Content' },
+          { component: 'unordered-list', items: ['Item 1'] },
+          { component: 'ordered-list', items: ['Item 2'] },
+          { component: 'container', content: ['Contained'] },
+          { component: 'url', title: 'Link Title' },
+          { component: 'inset-text', content: 'Inset Content' },
+          { component: 'warning-text', content: 'Warning Content' },
+          { component: 'details', summary: 'Summary', content: 'Detail Content' },
+          { component: 'notification-banner', text: 'Banner Text' },
+          { component: 'tag', content: 'Tag Content' },
+          { component: 'html', text: 'HTML Text' },
+          { component: 'raw', content: 'RAW Content' },
+          { items: [{ component: 'text', text: 'No type items' }] }
+        ]
+      }
+      const html = createCwTaskTooltipData(task)
+      expect(html).toContain('Title Only')
+      expect(html).toContain('Content Only')
+      expect(html).toContain('Para Content')
+      expect(html).toContain('<li>Item 1</li>')
+      expect(html).toContain('<li>Item 2</li>')
+      expect(html).toContain('Contained')
+      expect(html).toContain('Link Title')
+      expect(html).toContain('Inset Content')
+      expect(html).toContain('Warning Content')
+      expect(html).toContain('Summary')
+      expect(html).toContain('Banner Text')
+      expect(html).toContain('Tag Content')
+      expect(html).toContain('HTML Text')
+      expect(html).toContain('RAW Content')
+      expect(html).toContain('No type items')
+    })
+
+    it('should cover renderText with nested components in array', () => {
+      const task = {
+        name: 'T',
+        description: {
+          component: 'paragraph',
+          text: ['Text ', { component: 'span', text: 'Span' }, ' End']
+        }
+      }
+      const html = createCwTaskTooltipData(task)
+      expect(html).toContain('<p class="govuk-body">Text Span End</p>')
+    })
+
+    it('should cover renderInput branches', () => {
+      const task = {
+        name: 'T',
+        input: {
+          label: { text: 'Label' }, // no classes
+          hint: 'Hint' // not array
+        }
+      }
+      const html = createCwTaskTooltipData(task)
+      expect(html).toContain('<label class="govuk-label ">Label</label>')
+      expect(html).toContain('<div class="govuk-hint">Hint</div>')
+    })
+
+    it('should cover matchesCondition branches', () => {
+      expect(
+        createCwStatusTooltipData({ code: 'S' }, null, {
+          beforeContent: { renderIf: 'false', content: 'No' }
+        })
+      ).not.toContain('No')
+
+      expect(
+        createCwStatusTooltipData({ code: 'S' }, null, {
+          beforeContent: { renderIf: 123, content: 'Fallback' }
+        })
+      ).not.toContain('Fallback')
+    })
+
+    it('should match phase code in string expression', () => {
+      const status = { code: 'S' }
+      const phase = { code: 'PHASE_P1' }
+      const stage = {
+        beforeContent: {
+          renderIf: 'PHASE_P1',
+          content: 'Matched Phase String'
+        }
+      }
+      const html = createCwStatusTooltipData(status, phase, stage)
+      expect(html).toContain('Matched Phase String')
+    })
+
+    it('should hit exact match fallback in matchesCodeInExpression', () => {
+      const status = { code: '++' }
+      const stage = {
+        beforeContent: {
+          renderIf: '++',
+          content: 'Plus Plus Match'
+        }
+      }
+      const html = createCwStatusTooltipData(status, null, stage)
+      expect(html).toContain('Plus Plus Match')
+    })
+
+    it('should cover falsy description in renderDescription', () => {
+      // hits line 279
+      const task = { name: 'T', description: null }
+      const html = createCwTaskTooltipData(task)
+      expect(html).toContain('<h1 class="govuk-heading-l">T</h1>')
+      expect(html).not.toContain('govuk-body')
+    })
+
+    it('should hit false branches in matchesObjectCondition', () => {
+      const status = { code: 'S' }
+      const phase = { code: 'P' }
+
+      expect(
+        createCwStatusTooltipData(status, null, {
+          beforeContent: { renderIf: { statusCode: 'WRONG' }, content: 'X' }
+        })
+      ).not.toContain('X')
+
+      expect(
+        createCwStatusTooltipData(status, null, {
+          beforeContent: { renderIf: { status: 'WRONG' }, content: 'X' }
+        })
+      ).not.toContain('X')
+
+      expect(
+        createCwStatusTooltipData(status, null, {
+          beforeContent: { renderIf: { stageCode: 'WRONG' }, content: 'X' }
+        })
+      ).not.toContain('X')
+
+      expect(
+        createCwStatusTooltipData(status, phase, {
+          beforeContent: { renderIf: { phaseCode: 'WRONG' }, content: 'X' }
+        })
+      ).not.toContain('X')
+    })
+
+    it('should cover renderHtml, renderRaw and renderText fallbacks', () => {
+      const task = {
+        name: 'T',
+        description: [
+          { component: 'html' },
+          { component: 'raw' },
+          { component: 'text', text: 1 },
+          { component: 'text', text: true }
+        ]
+      }
+      const html = createCwTaskTooltipData(task)
+      expect(html).toContain('1')
+      expect(html).toContain('true')
+    })
+
     describe('ensureArray', () => {
       it('should return the same array if already an array', () => {
         const arr = ['a', 'b', 123]

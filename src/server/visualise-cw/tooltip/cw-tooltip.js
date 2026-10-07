@@ -369,11 +369,11 @@ const COMPONENT_RENDERERS = {
   ul: renderUl,
   'ordered-list': renderOrderedList,
   ol: renderOl,
-  container: renderContainer,
-  div: renderDiv,
-  group: renderGroup,
-  text: renderTextComponent,
-  span: renderSpan,
+  container: renderDivContainerGroup,
+  div: renderDivContainerGroup,
+  group: renderDivContainerGroup,
+  text: renderTextContent,
+  span: renderTextContent,
   url: renderUrl,
   link: renderLink,
   a: renderA,
@@ -388,7 +388,7 @@ const COMPONENT_RENDERERS = {
   button: renderButton,
   tag: renderTag,
   html: renderHtml,
-  raw: renderRaw
+  raw: renderHtml
 }
 
 function renderP(c, _type, _level, classes) {
@@ -423,29 +423,13 @@ function renderOl(c, _type, _level, classes) {
   return `<ol class="${buildClasses('govuk-list govuk-list--number', classes)}">${ensureArray(c.items).map(wrapComponentIntoListItem).join('')}</ol>`
 }
 
-function renderContainer(c, _type, _level, classes) {
+function renderDivContainerGroup(c, _type, _level, classes) {
   return `<div class="${buildClasses('', classes)}">${ensureArray(c.items || c.content)
     .map(renderComponent)
     .join('')}</div>`
 }
 
-function renderDiv(c, _type, _level, classes) {
-  return `<div class="${buildClasses('', classes)}">${ensureArray(c.items || c.content)
-    .map(renderComponent)
-    .join('')}</div>`
-}
-
-function renderGroup(c, _type, _level, classes) {
-  return `<div class="${buildClasses('', classes)}">${ensureArray(c.items || c.content)
-    .map(renderComponent)
-    .join('')}</div>`
-}
-
-function renderTextComponent(c, _type, _level, _classes) {
-  return renderText(c.text || c.content)
-}
-
-function renderSpan(c, _type, _level, _classes) {
+function renderTextContent(c, _type, _level, _classes) {
   return renderText(c.text || c.content)
 }
 
@@ -502,10 +486,6 @@ function renderTag(c, _type, _level, classes) {
 }
 
 function renderHtml(c, _type, _level, _classes) {
-  return c.html || c.text || c.content || ''
-}
-
-function renderRaw(c, _type, _level, _classes) {
   return c.html || c.text || c.content || ''
 }
 
