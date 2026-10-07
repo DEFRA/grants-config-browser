@@ -400,39 +400,45 @@ function renderParagraph(c, _type, _level, classes) {
 }
 
 function renderUnorderedList(c, _type, _level, classes) {
-  return `<ul class="${buildClasses(GOVUK_LIST_BULLET_CLASSES, classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
+  return `<ul class="${buildClasses(GOVUK_LIST_BULLET_CLASSES, classes)}">${ensureArray(c.items).map(wrapComponentIntoListItem).join('')}</ul>`
 }
 
 function renderBulletList(c, _type, _level, classes) {
-  return `<ul class="${buildClasses(GOVUK_LIST_BULLET_CLASSES, classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
+  return `<ul class="${buildClasses(GOVUK_LIST_BULLET_CLASSES, classes)}">${ensureArray(c.items).map(wrapComponentIntoListItem).join('')}</ul>`
 }
 
 function renderList(c, _type, _level, classes) {
-  return `<ul class="${buildClasses(GOVUK_LIST_BULLET_CLASSES, classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
+  return `<ul class="${buildClasses(GOVUK_LIST_BULLET_CLASSES, classes)}">${ensureArray(c.items).map(wrapComponentIntoListItem).join('')}</ul>`
 }
 
 function renderUl(c, _type, _level, classes) {
-  return `<ul class="${buildClasses(GOVUK_LIST_BULLET_CLASSES, classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ul>`
+  return `<ul class="${buildClasses(GOVUK_LIST_BULLET_CLASSES, classes)}">${ensureArray(c.items).map(wrapComponentIntoListItem).join('')}</ul>`
 }
 
 function renderOrderedList(c, _type, _level, classes) {
-  return `<ol class="${buildClasses('govuk-list govuk-list--number', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ol>`
+  return `<ol class="${buildClasses('govuk-list govuk-list--number', classes)}">${ensureArray(c.items).map(wrapComponentIntoListItem).join('')}</ol>`
 }
 
 function renderOl(c, _type, _level, classes) {
-  return `<ol class="${buildClasses('govuk-list govuk-list--number', classes)}">${(c.items || []).map(wrapComponentIntoListItem).join('')}</ol>`
+  return `<ol class="${buildClasses('govuk-list govuk-list--number', classes)}">${ensureArray(c.items).map(wrapComponentIntoListItem).join('')}</ol>`
 }
 
 function renderContainer(c, _type, _level, classes) {
-  return `<div class="${buildClasses('', classes)}">${(c.items || c.content || []).map(renderComponent).join('')}</div>`
+  return `<div class="${buildClasses('', classes)}">${ensureArray(c.items || c.content)
+    .map(renderComponent)
+    .join('')}</div>`
 }
 
 function renderDiv(c, _type, _level, classes) {
-  return `<div class="${buildClasses('', classes)}">${(c.items || c.content || []).map(renderComponent).join('')}</div>`
+  return `<div class="${buildClasses('', classes)}">${ensureArray(c.items || c.content)
+    .map(renderComponent)
+    .join('')}</div>`
 }
 
 function renderGroup(c, _type, _level, classes) {
-  return `<div class="${buildClasses('', classes)}">${(c.items || c.content || []).map(renderComponent).join('')}</div>`
+  return `<div class="${buildClasses('', classes)}">${ensureArray(c.items || c.content)
+    .map(renderComponent)
+    .join('')}</div>`
 }
 
 function renderTextComponent(c, _type, _level, _classes) {
