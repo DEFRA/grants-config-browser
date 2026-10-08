@@ -19,7 +19,7 @@
     "format:check": "prettier --check \"src/**/*.js\" \"**/*.{js,cjs,md,json,config.js,test.js}\"",
     "frontend:watch": "NODE_ENV=development webpack --watch",
     "git:pre-commit-hook": "npm run security-audit && npm run format:check && npm run lint && npm test",
-    "git:pre-commit-hook-temp": "npm run format:check && npm run lint && npm test",
+    "git:pre-commit-hook-temp": "npm run security-audit || true && npm run format:check && npm run lint && npm test",
     "postinstall": "npm run setup:husky",
     "lint": "run-s lint:js lint:scss",
     "lint:js": "eslint .",
@@ -85,8 +85,8 @@
     "tippy.js": "6.3.7"
   },
   "devDependencies": {
-    "@babel/preset-env": "7.29.7",
-    "@vitest/coverage-v8": "4.1.11",
+    "@babel/preset-env": "8.0.2",
+    "@vitest/coverage-v8": "5.0.3",
     "autoprefixer": "10.6.1",
     "babel-loader": "10.1.1",
     "cheerio": "1.2.0",
@@ -106,7 +106,7 @@
     "stylelint": "17.15.0",
     "stylelint-config-gds": "3.0.0",
     "terser-webpack-plugin": "5.6.1",
-    "vitest": "4.1.11",
+    "vitest": "5.0.3",
     "vitest-fetch-mock": "0.4.5",
     "webpack": "5.111.1",
     "webpack-assets-manifest": "6.5.4",
