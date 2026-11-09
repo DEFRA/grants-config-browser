@@ -259,4 +259,43 @@ describe('#grantController', () => {
       expect(versionRows).toEqual(['2.0.0 Active 02/01/2023', '1.0.0 Draft 01/01/2023'])
     })
   })
+
+  describe('Archived versions filter', () => {
+    const archivedCheckbox = ($) => $('input[name="archived"][value="include"]')
+
+    const render = async (url) => {
+      requestFromApi.mockResolvedValueOnce({ response: [] })
+      requestFromApi.mockResolvedValueOnce({ response: {} })
+      const { result } = await server.inject({ method: 'GET', url })
+      return load(result)
+    }
+
+    test('Should render an "include archived" checkbox, unticked, when the param is absent', async () => {
+      const $ = await render('/grant?grant=some-grant')
+
+      expect(archivedCheckbox($)).toHaveLength(1)
+      expect(archivedCheckbox($).is(':checked')).toBe(false)
+    })
+
+    test('Should tick the checkbox when archived=include is in the URL', async () => {
+      const $ = await render('/grant?grant=some-grant&archived=include')
+
+      expect(archivedCheckbox($).is(':checked')).toBe(true)
+    })
+
+    test('Should sit in a GET form that reloads /grant preserving the grant', async () => {
+      const $ = await render('/grant?grant=some-grant')
+      const form = archivedCheckbox($).closest('form')
+
+      expect(form.attr('method')).toMatch(/get/i)
+      expect(form.find('input[type="hidden"][name="grant"]').attr('value')).toBe('some-grant')
+    })
+
+    test('Should provide an Apply button to submit the filter', async () => {
+      const $ = await render('/grant?grant=some-grant')
+      const form = archivedCheckbox($).closest('form')
+
+      expect(form.find('button:contains("Apply")')).toHaveLength(1)
+    })
+  })
 })

@@ -145,6 +145,8 @@ export const grantController = {
     return h.view('grant/index', {
       pageTitle: `All versions of ${grant}`,
       heading: `${grant} config versions`,
+      grant,
+      archivedIncluded: archived === 'include',
       versionTableRows: allTables,
       headers: buildTableHeaders(),
       featureControlTableRows: createFeatureControlRows(featureControls),
