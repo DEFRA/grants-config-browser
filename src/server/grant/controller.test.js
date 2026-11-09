@@ -84,7 +84,7 @@ describe('#grantController', () => {
         .find('tbody tr')
         .map((_, row) =>
           $(row)
-            .find('td')
+            .find('td:not(:last-child)')
             .text()
             .trim()
             .replaceAll(/[\\n\s]+/g, ' ')
@@ -200,7 +200,7 @@ describe('#grantController', () => {
         .find('tbody tr')
         .map((_, row) =>
           $(row)
-            .find('td')
+            .find('td:not(:last-child)')
             .text()
             .trim()
             .replaceAll(/[\\n\s]+/g, ' ')
@@ -249,7 +249,7 @@ describe('#grantController', () => {
         .find('tbody tr')
         .map((_, row) =>
           $(row)
-            .find('td')
+            .find('td:not(:last-child)')
             .text()
             .trim()
             .replaceAll(/[\\n\s]+/g, ' ')
@@ -296,6 +296,37 @@ describe('#grantController', () => {
       const form = archivedCheckbox($).closest('form')
 
       expect(form.find('button:contains("Apply")')).toHaveLength(1)
+    })
+  })
+
+  describe('Archive and unarchive version buttons', () => {
+    let $
+
+    beforeAll(async () => {
+      requestFromApi.mockResolvedValueOnce({
+        response: [
+          { version: '2.0.0', status: 'active', lastUpdated: '2023-01-02', archived: true },
+          { version: '1.0.0', status: 'draft', lastUpdated: '2023-01-01' }
+        ]
+      })
+      requestFromApi.mockResolvedValueOnce({ response: {} })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/grant?grant=some-grant&archived=include'
+      })
+
+      $ = load(result)
+    })
+
+    const rowButtonText = (index) => $('table').eq(0).find('tbody tr').eq(index).find('button').text().trim()
+
+    test('Should show an Unarchive button for an archived version', () => {
+      expect(rowButtonText(0)).toBe('Unarchive')
+    })
+
+    test('Should show an Archive button for a non-archived version', () => {
+      expect(rowButtonText(1)).toBe('Archive')
     })
   })
 })

@@ -26,6 +26,9 @@ const buildTableHeaders = () => {
         'aria-sort': 'descending'
       },
       classes: 'col-19'
+    },
+    {
+      text: 'Actions'
     }
   ]
 }
@@ -45,9 +48,16 @@ const createRowsForTable = (versions, grant) => {
       },
       {
         text: formatDateTime(version.lastUpdated),
+        classes: centringClass,
         attributes: {
           'data-sort-value': new Date(version.lastUpdated).getTime()
         }
+      },
+      {
+        html: version.archived
+          ? '<button class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0" data-module="govuk-button">Unarchive</button>'
+          : '<button class="govuk-button govuk-!-margin-bottom-0" data-module="govuk-button">Archive</button>',
+        classes: centringClass
       }
     ]
   })
