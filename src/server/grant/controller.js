@@ -116,6 +116,7 @@ const createFeatureControlRows = (features) => {
 const getAllVersionsSchema = Joi.object({
   grant: Joi.string().required(),
   draft: Joi.string().lowercase().valid('include', 'only').optional(),
+  archived: Joi.string().lowercase().valid('include').optional(),
   constrainMajor: Joi.alternatives().conditional('constrainMinor', {
     is: Joi.exist(),
     then: Joi.number().min(0).required(),
@@ -126,12 +127,16 @@ const getAllVersionsSchema = Joi.object({
 
 export const grantController = {
   async handler(request, h) {
-    const { grant } = request.query
+    const { grant, archived } = request.query
     if (getAllVersionsSchema.validate(request.query).error) {
       return h.redirect('/')
     }
     //go fetch metadata from the config broker
-    const { response: allVersions } = await requestFromApi(`allVersions?grant=${grant}&draft=include`, request)
+    const archivedParam = archived ? '&archived=included' : ''
+    const { response: allVersions } = await requestFromApi(
+      `allVersions?grant=${grant}&draft=include${archivedParam}`,
+      request
+    )
 
     const { response: featureControlsResponse } = await requestFromApi(`feature-controls?scope=grant.${grant}`, request)
     const featureControls = featureControlsResponse?.items || []
