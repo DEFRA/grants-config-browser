@@ -328,5 +328,115 @@ describe('#grantController', () => {
     test('Should show an Archive button for a non-archived version', () => {
       expect(rowButtonText(1)).toBe('Archive')
     })
+
+    const rowForm = (index) => $('table').eq(0).find('tbody tr').eq(index).find('form')
+
+    test('Should link the Archive button to the archive confirmation page', () => {
+      const form = rowForm(1)
+
+      expect(form.attr('method')).toMatch(/get/i)
+      expect(form.attr('action')).toBe('/version/archive')
+      expect(form.find('input[name="grant"]').attr('value')).toBe('some-grant')
+      expect(form.find('input[name="version"]').attr('value')).toBe('1.0.0')
+    })
+
+    test('Should link the Unarchive button to the unarchive confirmation page', () => {
+      const form = rowForm(0)
+
+      expect(form.attr('method')).toMatch(/get/i)
+      expect(form.attr('action')).toBe('/version/unarchive')
+      expect(form.find('input[name="version"]').attr('value')).toBe('2.0.0')
+    })
+  })
+
+  describe('Archiving confirmation page', () => {
+    test('Should ask the user to confirm archiving a version', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: '/version/archive?grant=some-grant&version=1.0.0'
+      })
+      const $ = load(result)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect($('h1').text()).toContain('Are you sure you want to archive version 1.0.0 of grant some-grant')
+
+      const form = $('form')
+      expect(form.attr('method')).toMatch(/post/i)
+      expect(form.attr('action')).toBe('/version/archive')
+      expect(form.find('input[name="grant"]').attr('value')).toBe('some-grant')
+      expect(form.find('input[name="version"]').attr('value')).toBe('1.0.0')
+      expect(form.find('button:contains("Confirm")')).toHaveLength(1)
+      expect($('a:contains("Cancel")').attr('href')).toBe('/grant?grant=some-grant')
+    })
+
+    test('Should ask the user to confirm unarchiving and preserve the archived filter', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: '/version/unarchive?grant=some-grant&version=2.0.0&archived=include'
+      })
+      const $ = load(result)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect($('h1').text()).toContain('Are you sure you want to unarchive version 2.0.0 of grant some-grant')
+      expect($('form').attr('action')).toBe('/version/unarchive')
+      expect($('form').find('input[name="archived"]').attr('value')).toBe('include')
+      expect($('a:contains("Cancel")').attr('href')).toBe('/grant?grant=some-grant&archived=include')
+    })
+
+    test('Should redirect to home when the confirmation query is invalid', async () => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: '/version/archive?grant=some-grant'
+      })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(headers.location).toBe('/')
+    })
+  })
+
+  describe('Archiving and unarchiving a version', () => {
+    const credentials = { isAuthenticated: true, displayName: 'User A', roles: ['view.only'] }
+
+    const post = (url, payload) =>
+      server.inject({ method: 'POST', url, payload, auth: { strategy: 'session', credentials } })
+
+    test('Should call the broker archive endpoint and redirect back to the grant page', async () => {
+      requestFromApi.mockResolvedValueOnce({ status: statusCodes.ok })
+
+      const { statusCode, headers } = await post('/version/archive', { grant: 'some-grant', version: '1.0.0' })
+
+      expect(requestFromApi).toHaveBeenCalledWith('version/archive', expect.anything(), {}, 'POST', {
+        grant: 'some-grant',
+        version: '1.0.0',
+        user: 'User A'
+      })
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(headers.location).toBe('/grant?grant=some-grant')
+    })
+
+    test('Should call the broker unarchive endpoint and preserve the archived filter', async () => {
+      requestFromApi.mockResolvedValueOnce({ status: statusCodes.ok })
+
+      const { statusCode, headers } = await post('/version/unarchive', {
+        grant: 'some-grant',
+        version: '1.0.0',
+        archived: 'include'
+      })
+
+      expect(requestFromApi).toHaveBeenCalledWith('version/unarchive', expect.anything(), {}, 'POST', {
+        grant: 'some-grant',
+        version: '1.0.0',
+        user: 'User A'
+      })
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(headers.location).toBe('/grant?grant=some-grant&archived=include')
+    })
+
+    test('Should redirect to home when the payload is invalid', async () => {
+      const { statusCode, headers } = await post('/version/archive', { grant: 'some-grant' })
+
+      expect(statusCode).toBe(statusCodes.moved)
+      expect(headers.location).toBe('/')
+    })
   })
 })

@@ -33,7 +33,18 @@ const buildTableHeaders = () => {
   ]
 }
 
-const createRowsForTable = (versions, grant) => {
+const buildArchiveActionForm = (version, grant, archivedIncluded) => {
+  const hiddenArchived = archivedIncluded ? '<input type="hidden" name="archived" value="include">' : ''
+  const hiddenInputs =
+    `<input type="hidden" name="grant" value="${grant}">` +
+    `<input type="hidden" name="version" value="${version.version}">` +
+    hiddenArchived
+  return version.archived
+    ? `<form method="GET" action="/version/unarchive">${hiddenInputs}<button class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0" data-module="govuk-button">Unarchive</button></form>`
+    : `<form method="GET" action="/version/archive">${hiddenInputs}<button class="govuk-button govuk-!-margin-bottom-0" data-module="govuk-button">Archive</button></form>`
+}
+
+const createRowsForTable = (versions, grant, archivedIncluded) => {
   const env = nunjucks.configure(['src/server/common/templates/partials', 'node_modules/govuk-frontend/dist'])
   return versions.map((version) => {
     const centringClass = 'vertical-middle'
@@ -54,9 +65,7 @@ const createRowsForTable = (versions, grant) => {
         }
       },
       {
-        html: version.archived
-          ? '<button class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0" data-module="govuk-button">Unarchive</button>'
-          : '<button class="govuk-button govuk-!-margin-bottom-0" data-module="govuk-button">Archive</button>',
+        html: buildArchiveActionForm(version, grant, archivedIncluded),
         classes: centringClass
       }
     ]
@@ -151,7 +160,7 @@ export const grantController = {
     const { response: featureControlsResponse } = await requestFromApi(`feature-controls?scope=grant.${grant}`, request)
     const featureControls = featureControlsResponse?.items || []
 
-    const allTables = createRowsForTable(allVersions, grant)
+    const allTables = createRowsForTable(allVersions, grant, archived === 'include')
     return h.view('grant/index', {
       pageTitle: `All versions of ${grant}`,
       heading: `${grant} config versions`,
@@ -173,3 +182,45 @@ export const grantController = {
     })
   }
 }
+
+const postArchivingSchema = Joi.object({
+  grant: Joi.string().required(),
+  version: Joi.string().required(),
+  archived: Joi.string().lowercase().valid('include').optional()
+})
+
+const renderArchivingConfirmation = (request, h, action) => {
+  if (postArchivingSchema.validate(request.query).error) {
+    return h.redirect('/')
+  }
+  const { grant, version, archived } = request.query
+  const archivedIncluded = archived === 'include'
+  const archivedParam = archivedIncluded ? '&archived=include' : ''
+  return h.view('grant/confirm-archiving', {
+    pageTitle: `Confirm ${action}`,
+    action,
+    grant,
+    version,
+    archivedIncluded,
+    cancelUrl: `/grant?grant=${grant}${archivedParam}`
+  })
+}
+
+export const confirmArchiveHandler = (request, h) => renderArchivingConfirmation(request, h, 'archive')
+
+export const confirmUnarchiveHandler = (request, h) => renderArchivingConfirmation(request, h, 'unarchive')
+
+const submitArchivingAction = async (request, h, endpoint) => {
+  if (postArchivingSchema.validate(request.payload).error) {
+    return h.redirect('/')
+  }
+  const { grant, version, archived } = request.payload
+  const user = request.auth.credentials.displayName
+  await requestFromApi(endpoint, request, {}, 'POST', { grant, version, user })
+  const archivedParam = archived === 'include' ? '&archived=include' : ''
+  return h.redirect(`/grant?grant=${grant}${archivedParam}`)
+}
+
+export const archiveVersionHandler = (request, h) => submitArchivingAction(request, h, 'version/archive')
+
+export const unarchiveVersionHandler = (request, h) => submitArchivingAction(request, h, 'version/unarchive')
