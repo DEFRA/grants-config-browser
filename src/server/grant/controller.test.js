@@ -400,116 +400,175 @@ describe('#grantController', () => {
     const post = (url, payload) =>
       server.inject({ method: 'POST', url, payload, auth: { strategy: 'session', credentials } })
 
-    test('Should archive the version, store the success, and redirect back to the grant page', async () => {
-      requestFromApi.mockResolvedValueOnce({ status: statusCodes.ok })
+    describe('on archiving', () => {
+      let statusCode
+      let headers
 
-      const { statusCode, headers } = await post('/version/archive', { grant: 'some-grant', version: '1.0.0' })
+      beforeEach(async () => {
+        requestFromApi.mockResolvedValueOnce({ status: statusCodes.ok })
 
-      expect(requestFromApi).toHaveBeenCalledWith(
-        'version/archive',
-        expect.anything(),
-        {},
-        'POST',
-        { grant: 'some-grant', version: '1.0.0', user: 'User A' },
-        true
-      )
-      expect(await server.session.get('session-123-archiving')).toEqual({
-        status: 'success',
-        action: 'archive',
-        version: '1.0.0'
-      })
-      expect(statusCode).toBe(statusCodes.moved)
-      expect(headers.location).toBe('/grant?grant=some-grant')
-    })
-
-    test('Should unarchive the version, store the success, and preserve the archived filter', async () => {
-      requestFromApi.mockResolvedValueOnce({ status: statusCodes.ok })
-
-      const { statusCode, headers } = await post('/version/unarchive', {
-        grant: 'some-grant',
-        version: '1.0.0',
-        archived: 'include'
+        const response = await post('/version/archive', { grant: 'some-grant', version: '1.0.0' })
+        statusCode = response.statusCode
+        headers = response.headers
       })
 
-      expect(requestFromApi).toHaveBeenCalledWith(
-        'version/unarchive',
-        expect.anything(),
-        {},
-        'POST',
-        { grant: 'some-grant', version: '1.0.0', user: 'User A' },
-        true
-      )
-      expect(await server.session.get('session-123-archiving')).toEqual({
-        status: 'success',
-        action: 'unarchive',
-        version: '1.0.0'
-      })
-      expect(statusCode).toBe(statusCodes.moved)
-      expect(headers.location).toBe('/grant?grant=some-grant&archived=include')
-    })
-
-    test('Should store the broker error message when archiving fails', async () => {
-      requestFromApi.mockResolvedValueOnce({
-        status: statusCodes.badRequest,
-        href: 'http://broker/api/version/archive',
-        error: 'Cannot archive the latest version'
+      it('calls the archive endpoint', () => {
+        expect(requestFromApi).toHaveBeenCalledWith(
+          'version/archive',
+          expect.anything(),
+          {},
+          'POST',
+          { grant: 'some-grant', version: '1.0.0', user: 'User A' },
+          true
+        )
       })
 
-      const { statusCode, headers } = await post('/version/archive', { grant: 'some-grant', version: '1.0.0' })
-
-      expect(await server.session.get('session-123-archiving')).toEqual({
-        status: 'failure',
-        action: 'archive',
-        version: '1.0.0',
-        error: 'Cannot archive the latest version'
+      it('stores the result on the session', async () => {
+        expect(await server.session.get('session-123-archiving')).toEqual({
+          status: 'success',
+          action: 'archive',
+          version: '1.0.0'
+        })
       })
-      expect(statusCode).toBe(statusCodes.moved)
-      expect(headers.location).toBe('/grant?grant=some-grant')
-    })
 
-    test('Should store a generic error when the broker returns no message', async () => {
-      requestFromApi.mockResolvedValueOnce(null)
-
-      await post('/version/archive', { grant: 'some-grant', version: '1.0.0' })
-
-      expect(await server.session.get('session-123-archiving')).toEqual({
-        status: 'failure',
-        action: 'archive',
-        version: '1.0.0',
-        error: 'The request could not be completed'
+      it('redirects to the grant page', () => {
+        expect(statusCode).toBe(statusCodes.moved)
+        expect(headers.location).toBe('/grant?grant=some-grant')
       })
     })
 
-    test('Should store a validation failure and redirect to home when the payload is invalid', async () => {
-      const { statusCode, headers } = await post('/version/archive', { grant: 'some-grant' })
+    describe('on unarchiving', () => {
+      let statusCode
+      let headers
 
-      const stored = await server.session.get('session-123-archiving')
-      expect(stored.status).toBe('failure')
-      expect(stored.action).toBe('archive')
-      expect(stored.error).toBeTruthy()
+      beforeEach(async () => {
+        requestFromApi.mockResolvedValueOnce({ status: statusCodes.ok })
 
-      expect(statusCode).toBe(statusCodes.moved)
-      expect(headers.location).toBe('/')
-    })
-
-    test('Should reject an unauthenticated archive request', async () => {
-      const { statusCode } = await server.inject({
-        method: 'POST',
-        url: '/version/archive',
-        payload: { grant: 'some-grant', version: '1.0.0' }
+        const response = await post('/version/unarchive', {
+          grant: 'some-grant',
+          version: '1.0.0',
+          archived: 'include'
+        })
+        statusCode = response.statusCode
+        headers = response.headers
       })
 
-      expect(statusCode).toBe(statusCodes.unauthorized)
-    })
-
-    test('Should reject an unauthenticated unarchive request', async () => {
-      const { statusCode } = await server.inject({
-        method: 'POST',
-        url: '/version/unarchive',
-        payload: { grant: 'some-grant', version: '1.0.0' }
+      it('calls the unarchive endpoint', () => {
+        expect(requestFromApi).toHaveBeenCalledWith(
+          'version/unarchive',
+          expect.anything(),
+          {},
+          'POST',
+          { grant: 'some-grant', version: '1.0.0', user: 'User A' },
+          true
+        )
       })
 
-      expect(statusCode).toBe(statusCodes.unauthorized)
+      it('stores the result on the session', async () => {
+        expect(await server.session.get('session-123-archiving')).toEqual({
+          status: 'success',
+          action: 'unarchive',
+          version: '1.0.0'
+        })
+      })
+
+      it('redirects to the grant page preserving the archived filter', () => {
+        expect(statusCode).toBe(statusCodes.moved)
+        expect(headers.location).toBe('/grant?grant=some-grant&archived=include')
+      })
+    })
+
+    describe('when the broker rejects the archive', () => {
+      let statusCode
+      let headers
+
+      beforeEach(async () => {
+        requestFromApi.mockResolvedValueOnce({
+          status: statusCodes.badRequest,
+          href: 'http://broker/api/version/archive',
+          error: 'Cannot archive the latest version'
+        })
+
+        const response = await post('/version/archive', { grant: 'some-grant', version: '1.0.0' })
+        statusCode = response.statusCode
+        headers = response.headers
+      })
+
+      it('stores the broker error message on the session', async () => {
+        expect(await server.session.get('session-123-archiving')).toEqual({
+          status: 'failure',
+          action: 'archive',
+          version: '1.0.0',
+          error: 'Cannot archive the latest version'
+        })
+      })
+
+      it('redirects to the grant page', () => {
+        expect(statusCode).toBe(statusCodes.moved)
+        expect(headers.location).toBe('/grant?grant=some-grant')
+      })
+    })
+
+    describe('when the broker returns no message', () => {
+      beforeEach(async () => {
+        requestFromApi.mockResolvedValueOnce(null)
+
+        await post('/version/archive', { grant: 'some-grant', version: '1.0.0' })
+      })
+
+      it('stores a generic error on the session', async () => {
+        expect(await server.session.get('session-123-archiving')).toEqual({
+          status: 'failure',
+          action: 'archive',
+          version: '1.0.0',
+          error: 'The request could not be completed'
+        })
+      })
+    })
+
+    describe('on an invalid payload', () => {
+      let statusCode
+      let headers
+
+      beforeEach(async () => {
+        const response = await post('/version/archive', { grant: 'some-grant' })
+        statusCode = response.statusCode
+        headers = response.headers
+      })
+
+      it('stores a validation failure on the session', async () => {
+        const stored = await server.session.get('session-123-archiving')
+        expect(stored.status).toBe('failure')
+        expect(stored.action).toBe('archive')
+        expect(stored.error).toBeTruthy()
+      })
+
+      it('redirects to home', () => {
+        expect(statusCode).toBe(statusCodes.moved)
+        expect(headers.location).toBe('/')
+      })
+    })
+
+    describe('without authentication', () => {
+      it('rejects an archive request', async () => {
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: '/version/archive',
+          payload: { grant: 'some-grant', version: '1.0.0' }
+        })
+
+        expect(statusCode).toBe(statusCodes.unauthorized)
+      })
+
+      it('rejects an unarchive request', async () => {
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: '/version/unarchive',
+          payload: { grant: 'some-grant', version: '1.0.0' }
+        })
+
+        expect(statusCode).toBe(statusCodes.unauthorized)
+      })
     })
   })
 })
