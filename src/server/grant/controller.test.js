@@ -438,5 +438,25 @@ describe('#grantController', () => {
       expect(statusCode).toBe(statusCodes.moved)
       expect(headers.location).toBe('/')
     })
+
+    test('Should reject an unauthenticated archive request', async () => {
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/version/archive',
+        payload: { grant: 'some-grant', version: '1.0.0' }
+      })
+
+      expect(statusCode).toBe(statusCodes.unauthorized)
+    })
+
+    test('Should reject an unauthenticated unarchive request', async () => {
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/version/unarchive',
+        payload: { grant: 'some-grant', version: '1.0.0' }
+      })
+
+      expect(statusCode).toBe(statusCodes.unauthorized)
+    })
   })
 })
