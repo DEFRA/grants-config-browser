@@ -3,6 +3,9 @@ import Joi from 'joi'
 import { formatDateTime } from '../helpers/date-display.js'
 import nunjucks from 'nunjucks'
 import { formatValue } from '../feature-control/helpers.js'
+import { statusCodes } from '../common/constants/status-codes.js'
+
+const defaultArchivingError = 'The request could not be completed'
 
 const buildTableHeaders = () => {
   return [
@@ -210,17 +213,31 @@ export const confirmArchiveHandler = (request, h) => renderArchivingConfirmation
 
 export const confirmUnarchiveHandler = (request, h) => renderArchivingConfirmation(request, h, 'unarchive')
 
-const submitArchivingAction = async (request, h, endpoint) => {
-  if (postArchivingSchema.validate(request.payload).error) {
+const storeArchivingOutcome = (request, record) =>
+  request.server.session.set(`${request.auth.credentials.sessionId}-archiving`, record)
+
+const submitArchivingAction = async (request, h, action) => {
+  const { grant, version, archived } = request.payload
+
+  const validation = postArchivingSchema.validate(request.payload)
+  if (validation.error) {
+    await storeArchivingOutcome(request, { status: 'failure', action, version, error: validation.error.message })
     return h.redirect('/')
   }
-  const { grant, version, archived } = request.payload
+
   const user = request.auth.credentials.displayName
-  await requestFromApi(endpoint, request, {}, 'POST', { grant, version, user })
+  const result = await requestFromApi(`version/${action}`, request, {}, 'POST', { grant, version, user }, true)
+
+  const record =
+    result?.status === statusCodes.ok
+      ? { status: 'success', action, version }
+      : { status: 'failure', action, version, error: result?.error ?? defaultArchivingError }
+  await storeArchivingOutcome(request, record)
+
   const archivedParam = archived === 'include' ? '&archived=include' : ''
   return h.redirect(`/grant?grant=${grant}${archivedParam}`)
 }
 
-export const archiveVersionHandler = (request, h) => submitArchivingAction(request, h, 'version/archive')
+export const archiveVersionHandler = (request, h) => submitArchivingAction(request, h, 'archive')
 
-export const unarchiveVersionHandler = (request, h) => submitArchivingAction(request, h, 'version/unarchive')
+export const unarchiveVersionHandler = (request, h) => submitArchivingAction(request, h, 'unarchive')
