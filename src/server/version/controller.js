@@ -1,6 +1,6 @@
 import { requestFromApi } from '../helpers/request-from-api.js'
 import Joi from 'joi'
-import { takeArchivingOutcome, describeArchivingOutcome, latestVersionsOfEachMajor } from '../grant/controller.js'
+import { takeArchivingOutcome, describeArchivingOutcome, latestVersionsOfEachMajor } from '../helpers/archiving.js'
 
 const buildTableHeaders = () => {
   return [

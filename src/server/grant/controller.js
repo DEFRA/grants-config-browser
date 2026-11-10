@@ -4,6 +4,12 @@ import { formatDateTime } from '../helpers/date-display.js'
 import nunjucks from 'nunjucks'
 import { formatValue } from '../feature-control/helpers.js'
 import { statusCodes } from '../common/constants/status-codes.js'
+import {
+  latestVersionsOfEachMajor,
+  storeArchivingOutcome,
+  takeArchivingOutcome,
+  describeArchivingOutcome
+} from '../helpers/archiving.js'
 
 const defaultArchivingError = 'The request could not be completed'
 
@@ -34,24 +40,6 @@ const buildTableHeaders = () => {
       text: 'Actions'
     }
   ]
-}
-
-// The broker refuses to archive the latest version of a major line
-// (isLatestVersionInMajor), so the browser hides the button for it. The latest
-// of a major is its highest non-archived version.
-export const latestVersionsOfEachMajor = (versions) => {
-  const highestByMajor = new Map()
-  for (const { version, archived } of versions) {
-    if (archived) {
-      continue
-    }
-    const [major, minor, patch] = version.split('.').map(Number)
-    const current = highestByMajor.get(major)
-    if (!current || minor > current.minor || (minor === current.minor && patch > current.patch)) {
-      highestByMajor.set(major, { version, minor, patch })
-    }
-  }
-  return new Set([...highestByMajor.values()].map((entry) => entry.version))
 }
 
 // A single number that orders versions as semver (so 10.x sorts above 2.x).
@@ -256,42 +244,6 @@ const renderArchivingConfirmation = (request, h, action) => {
 export const confirmArchiveHandler = (request, h) => renderArchivingConfirmation(request, h, 'archive')
 
 export const confirmUnarchiveHandler = (request, h) => renderArchivingConfirmation(request, h, 'unarchive')
-
-const sessionIdFromCookie = (request) => request.state?.userSessionCookie?.sessionId
-
-const archivingKey = (sessionId) => `${sessionId}-archiving`
-
-const storeArchivingOutcome = (request, record) => {
-  const sessionId = sessionIdFromCookie(request)
-  if (!sessionId) {
-    return
-  }
-  return request.server.session.set(archivingKey(sessionId), record)
-}
-
-export const takeArchivingOutcome = async (request) => {
-  const sessionId = sessionIdFromCookie(request)
-  if (!sessionId) {
-    return null
-  }
-  const key = archivingKey(sessionId)
-  const outcome = await request.server.session.get(key)
-  if (outcome) {
-    await request.server.session.drop(key)
-  }
-  return outcome
-}
-
-export const describeArchivingOutcome = ({ status, action, version, error }) => {
-  const past = action === 'archive' ? 'archived' : 'unarchived'
-  return {
-    status,
-    message:
-      status === 'success'
-        ? `Version ${version} has been ${past}.`
-        : `Version ${version} could not be ${past}. ${error}`
-  }
-}
 
 const submitArchivingAction = async (request, h, action) => {
   const { grant, version, archived, origin } = request.payload
