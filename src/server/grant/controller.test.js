@@ -31,7 +31,7 @@ describe('#grantController', () => {
     await server.stop({ timeout: 0 })
   })
 
-  test('Should redirect to home page if invalid query parameters supplied', async () => {
+  it('redirects to home page if invalid query parameters supplied', async () => {
     const {
       headers: { location },
       statusCode
@@ -79,11 +79,11 @@ describe('#grantController', () => {
       $ = load(result)
     })
 
-    test('Should respond with 200 OK', () => {
+    it('responds with 200 OK', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('Should render the versions table', () => {
+    it('renders the versions table', () => {
       expect($('title').text()).toEqual(expect.stringContaining('All versions of some-grant |'))
       expect($('h2:contains("All versions")').length).toBe(1)
 
@@ -102,7 +102,7 @@ describe('#grantController', () => {
       expect(versionRows).toEqual(['2.0.0 Active 02/01/2023', '1.0.0 Draft 01/01/2023'])
     })
 
-    test('Should default to sorting by Version descending', () => {
+    it('defaults to sorting by Version descending', () => {
       const headerCells = $('table').eq(0).find('thead th')
       expect(headerCells.eq(0).text().trim()).toBe('Version')
       expect(headerCells.eq(0).attr('aria-sort')).toBe('descending')
@@ -110,7 +110,7 @@ describe('#grantController', () => {
       expect(headerCells.eq(2).attr('aria-sort')).toBe('none')
     })
 
-    test('Should give each Version cell a numeric semver sort value', () => {
+    it('gives each Version cell a numeric semver sort value', () => {
       const versionCells = $('table')
         .eq(0)
         .find('tbody tr')
@@ -120,7 +120,7 @@ describe('#grantController', () => {
       expect(versionCells).toEqual(['2000000', '1000000'])
     })
 
-    test('Should render the related feature controls table', () => {
+    it('renders the related feature controls table', () => {
       expect($('h2:contains("Related feature controls")').length).toBe(1)
 
       const featureRows = $('table')
@@ -158,11 +158,11 @@ describe('#grantController', () => {
       $ = load(response.result)
     })
 
-    test('Should respond with 200 OK', () => {
+    it('responds with 200 OK', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('Should render an empty feature controls table', () => {
+    it('renders an empty feature controls table', () => {
       const featureRows = $('table').eq(1).find('tbody tr').get()
 
       expect(featureRows).toHaveLength(0)
@@ -186,11 +186,11 @@ describe('#grantController', () => {
       $ = load(response.result)
     })
 
-    test('Should respond with 200 OK', () => {
+    it('responds with 200 OK', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('Should render an empty versions table', () => {
+    it('renders an empty versions table', () => {
       const versionRows = $('table').eq(0).find('tbody tr').get()
 
       expect(versionRows).toHaveLength(0)
@@ -216,11 +216,11 @@ describe('#grantController', () => {
       $ = load(response.result)
     })
 
-    test('Should respond with 200 OK', () => {
+    it('responds  with 200 OK', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('Should render a single versions table row', () => {
+    it('renders  a single versions table row', () => {
       const versionRows = $('table')
         .eq(0)
         .find('tbody tr')
@@ -261,15 +261,15 @@ describe('#grantController', () => {
       allVersionsUrl = requestFromApi.mock.calls[0][0]
     })
 
-    test('Should respond with 200 OK', () => {
+    it('responds  with 200 OK', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('Should pass archived=included through to the broker', () => {
+    it('passs  archived=included through to the broker', () => {
       expect(allVersionsUrl).toEqual(expect.stringContaining('archived=included'))
     })
 
-    test('Should render every version regardless of archived state', () => {
+    it('renders  every version regardless of archived state', () => {
       const versionRows = $('table')
         .eq(0)
         .find('tbody tr')
@@ -296,20 +296,20 @@ describe('#grantController', () => {
       return load(result)
     }
 
-    test('Should render an "include archived" checkbox, unticked, when the param is absent', async () => {
+    it('renders  an "include archived" checkbox, unticked, when the param is absent', async () => {
       const $ = await render('/grant?grant=some-grant')
 
       expect(archivedCheckbox($)).toHaveLength(1)
       expect(archivedCheckbox($).is(':checked')).toBe(false)
     })
 
-    test('Should tick the checkbox when archived=include is in the URL', async () => {
+    it('ticks  the checkbox when archived=include is in the URL', async () => {
       const $ = await render('/grant?grant=some-grant&archived=include')
 
       expect(archivedCheckbox($).is(':checked')).toBe(true)
     })
 
-    test('Should sit in a GET form that reloads /grant preserving the grant', async () => {
+    it('sits  in a GET form that reloads /grant preserving the grant', async () => {
       const $ = await render('/grant?grant=some-grant')
       const form = archivedCheckbox($).closest('form')
 
@@ -317,7 +317,7 @@ describe('#grantController', () => {
       expect(form.find('input[type="hidden"][name="grant"]').attr('value')).toBe('some-grant')
     })
 
-    test('Should provide an Apply button to submit the filter', async () => {
+    it('provides  an Apply button to submit the filter', async () => {
       const $ = await render('/grant?grant=some-grant')
       const form = archivedCheckbox($).closest('form')
 
@@ -348,17 +348,17 @@ describe('#grantController', () => {
 
     const rowButtonText = (index) => $('table').eq(0).find('tbody tr').eq(index).find('button').text().trim()
 
-    test('Should show an Unarchive button for an archived version', () => {
+    it('shows  an Unarchive button for an archived version', () => {
       expect(rowButtonText(0)).toBe('Unarchive')
     })
 
-    test('Should show an Archive button for a non-latest non-archived version', () => {
+    it('shows  an Archive button for a non-latest non-archived version', () => {
       expect(rowButtonText(2)).toBe('Archive')
     })
 
     const rowForm = (index) => $('table').eq(0).find('tbody tr').eq(index).find('form')
 
-    test('Should link the Archive button to the archive confirmation page', () => {
+    it('links  the Archive button to the archive confirmation page', () => {
       const form = rowForm(2)
 
       expect(form.attr('method')).toMatch(/get/i)
@@ -367,7 +367,7 @@ describe('#grantController', () => {
       expect(form.find('input[name="version"]').attr('value')).toBe('1.0.0')
     })
 
-    test('Should link the Unarchive button to the unarchive confirmation page', () => {
+    it('links  the Unarchive button to the unarchive confirmation page', () => {
       const form = rowForm(0)
 
       expect(form.attr('method')).toMatch(/get/i)
@@ -401,19 +401,19 @@ describe('#grantController', () => {
     const rowButton = (version) =>
       $(`a[href="/version?grant=some-grant&version=${version}"]`).closest('tr').find('button').text().trim()
 
-    test('hides the Archive button on the highest non-archived version of a major', () => {
+    it('hides the Archive button on the highest non-archived version of a major', () => {
       expect(rowButton('2.0.0')).toBe('')
     })
 
-    test('still offers Archive on lower versions of a major', () => {
+    it('still offers Archive on lower versions of a major', () => {
       expect(rowButton('1.0.0')).toBe('Archive')
     })
 
-    test('treats the highest non-archived version as the latest when a higher one is archived', () => {
+    it('treats the highest non-archived version as the latest when a higher one is archived', () => {
       expect(rowButton('1.1.0')).toBe('')
     })
 
-    test('still offers Unarchive on an archived version', () => {
+    it('still offers Unarchive on an archived version', () => {
       expect(rowButton('1.2.0')).toBe('Unarchive')
     })
   })
@@ -472,7 +472,7 @@ describe('#grantController', () => {
   })
 
   describe('Archiving confirmation page', () => {
-    test('Should ask the user to confirm archiving a version', async () => {
+    it('asks the user to confirm archiving a version', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: '/version/archive?grant=some-grant&version=1.0.0'
@@ -491,7 +491,7 @@ describe('#grantController', () => {
       expect($('a:contains("Cancel")').attr('href')).toBe('/grant?grant=some-grant')
     })
 
-    test('Should ask the user to confirm unarchiving and preserve the archived filter', async () => {
+    it('asks the user to confirm unarchiving and preserve the archived filter', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: '/version/unarchive?grant=some-grant&version=2.0.0&archived=include'
@@ -505,7 +505,7 @@ describe('#grantController', () => {
       expect($('a:contains("Cancel")').attr('href')).toBe('/grant?grant=some-grant&archived=include')
     })
 
-    test('Should redirect to home when the confirmation query is invalid', async () => {
+    it('redirects  to home when the confirmation query is invalid', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: '/version/archive?grant=some-grant'
@@ -515,7 +515,7 @@ describe('#grantController', () => {
       expect(headers.location).toBe('/')
     })
 
-    test('Should cancel back to the version page and carry the origin when launched from it', async () => {
+    it('cancels back to the version page and carry the origin when launched from it', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: '/version/archive?grant=some-grant&version=1.0.0&origin=version'
