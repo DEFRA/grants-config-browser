@@ -10,6 +10,7 @@ import {
   takeArchivingOutcome,
   describeArchivingOutcome
 } from '../helpers/archiving.js'
+import { versionSortValue } from '../helpers/version-sort.js'
 
 const defaultArchivingError = 'The request could not be completed'
 
@@ -40,12 +41,6 @@ const buildTableHeaders = () => {
       text: 'Actions'
     }
   ]
-}
-
-// A single number that orders versions as semver (so 10.x sorts above 2.x).
-const versionSortValue = (version) => {
-  const [major, minor, patch] = version.split('.').map(Number)
-  return major * 1_000_000 + minor * 1_000 + patch
 }
 
 const buildArchiveActionForm = (version, grant, archivedIncluded, isLatestOfMajor) => {

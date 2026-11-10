@@ -84,4 +84,49 @@ describe('#homeController', () => {
     expect(versions).toEqual(['4.0.0', '3.0.0', '2.0.0'])
     expect(statusCode).toBe(statusCodes.ok)
   })
+
+  describe('Sorting by version', () => {
+    let $
+
+    beforeEach(async () => {
+      requestFromApi.mockResolvedValueOnce({
+        response: [
+          {
+            grant: 'some-grant',
+            versions: [
+              { version: '2.0.0', status: 'active', lastUpdated: '2023-01-09' },
+              { version: '10.0.0', status: 'active', lastUpdated: '2023-01-01' },
+              { version: '9.0.0', status: 'active', lastUpdated: '2023-01-05' },
+              { version: '1.0.0', status: 'active', lastUpdated: '2023-01-02' }
+            ]
+          }
+        ]
+      })
+      $ = load((await server.inject({ method: 'GET', url: '/' })).result)
+    })
+
+    test('truncates to the three highest versions, not the three most recently updated', () => {
+      const versions = $('table tbody tr')
+        .map((_, row) => $(row).find('td').eq(0).text().trim())
+        .get()
+
+      expect(versions).toEqual(['10.0.0', '9.0.0', '2.0.0'])
+    })
+
+    test('defaults to sorting by Version descending', () => {
+      const headerCells = $('table thead th')
+      expect(headerCells.eq(0).text().trim()).toBe('Version')
+      expect(headerCells.eq(0).attr('aria-sort')).toBe('descending')
+      expect(headerCells.eq(2).text().trim()).toBe('Last Updated')
+      expect(headerCells.eq(2).attr('aria-sort')).toBe('none')
+    })
+
+    test('gives each Version cell a numeric semver sort value', () => {
+      const sortValues = $('table tbody tr')
+        .map((_, row) => $(row).find('td').eq(0).attr('data-sort-value'))
+        .get()
+
+      expect(sortValues).toEqual(['10000000', '9000000', '2000000'])
+    })
+  })
 })
