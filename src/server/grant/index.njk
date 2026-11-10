@@ -2,8 +2,23 @@
 
 {% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
 {% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 
 {% block content %}
+  {% if archivingOutcome %}
+    {% if archivingOutcome.status == 'success' %}
+      {{ govukNotificationBanner({
+        type: 'success',
+        text: archivingOutcome.message
+      }) }}
+    {% else %}
+      {{ govukNotificationBanner({
+        titleText: 'Important',
+        text: archivingOutcome.message
+      }) }}
+    {% endif %}
+  {% endif %}
+
   {{ appHeading({
     text: heading
   }) }}

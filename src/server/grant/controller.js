@@ -153,6 +153,7 @@ export const grantController = {
     if (getAllVersionsSchema.validate(request.query).error) {
       return h.redirect('/')
     }
+    const outcome = await takeArchivingOutcome(request)
     //go fetch metadata from the config broker
     const archivedParam = archived ? '&archived=included' : ''
     const { response: allVersions } = await requestFromApi(
@@ -169,6 +170,7 @@ export const grantController = {
       heading: `${grant} config versions`,
       grant,
       archivedIncluded: archived === 'include',
+      archivingOutcome: outcome && describeArchivingOutcome(outcome),
       versionTableRows: allTables,
       headers: buildTableHeaders(),
       featureControlTableRows: createFeatureControlRows(featureControls),
@@ -213,8 +215,41 @@ export const confirmArchiveHandler = (request, h) => renderArchivingConfirmation
 
 export const confirmUnarchiveHandler = (request, h) => renderArchivingConfirmation(request, h, 'unarchive')
 
-const storeArchivingOutcome = (request, record) =>
-  request.server.session.set(`${request.auth.credentials.sessionId}-archiving`, record)
+const sessionIdFromCookie = (request) => request.state?.userSessionCookie?.sessionId
+
+const archivingKey = (sessionId) => `${sessionId}-archiving`
+
+const storeArchivingOutcome = (request, record) => {
+  const sessionId = sessionIdFromCookie(request)
+  if (!sessionId) {
+    return
+  }
+  return request.server.session.set(archivingKey(sessionId), record)
+}
+
+const takeArchivingOutcome = async (request) => {
+  const sessionId = sessionIdFromCookie(request)
+  if (!sessionId) {
+    return null
+  }
+  const key = archivingKey(sessionId)
+  const outcome = await request.server.session.get(key)
+  if (outcome) {
+    await request.server.session.drop(key)
+  }
+  return outcome
+}
+
+const describeArchivingOutcome = ({ status, action, version, error }) => {
+  const past = action === 'archive' ? 'archived' : 'unarchived'
+  return {
+    status,
+    message:
+      status === 'success'
+        ? `Version ${version} has been ${past}.`
+        : `Version ${version} could not be ${past}. ${error}`
+  }
+}
 
 const submitArchivingAction = async (request, h, action) => {
   const { grant, version, archived } = request.payload

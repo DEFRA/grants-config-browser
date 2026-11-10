@@ -10,6 +10,14 @@ describe('#grantController', () => {
 
   beforeAll(async () => {
     server = await createServer()
+    // The real cookie is iron-encrypted; mimic hapi decoding it onto request.state.
+    server.ext('onPreAuth', (request, h) => {
+      const sessionId = request.headers.cookie?.match(/userSessionCookie=([^;]+)/)?.[1]
+      if (sessionId) {
+        request.state.userSessionCookie = { sessionId }
+      }
+      return h.continue
+    })
     await server.initialize()
     requestFromApi.mockResolvedValue({
       response: [
@@ -349,6 +357,59 @@ describe('#grantController', () => {
     })
   })
 
+  describe('Showing the archiving outcome after the redirect', () => {
+    const credentials = { isAuthenticated: true, displayName: 'User A', roles: ['view.only'] }
+
+    const getGrant = () =>
+      server.inject({
+        method: 'GET',
+        url: '/grant?grant=some-grant',
+        auth: { strategy: 'session', credentials },
+        headers: { cookie: 'userSessionCookie=session-123' }
+      })
+
+    beforeEach(() => {
+      requestFromApi.mockResolvedValueOnce({
+        response: [{ version: '1.0.0', status: 'active', lastUpdated: '2023-01-01' }]
+      })
+      requestFromApi.mockResolvedValueOnce({ response: {} })
+    })
+
+    it('shows a success banner and clears the outcome from the session', async () => {
+      await server.session.set('session-123-archiving', { status: 'success', action: 'archive', version: '1.0.0' })
+
+      const $ = load((await getGrant()).result)
+
+      const banner = $('.govuk-notification-banner--success')
+      expect(banner).toHaveLength(1)
+      expect(banner.text()).toContain('Version 1.0.0 has been archived')
+      expect(await server.session.get('session-123-archiving')).toBeNull()
+    })
+
+    it('shows a failure banner carrying the broker error', async () => {
+      await server.session.set('session-123-archiving', {
+        status: 'failure',
+        action: 'unarchive',
+        version: '2.0.0',
+        error: 'Cannot unarchive the version'
+      })
+
+      const $ = load((await getGrant()).result)
+
+      const banner = $('.govuk-notification-banner')
+      expect(banner).toHaveLength(1)
+      expect(banner.text()).toContain('Version 2.0.0 could not be unarchived')
+      expect(banner.text()).toContain('Cannot unarchive the version')
+      expect(await server.session.get('session-123-archiving')).toBeNull()
+    })
+
+    it('shows no banner when the session holds no outcome', async () => {
+      const $ = load((await getGrant()).result)
+
+      expect($('.govuk-notification-banner')).toHaveLength(0)
+    })
+  })
+
   describe('Archiving confirmation page', () => {
     test('Should ask the user to confirm archiving a version', async () => {
       const { statusCode, result } = await server.inject({
@@ -395,10 +456,16 @@ describe('#grantController', () => {
   })
 
   describe('Archiving and unarchiving a version', () => {
-    const credentials = { isAuthenticated: true, displayName: 'User A', roles: ['view.only'], sessionId: 'session-123' }
+    const credentials = { isAuthenticated: true, displayName: 'User A', roles: ['view.only'] }
 
     const post = (url, payload) =>
-      server.inject({ method: 'POST', url, payload, auth: { strategy: 'session', credentials } })
+      server.inject({
+        method: 'POST',
+        url,
+        payload,
+        auth: { strategy: 'session', credentials },
+        headers: { cookie: 'userSessionCookie=session-123' }
+      })
 
     describe('on archiving', () => {
       let statusCode
