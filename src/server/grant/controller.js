@@ -39,7 +39,7 @@ const buildTableHeaders = () => {
 // The broker refuses to archive the latest version of a major line
 // (isLatestVersionInMajor), so the browser hides the button for it. The latest
 // of a major is its highest non-archived version.
-const latestVersionsOfEachMajor = (versions) => {
+export const latestVersionsOfEachMajor = (versions) => {
   const highestByMajor = new Map()
   for (const { version, archived } of versions) {
     if (archived) {
@@ -223,23 +223,33 @@ export const grantController = {
 const postArchivingSchema = Joi.object({
   grant: Joi.string().required(),
   version: Joi.string().required(),
-  archived: Joi.string().lowercase().valid('include').optional()
+  archived: Joi.string().lowercase().valid('include').optional(),
+  origin: Joi.string().valid('version').optional()
 })
+
+// Archiving is launched from either the grant page (one row per version) or the
+// version page itself; it returns the user to wherever they came from.
+const archivingReturnUrl = ({ grant, version, origin, archived }) => {
+  if (origin === 'version') {
+    return `/version?grant=${grant}&version=${version}`
+  }
+  const archivedParam = archived === 'include' ? '&archived=include' : ''
+  return `/grant?grant=${grant}${archivedParam}`
+}
 
 const renderArchivingConfirmation = (request, h, action) => {
   if (postArchivingSchema.validate(request.query).error) {
     return h.redirect('/')
   }
-  const { grant, version, archived } = request.query
-  const archivedIncluded = archived === 'include'
-  const archivedParam = archivedIncluded ? '&archived=include' : ''
+  const { grant, version, archived, origin } = request.query
   return h.view('grant/confirm-archiving', {
     pageTitle: `Confirm ${action}`,
     action,
     grant,
     version,
-    archivedIncluded,
-    cancelUrl: `/grant?grant=${grant}${archivedParam}`
+    archivedIncluded: archived === 'include',
+    origin,
+    cancelUrl: archivingReturnUrl({ grant, version, origin, archived })
   })
 }
 
@@ -259,7 +269,7 @@ const storeArchivingOutcome = (request, record) => {
   return request.server.session.set(archivingKey(sessionId), record)
 }
 
-const takeArchivingOutcome = async (request) => {
+export const takeArchivingOutcome = async (request) => {
   const sessionId = sessionIdFromCookie(request)
   if (!sessionId) {
     return null
@@ -272,7 +282,7 @@ const takeArchivingOutcome = async (request) => {
   return outcome
 }
 
-const describeArchivingOutcome = ({ status, action, version, error }) => {
+export const describeArchivingOutcome = ({ status, action, version, error }) => {
   const past = action === 'archive' ? 'archived' : 'unarchived'
   return {
     status,
@@ -284,7 +294,7 @@ const describeArchivingOutcome = ({ status, action, version, error }) => {
 }
 
 const submitArchivingAction = async (request, h, action) => {
-  const { grant, version, archived } = request.payload
+  const { grant, version, archived, origin } = request.payload
 
   const validation = postArchivingSchema.validate(request.payload)
   if (validation.error) {
@@ -301,8 +311,7 @@ const submitArchivingAction = async (request, h, action) => {
       : { status: 'failure', action, version, error: result?.error ?? defaultArchivingError }
   await storeArchivingOutcome(request, record)
 
-  const archivedParam = archived === 'include' ? '&archived=include' : ''
-  return h.redirect(`/grant?grant=${grant}${archivedParam}`)
+  return h.redirect(archivingReturnUrl({ grant, version, origin, archived }))
 }
 
 export const archiveVersionHandler = (request, h) => submitArchivingAction(request, h, 'archive')

@@ -1,7 +1,23 @@
 {% extends 'layouts/page.njk' %}
 {% from 'partials/tag.njk' import statusTag %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 
 {% block content %}
+  {% if archivingOutcome %}
+    {% if archivingOutcome.status == 'success' %}
+      {{ govukNotificationBanner({
+        type: 'success',
+        text: archivingOutcome.message
+      }) }}
+    {% else %}
+      {{ govukNotificationBanner({
+        titleText: 'Important',
+        text: archivingOutcome.message
+      }) }}
+    {% endif %}
+  {% endif %}
+
   {{ appHeading({
     text: heading
   }) }}
@@ -12,6 +28,28 @@
         <p></p>
         {% if versionTableRows.length %}
           <h2 class="govuk-heading-m">{{ version }} - {{ statusTag(status) }}</h2>
+
+          {% if isArchived %}
+            <form method="GET" action="/version/unarchive">
+              <input type="hidden" name="grant" value="{{ grant }}">
+              <input type="hidden" name="version" value="{{ version }}">
+              <input type="hidden" name="origin" value="version">
+              {{ govukButton({
+                text: "Unarchive",
+                classes: "govuk-button--secondary"
+              }) }}
+            </form>
+          {% elif not isLatestOfMajor %}
+            <form method="GET" action="/version/archive">
+              <input type="hidden" name="grant" value="{{ grant }}">
+              <input type="hidden" name="version" value="{{ version }}">
+              <input type="hidden" name="origin" value="version">
+              {{ govukButton({
+                text: "Archive"
+              }) }}
+            </form>
+          {% endif %}
+
           <h2 class="govuk-heading-m govuk-!-static-margin-top-2">
             Files available
           </h2>

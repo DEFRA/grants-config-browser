@@ -12,6 +12,9 @@
         {% if archivedIncluded %}
           <input type="hidden" name="archived" value="include">
         {% endif %}
+        {% if origin %}
+          <input type="hidden" name="origin" value="{{ origin }}">
+        {% endif %}
 
         <div class="govuk-button-group">
           {{ govukButton({

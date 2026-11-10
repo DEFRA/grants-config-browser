@@ -514,6 +514,18 @@ describe('#grantController', () => {
       expect(statusCode).toBe(statusCodes.moved)
       expect(headers.location).toBe('/')
     })
+
+    test('Should cancel back to the version page and carry the origin when launched from it', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: '/version/archive?grant=some-grant&version=1.0.0&origin=version'
+      })
+      const $ = load(result)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect($('form').find('input[name="origin"]').attr('value')).toBe('version')
+      expect($('a:contains("Cancel")').attr('href')).toBe('/version?grant=some-grant&version=1.0.0')
+    })
   })
 
   describe('Archiving and unarchiving a version', () => {
@@ -603,6 +615,36 @@ describe('#grantController', () => {
       it('redirects to the grant page preserving the archived filter', () => {
         expect(statusCode).toBe(statusCodes.moved)
         expect(headers.location).toBe('/grant?grant=some-grant&archived=include')
+      })
+    })
+
+    describe('on archiving from the version page', () => {
+      let statusCode
+      let headers
+
+      beforeEach(async () => {
+        requestFromApi.mockResolvedValueOnce({ status: statusCodes.ok })
+
+        const response = await post('/version/archive', {
+          grant: 'some-grant',
+          version: '1.0.0',
+          origin: 'version'
+        })
+        statusCode = response.statusCode
+        headers = response.headers
+      })
+
+      it('stores the result on the session', async () => {
+        expect(await server.session.get('session-123-archiving')).toEqual({
+          status: 'success',
+          action: 'archive',
+          version: '1.0.0'
+        })
+      })
+
+      it('redirects back to the version page', () => {
+        expect(statusCode).toBe(statusCodes.moved)
+        expect(headers.location).toBe('/version?grant=some-grant&version=1.0.0')
       })
     })
 
