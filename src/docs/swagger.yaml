@@ -51,6 +51,13 @@ paths:
             type: integer
             minimum: 0
           description: Constraint for the minor version.
+        - name: archived
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [included]
+          description: Include archived versions.
       responses:
         '200':
           description: Successfully retrieved the latest version.
@@ -171,6 +178,13 @@ paths:
             type: integer
             minimum: 0
           description: Constraint for the minor version.
+        - name: archived
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [included]
+          description: Include archived versions.
       responses:
         '200':
           description: Successfully retrieved all versions.
@@ -204,6 +218,13 @@ paths:
             type: string
             enum: [include, only]
           description: Filter for draft versions.
+        - name: archived
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [included]
+          description: Include archived versions.
       responses:
         '200':
           description: Successfully retrieved all grants versions.
@@ -275,6 +296,86 @@ paths:
                   description: Details of the version history entry.
         '400':
           description: Bad Request - Validation error.
+        '401':
+          description: Unauthorized - Invalid or missing authentication credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found - Grant or version not found.
+  /api/version/archive:
+    post:
+      summary: Archive a specific version of config for a given grant
+      description: Marks a specific configuration version as archived. The latest version of a major cannot be archived.
+      security:
+        - bearerAuth: []
+          apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/cdpRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostArchiveVersionRequest'
+      responses:
+        '200':
+          description: The version has been archived (or was already archived).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: archived
+        '400':
+          description: Bad Request - Validation error, or the version is the latest of its major and cannot be archived.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - Invalid or missing authentication credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found - Grant or version not found.
+  /api/version/unarchive:
+    post:
+      summary: Unarchive a specific version of config for a given grant
+      description: Clears the archived flag on a specific configuration version.
+      security:
+        - bearerAuth: []
+          apiKey: []
+      parameters:
+        - $ref: '#/components/parameters/cdpRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostArchiveVersionRequest'
+      responses:
+        '200':
+          description: The version has been unarchived (or was already unarchived).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    example: unarchived
+        '400':
+          description: Bad Request - Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Unauthorized - Invalid or missing authentication credentials.
           content:
@@ -422,8 +523,8 @@ paths:
       summary: Update a feature control status
       description: Updates the current status of a feature control for the current environment.
       security:
-        - bearerAuth: [ ]
-          apiKey: [ ]
+        - bearerAuth: []
+          apiKey: []
       parameters:
         - $ref: '#/components/parameters/cdpRequestId'
       requestBody:
@@ -501,7 +602,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [active, expired, withdrawn]
+            enum: [active, withdrawn, expired, removed]
           description: Exact status match.
       responses:
         '200':
@@ -537,7 +638,7 @@ components:
           properties:
             status:
               type: string
-              enum: [active, expired, withdrawn]
+              enum: [active, withdrawn, expired, removed]
             displayName:
               type: string
             description:
@@ -588,6 +689,10 @@ components:
           format: date-time
         note:
           type: string
+        changeToValue:
+          type: string
+        notificationEmitted:
+          type: boolean
     FeatureControlsResponse:
       type: object
       properties:
@@ -688,7 +793,7 @@ components:
           type: string
         status:
           type: string
-          enum: [ active, expired, withdrawn ]
+          enum: [active, withdrawn, expired, removed]
         user:
           type: string
         note:
@@ -720,6 +825,33 @@ components:
         user:
           type: string
           description: The user performing the release.
+    PostArchiveVersionRequest:
+      type: object
+      required:
+        - grant
+        - user
+      properties:
+        grant:
+          type: string
+          description: The name of the grant.
+        version:
+          type: string
+          description: Full version string (e.g., "1.2.3"). If not provided, major, minor, and patch are required.
+        major:
+          type: integer
+          minimum: 0
+          description: Major version component. Required if version is not provided.
+        minor:
+          type: integer
+          minimum: 0
+          description: Minor version component. Required if version is not provided.
+        patch:
+          type: integer
+          minimum: 0
+          description: Patch version component. Required if version is not provided.
+        user:
+          type: string
+          description: The user performing the operation.
     VersionResponse:
       type: object
       properties:
@@ -742,6 +874,9 @@ components:
           type: string
           format: date-time
           description: The timestamp of the last update.
+        archived:
+          type: boolean
+          description: Whether the version has been archived. Present and true for archived versions; otherwise absent.
     ErrorResponse:
       type: object
       properties:
