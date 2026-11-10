@@ -113,14 +113,72 @@ describe('requestFromApi', () => {
     expect(result).toBeNull()
   })
 
-  it('should log an error and return undefined if fetch throws', async () => {
-    const error = new Error('Network failure')
-    global.fetch.mockRejectedValueOnce(error)
+  describe('when returnError is true', () => {
+    describe('when the response is not ok with message', () => {
+      let result
+      beforeEach(async () => {
+        const mockResponseData = { error: 'Cannot archive the latest version' }
+        global.fetch.mockResolvedValueOnce({
+          ok: false,
+          status: 400,
+          text: async () => JSON.stringify(mockResponseData)
+        })
 
-    const result = await requestFromApi(mockEndpoint, mockRequest)
+        result = await requestFromApi(mockEndpoint, mockRequest, {}, 'POST', null, true)
+      })
 
-    expect(mockRequest.logger.error).toHaveBeenCalledWith(error, 'Error fetching data from API:')
-    expect(result).toBeNull()
+      it('logs the error', () => {
+        const error = new Error('API request to https://api.example.com/api/test-endpoint failed with status 400')
+        expect(mockRequest.logger.error).toHaveBeenCalledWith(error, 'Error fetching data from API:')
+      })
+
+      it('returns the status code', () => {
+        expect(result.status).toBe(400)
+      })
+
+      it('returns the url', () => {
+        expect(result.href).toBe('https://api.example.com/api/test-endpoint')
+      })
+
+      it('returns the error message', () => {
+        expect(result.error).toEqual('Cannot archive the latest version')
+      })
+    })
+
+    describe('when the response is not ok with no message', () => {
+      let result
+      beforeEach(async () => {
+        global.fetch.mockResolvedValueOnce({
+          ok: false,
+          status: 403,
+          text: async () => ''
+        })
+
+        result = await requestFromApi(mockEndpoint, mockRequest, {}, 'POST', null, true)
+      })
+
+      it('returns the status code', () => {
+        expect(result.status).toBe(403)
+      })
+
+      it('returns the url', () => {
+        expect(result.href).toBe('https://api.example.com/api/test-endpoint')
+      })
+
+      it('returns no message', () => {
+        expect(result.error).toBeUndefined()
+      })
+    })
+
+    it('should log an error and return undefined if fetch throws', async () => {
+      const error = new Error('Network failure')
+      global.fetch.mockRejectedValueOnce(error)
+
+      const result = await requestFromApi(mockEndpoint, mockRequest)
+
+      expect(mockRequest.logger.error).toHaveBeenCalledWith(error, 'Error fetching data from API:')
+      expect(result).toBeNull()
+    })
   })
 
   it('should handle other methods like PUT', async () => {
