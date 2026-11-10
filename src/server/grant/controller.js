@@ -12,7 +12,7 @@ const buildTableHeaders = () => {
     {
       text: 'Version',
       attributes: {
-        'aria-sort': 'none'
+        'aria-sort': 'descending'
       },
       classes: 'col-25'
     },
@@ -26,7 +26,7 @@ const buildTableHeaders = () => {
     {
       text: 'Last Updated',
       attributes: {
-        'aria-sort': 'descending'
+        'aria-sort': 'none'
       },
       classes: 'col-19'
     },
@@ -36,25 +36,57 @@ const buildTableHeaders = () => {
   ]
 }
 
-const buildArchiveActionForm = (version, grant, archivedIncluded) => {
+// The broker refuses to archive the latest version of a major line
+// (isLatestVersionInMajor), so the browser hides the button for it. The latest
+// of a major is its highest non-archived version.
+const latestVersionsOfEachMajor = (versions) => {
+  const highestByMajor = new Map()
+  for (const { version, archived } of versions) {
+    if (archived) {
+      continue
+    }
+    const [major, minor, patch] = version.split('.').map(Number)
+    const current = highestByMajor.get(major)
+    if (!current || minor > current.minor || (minor === current.minor && patch > current.patch)) {
+      highestByMajor.set(major, { version, minor, patch })
+    }
+  }
+  return new Set([...highestByMajor.values()].map((entry) => entry.version))
+}
+
+// A single number that orders versions as semver (so 10.x sorts above 2.x).
+const versionSortValue = (version) => {
+  const [major, minor, patch] = version.split('.').map(Number)
+  return major * 1_000_000 + minor * 1_000 + patch
+}
+
+const buildArchiveActionForm = (version, grant, archivedIncluded, isLatestOfMajor) => {
   const hiddenArchived = archivedIncluded ? '<input type="hidden" name="archived" value="include">' : ''
   const hiddenInputs =
     `<input type="hidden" name="grant" value="${grant}">` +
     `<input type="hidden" name="version" value="${version.version}">` +
     hiddenArchived
-  return version.archived
-    ? `<form method="GET" action="/version/unarchive">${hiddenInputs}<button class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0" data-module="govuk-button">Unarchive</button></form>`
-    : `<form method="GET" action="/version/archive">${hiddenInputs}<button class="govuk-button govuk-!-margin-bottom-0" data-module="govuk-button">Archive</button></form>`
+  if (version.archived) {
+    return `<form method="GET" action="/version/unarchive">${hiddenInputs}<button class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0" data-module="govuk-button">Unarchive</button></form>`
+  }
+  if (isLatestOfMajor) {
+    return ''
+  }
+  return `<form method="GET" action="/version/archive">${hiddenInputs}<button class="govuk-button govuk-!-margin-bottom-0" data-module="govuk-button">Archive</button></form>`
 }
 
 const createRowsForTable = (versions, grant, archivedIncluded) => {
   const env = nunjucks.configure(['src/server/common/templates/partials', 'node_modules/govuk-frontend/dist'])
+  const latestOfMajor = latestVersionsOfEachMajor(versions)
   return versions.map((version) => {
     const centringClass = 'vertical-middle'
     return [
       {
         html: `<a href="/version?grant=${grant}&version=${version.version}">${version.version}</a>`,
-        classes: centringClass
+        classes: centringClass,
+        attributes: {
+          'data-sort-value': versionSortValue(version.version)
+        }
       },
       {
         html: env.render('tag.njk', { status: version.status }),
@@ -68,7 +100,7 @@ const createRowsForTable = (versions, grant, archivedIncluded) => {
         }
       },
       {
-        html: buildArchiveActionForm(version, grant, archivedIncluded),
+        html: buildArchiveActionForm(version, grant, archivedIncluded, latestOfMajor.has(version.version)),
         classes: centringClass
       }
     ]

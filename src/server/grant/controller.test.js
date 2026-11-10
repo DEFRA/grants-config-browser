@@ -102,6 +102,24 @@ describe('#grantController', () => {
       expect(versionRows).toEqual(['2.0.0 Active 02/01/2023', '1.0.0 Draft 01/01/2023'])
     })
 
+    test('Should default to sorting by Version descending', () => {
+      const headerCells = $('table').eq(0).find('thead th')
+      expect(headerCells.eq(0).text().trim()).toBe('Version')
+      expect(headerCells.eq(0).attr('aria-sort')).toBe('descending')
+      expect(headerCells.eq(2).text().trim()).toBe('Last Updated')
+      expect(headerCells.eq(2).attr('aria-sort')).toBe('none')
+    })
+
+    test('Should give each Version cell a numeric semver sort value', () => {
+      const versionCells = $('table')
+        .eq(0)
+        .find('tbody tr')
+        .map((_, row) => $(row).find('td').eq(0).attr('data-sort-value'))
+        .get()
+
+      expect(versionCells).toEqual(['2000000', '1000000'])
+    })
+
     test('Should render the related feature controls table', () => {
       expect($('h2:contains("Related feature controls")').length).toBe(1)
 
@@ -313,7 +331,8 @@ describe('#grantController', () => {
     beforeAll(async () => {
       requestFromApi.mockResolvedValueOnce({
         response: [
-          { version: '2.0.0', status: 'active', lastUpdated: '2023-01-02', archived: true },
+          { version: '2.0.0', status: 'active', lastUpdated: '2023-01-03', archived: true },
+          { version: '1.1.0', status: 'active', lastUpdated: '2023-01-02' },
           { version: '1.0.0', status: 'draft', lastUpdated: '2023-01-01' }
         ]
       })
@@ -333,14 +352,14 @@ describe('#grantController', () => {
       expect(rowButtonText(0)).toBe('Unarchive')
     })
 
-    test('Should show an Archive button for a non-archived version', () => {
-      expect(rowButtonText(1)).toBe('Archive')
+    test('Should show an Archive button for a non-latest non-archived version', () => {
+      expect(rowButtonText(2)).toBe('Archive')
     })
 
     const rowForm = (index) => $('table').eq(0).find('tbody tr').eq(index).find('form')
 
     test('Should link the Archive button to the archive confirmation page', () => {
-      const form = rowForm(1)
+      const form = rowForm(2)
 
       expect(form.attr('method')).toMatch(/get/i)
       expect(form.attr('action')).toBe('/version/archive')
@@ -354,6 +373,48 @@ describe('#grantController', () => {
       expect(form.attr('method')).toMatch(/get/i)
       expect(form.attr('action')).toBe('/version/unarchive')
       expect(form.find('input[name="version"]').attr('value')).toBe('2.0.0')
+    })
+  })
+
+  describe('Hiding the Archive button for the latest of a major line', () => {
+    let $
+
+    beforeAll(async () => {
+      requestFromApi.mockResolvedValueOnce({
+        response: [
+          { version: '2.0.0', status: 'active', lastUpdated: '2023-01-05' },
+          { version: '1.2.0', status: 'active', lastUpdated: '2023-01-04', archived: true },
+          { version: '1.1.0', status: 'active', lastUpdated: '2023-01-03' },
+          { version: '1.0.0', status: 'active', lastUpdated: '2023-01-02' }
+        ]
+      })
+      requestFromApi.mockResolvedValueOnce({ response: {} })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/grant?grant=some-grant&archived=include'
+      })
+
+      $ = load(result)
+    })
+
+    const rowButton = (version) =>
+      $(`a[href="/version?grant=some-grant&version=${version}"]`).closest('tr').find('button').text().trim()
+
+    test('hides the Archive button on the highest non-archived version of a major', () => {
+      expect(rowButton('2.0.0')).toBe('')
+    })
+
+    test('still offers Archive on lower versions of a major', () => {
+      expect(rowButton('1.0.0')).toBe('Archive')
+    })
+
+    test('treats the highest non-archived version as the latest when a higher one is archived', () => {
+      expect(rowButton('1.1.0')).toBe('')
+    })
+
+    test('still offers Unarchive on an archived version', () => {
+      expect(rowButton('1.2.0')).toBe('Unarchive')
     })
   })
 
