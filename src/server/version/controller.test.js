@@ -44,7 +44,7 @@ describe('#versionController', () => {
     requestFromApi.mockReset()
   })
 
-  test('Should redirect to home page if invalid query parameters supplied', async () => {
+  it('redirects to home page if invalid query parameters supplied', async () => {
     const {
       headers: { location },
       statusCode
@@ -57,7 +57,7 @@ describe('#versionController', () => {
     expect(location).toBe('/')
   })
 
-  test('Should render page with expected elements', async () => {
+  it('renders page with expected elements', async () => {
     mockVersion()
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -126,7 +126,7 @@ describe('#versionController', () => {
     const archiveForm = ($) => $('form[action="/version/archive"]')
     const unarchiveForm = ($) => $('form[action="/version/unarchive"]')
 
-    test('Should offer Archive for a non-archived version that is not the latest of its major', async () => {
+    it('offers Archive for a non-archived version that is not the latest of its major', async () => {
       mockVersion({ ...versionDetail, version: '1.0.0', archived: false }, [
         { version: '1.1.0', status: 'active' },
         { version: '1.0.0', status: 'active' }
@@ -144,7 +144,7 @@ describe('#versionController', () => {
       expect(form.find('input[name="origin"]').attr('value')).toBe('version')
     })
 
-    test('Should offer Unarchive for an archived version', async () => {
+    it('offers Unarchive for an archived version', async () => {
       mockVersion({ ...versionDetail, version: '1.0.0', archived: true }, [{ version: '1.1.0', status: 'active' }])
 
       const { result } = await server.inject({ method: 'GET', url: '/version?grant=some-grant&version=1.0.0' })
@@ -157,7 +157,7 @@ describe('#versionController', () => {
       expect(form.find('input[name="origin"]').attr('value')).toBe('version')
     })
 
-    test('Should hide the Archive button for the latest version of a major', async () => {
+    it('hides the Archive button for the latest version of a major', async () => {
       mockVersion({ ...versionDetail, version: '2.0.0', archived: false }, [
         { version: '2.0.0', status: 'active' },
         { version: '1.0.0', status: 'active' }
