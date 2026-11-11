@@ -45,10 +45,7 @@ const buildTableHeaders = () => {
 
 const buildArchiveActionForm = (version, grant, archivedIncluded, isLatestOfMajor) => {
   const hiddenArchived = archivedIncluded ? '<input type="hidden" name="archived" value="include">' : ''
-  const hiddenInputs =
-    `<input type="hidden" name="grant" value="${grant}">` +
-    `<input type="hidden" name="version" value="${version.version}">` +
-    hiddenArchived
+  const hiddenInputs = `<input type="hidden" name="grant" value="${grant}"><input type="hidden" name="version" value="${version.version}">${hiddenArchived}`
   if (version.archived) {
     return `<form method="GET" action="/version/unarchive">${hiddenInputs}<button class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 app-archive-button" data-module="govuk-button">Unarchive</button></form>`
   }
