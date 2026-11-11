@@ -374,6 +374,13 @@ describe('#grantController', () => {
       expect(form.attr('action')).toBe('/version/unarchive')
       expect(form.find('input[name="version"]').attr('value')).toBe('2.0.0')
     })
+
+    const rowButtonClass = (index) => $('table').eq(0).find('tbody tr').eq(index).find('button').attr('class')
+
+    it('gives  the Archive and Unarchive buttons a shared fixed width', () => {
+      expect(rowButtonClass(0)).toContain('app-archive-button') // Unarchive
+      expect(rowButtonClass(2)).toContain('app-archive-button') // Archive
+    })
   })
 
   describe('Hiding the Archive button for the latest of a major line', () => {

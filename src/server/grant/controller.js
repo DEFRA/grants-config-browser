@@ -50,12 +50,12 @@ const buildArchiveActionForm = (version, grant, archivedIncluded, isLatestOfMajo
     `<input type="hidden" name="version" value="${version.version}">` +
     hiddenArchived
   if (version.archived) {
-    return `<form method="GET" action="/version/unarchive">${hiddenInputs}<button class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0" data-module="govuk-button">Unarchive</button></form>`
+    return `<form method="GET" action="/version/unarchive">${hiddenInputs}<button class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 app-archive-button" data-module="govuk-button">Unarchive</button></form>`
   }
   if (isLatestOfMajor) {
     return ''
   }
-  return `<form method="GET" action="/version/archive">${hiddenInputs}<button class="govuk-button govuk-!-margin-bottom-0" data-module="govuk-button">Archive</button></form>`
+  return `<form method="GET" action="/version/archive">${hiddenInputs}<button class="govuk-button govuk-!-margin-bottom-0 app-archive-button" data-module="govuk-button">Archive</button></form>`
 }
 
 const createRowsForTable = (versions, grant, archivedIncluded) => {
