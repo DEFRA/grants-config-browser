@@ -480,7 +480,7 @@ describe('#grantController', () => {
       const $ = load(result)
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect($('h1').text()).toContain('Are you sure you want to archive version 1.0.0 of grant some-grant')
+      expect($('h1').text()).toContain('Archive version?')
 
       const form = $('form')
       expect(form.attr('method')).toMatch(/post/i)
@@ -499,7 +499,7 @@ describe('#grantController', () => {
       const $ = load(result)
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect($('h1').text()).toContain('Are you sure you want to unarchive version 2.0.0 of grant some-grant')
+      expect($('h1').text()).toContain('Unarchive version?')
       expect($('form').attr('action')).toBe('/version/unarchive')
       expect($('form').find('input[name="archived"]').attr('value')).toBe('include')
       expect($('a:contains("Cancel")').attr('href')).toBe('/grant?grant=some-grant&archived=include')

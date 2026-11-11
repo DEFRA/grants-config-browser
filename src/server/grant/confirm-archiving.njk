@@ -4,8 +4,9 @@
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      <h1 class="govuk-heading-l">Are you sure you want to {{ action }} version {{ version }} of grant {{ grant }}?</h1>
+      <h1 class="govuk-heading-l">{{ action | capitalize }} version?</h1>
 
+      <p class="govuk-body">Are you sure you want to {{ action }} version {{ version }} of grant {{ grant }}?</p>
       <form method="POST" action="/version/{{ action }}">
         <input type="hidden" name="grant" value="{{ grant }}">
         <input type="hidden" name="version" value="{{ version }}">
