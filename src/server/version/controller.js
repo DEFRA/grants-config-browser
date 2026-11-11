@@ -1,5 +1,6 @@
 import { requestFromApi } from '../helpers/request-from-api.js'
 import Joi from 'joi'
+import { takeArchivingOutcome, describeArchivingOutcome, latestVersionsOfEachMajor } from '../helpers/archiving.js'
 
 const buildTableHeaders = () => {
   return [
@@ -61,14 +62,23 @@ export const versionController = {
     if (getVersionSchema.validate(request.query).error) {
       return h.redirect('/')
     }
+    const outcome = await takeArchivingOutcome(request)
     //go fetch metadata from the config broker
     const { response: thisVersion } = await requestFromApi(`version?grant=${grant}&version=${version}`, request)
+    // The broker refuses to archive the latest version of a major, so hide the
+    // button for it just as the grant page does.
+    const { response: allVersions } = (await requestFromApi(`allVersions?grant=${grant}&draft=include`, request)) ?? {}
+    const isLatestOfMajor = latestVersionsOfEachMajor(allVersions ?? []).has(version)
     const allFiles = createRowsForTable(thisVersion.path, thisVersion.manifest, grant, version)
     return h.view('version/index', {
       pageTitle: `${grant} - ${version}`,
       heading: grant,
+      grant,
       status: thisVersion.status,
       version,
+      isArchived: thisVersion.archived === true,
+      isLatestOfMajor,
+      archivingOutcome: outcome && describeArchivingOutcome(outcome),
       versionTableRows: allFiles,
       headers: buildTableHeaders(),
       breadcrumbs: [

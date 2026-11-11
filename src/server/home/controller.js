@@ -1,5 +1,6 @@
 import { requestFromApi } from '../helpers/request-from-api.js'
 import { formatDateTime } from '../helpers/date-display.js'
+import { versionSortValue } from '../helpers/version-sort.js'
 import nunjucks from 'nunjucks'
 
 const MAX_ROWS = 3
@@ -9,7 +10,7 @@ const buildTableHeaders = () => {
     {
       text: 'Version',
       attributes: {
-        'aria-sort': 'none'
+        'aria-sort': 'descending'
       },
       classes: 'col-25'
     },
@@ -23,21 +24,26 @@ const buildTableHeaders = () => {
     {
       text: 'Last Updated',
       attributes: {
-        'aria-sort': 'descending'
+        'aria-sort': 'none'
       },
       classes: 'col-19'
     }
   ]
 }
 
+const byVersionDescending = (a, b) => versionSortValue(b.version) - versionSortValue(a.version)
+
 const createRowsForTable = (versions, grantName) => {
   const env = nunjucks.configure(['src/server/common/templates/partials', 'node_modules/govuk-frontend/dist'])
-  const rows = versions.map((version) => {
+  const rows = [...versions].sort(byVersionDescending).map((version) => {
     const centringClass = 'vertical-middle'
     return [
       {
         html: `<a href="/version?grant=${grantName}&version=${version.version}">${version.version}</a>`,
-        classes: centringClass
+        classes: centringClass,
+        attributes: {
+          'data-sort-value': versionSortValue(version.version)
+        }
       },
       {
         html: env.render('tag.njk', { status: version.status }),

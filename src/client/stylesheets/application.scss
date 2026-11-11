@@ -21,6 +21,17 @@
   text-decoration: line-through;
 }
 
+.vertical-middle {
+  vertical-align: middle;
+}
+
+// Keep the Archive and Unarchive buttons the same width so the actions column
+// reads evenly across version rows. The floor must clear the wider "Unarchive"
+// (~110px: 86px of text + 24px padding/border) so both buttons hit it.
+.app-archive-button {
+  min-width: 7.5rem;
+}
+
 .tippy-box[data-theme~="white-bg"] {
   background-color: #ffffff;
   color: #333333;
