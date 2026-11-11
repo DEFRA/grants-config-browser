@@ -28,7 +28,7 @@ const archivingKey = (sessionId) => `${sessionId}-archiving`
 export const storeArchivingOutcome = (request, record) => {
   const sessionId = sessionIdFromCookie(request)
   if (!sessionId) {
-    return
+    return null
   }
   return request.server.session.set(archivingKey(sessionId), record)
 }
