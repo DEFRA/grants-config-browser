@@ -123,8 +123,17 @@ describe('#versionController', () => {
   })
 
   describe('Archive and unarchive button', () => {
+    const credentials = { isAuthenticated: true, displayName: 'User A', roles: ['view.only'] }
     const archiveForm = ($) => $('form[action="/version/archive"]')
     const unarchiveForm = ($) => $('form[action="/version/unarchive"]')
+
+    const getVersion = (url) =>
+      server.inject({
+        method: 'GET',
+        url,
+        auth: { strategy: 'session', credentials },
+        headers: { cookie: 'userSessionCookie=session-123' }
+      })
 
     it('offers Archive for a non-archived version that is not the latest of its major', async () => {
       mockVersion({ ...versionDetail, version: '1.0.0', archived: false }, [
@@ -132,7 +141,7 @@ describe('#versionController', () => {
         { version: '1.0.0', status: 'active' }
       ])
 
-      const { result } = await server.inject({ method: 'GET', url: '/version?grant=some-grant&version=1.0.0' })
+      const { result } = await getVersion('/version?grant=some-grant&version=1.0.0')
       const $ = load(result)
       const form = archiveForm($)
 
@@ -147,7 +156,7 @@ describe('#versionController', () => {
     it('offers Unarchive for an archived version', async () => {
       mockVersion({ ...versionDetail, version: '1.0.0', archived: true }, [{ version: '1.1.0', status: 'active' }])
 
-      const { result } = await server.inject({ method: 'GET', url: '/version?grant=some-grant&version=1.0.0' })
+      const { result } = await getVersion('/version?grant=some-grant&version=1.0.0')
       const $ = load(result)
       const form = unarchiveForm($)
 
@@ -163,10 +172,31 @@ describe('#versionController', () => {
         { version: '1.0.0', status: 'active' }
       ])
 
-      const { result } = await server.inject({ method: 'GET', url: '/version?grant=some-grant&version=2.0.0' })
+      const { result } = await getVersion('/version?grant=some-grant&version=2.0.0')
       const $ = load(result)
 
       expect(archiveForm($)).toHaveLength(0)
+      expect(unarchiveForm($)).toHaveLength(0)
+    })
+
+    it('hides the Archive button when the user is not authenticated', async () => {
+      mockVersion({ ...versionDetail, version: '1.0.0', archived: false }, [
+        { version: '1.1.0', status: 'active' },
+        { version: '1.0.0', status: 'active' }
+      ])
+
+      const { result } = await server.inject({ method: 'GET', url: '/version?grant=some-grant&version=1.0.0' })
+      const $ = load(result)
+
+      expect(archiveForm($)).toHaveLength(0)
+    })
+
+    it('hides the Unarchive button when the user is not authenticated', async () => {
+      mockVersion({ ...versionDetail, version: '1.0.0', archived: true }, [{ version: '1.1.0', status: 'active' }])
+
+      const { result } = await server.inject({ method: 'GET', url: '/version?grant=some-grant&version=1.0.0' })
+      const $ = load(result)
+
       expect(unarchiveForm($)).toHaveLength(0)
     })
   })

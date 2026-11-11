@@ -325,6 +325,16 @@ describe('#grantController', () => {
     })
   })
 
+  const credentials = { isAuthenticated: true, displayName: 'User A', roles: ['view.only'] }
+
+  const getGrantAuthenticated = (url) =>
+    server.inject({
+      method: 'GET',
+      url,
+      auth: { strategy: 'session', credentials },
+      headers: { cookie: 'userSessionCookie=session-123' }
+    })
+
   describe('Archive and unarchive version buttons', () => {
     let $
 
@@ -338,10 +348,7 @@ describe('#grantController', () => {
       })
       requestFromApi.mockResolvedValueOnce({ response: {} })
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: '/grant?grant=some-grant&archived=include'
-      })
+      const { result } = await getGrantAuthenticated('/grant?grant=some-grant&archived=include')
 
       $ = load(result)
     })
@@ -397,10 +404,7 @@ describe('#grantController', () => {
       })
       requestFromApi.mockResolvedValueOnce({ response: {} })
 
-      const { result } = await server.inject({
-        method: 'GET',
-        url: '/grant?grant=some-grant&archived=include'
-      })
+      const { result } = await getGrantAuthenticated('/grant?grant=some-grant&archived=include')
 
       $ = load(result)
     })
@@ -422,6 +426,32 @@ describe('#grantController', () => {
 
     it('still offers Unarchive on an archived version', () => {
       expect(rowButton('1.2.0')).toBe('Unarchive')
+    })
+  })
+
+  describe('Hiding the Archive and Unarchive buttons when not authenticated', () => {
+    let $
+
+    beforeAll(async () => {
+      requestFromApi.mockResolvedValueOnce({
+        response: [
+          { version: '2.0.0', status: 'active', lastUpdated: '2023-01-03', archived: true },
+          { version: '1.1.0', status: 'active', lastUpdated: '2023-01-02' },
+          { version: '1.0.0', status: 'draft', lastUpdated: '2023-01-01' }
+        ]
+      })
+      requestFromApi.mockResolvedValueOnce({ response: {} })
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/grant?grant=some-grant&archived=include'
+      })
+
+      $ = load(result)
+    })
+
+    it('shows no archive or unarchive buttons', () => {
+      expect($('table').eq(0).find('button')).toHaveLength(0)
     })
   })
 

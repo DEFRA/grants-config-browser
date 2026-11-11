@@ -43,7 +43,10 @@ const buildTableHeaders = () => {
   ]
 }
 
-const buildArchiveActionForm = (version, grant, archivedIncluded, isLatestOfMajor) => {
+const buildArchiveActionForm = (version, grant, archivedIncluded, isLatestOfMajor, isAuthenticated) => {
+  if (!isAuthenticated) {
+    return ''
+  }
   const hiddenArchived = archivedIncluded ? '<input type="hidden" name="archived" value="include">' : ''
   const hiddenInputs = `<input type="hidden" name="grant" value="${grant}"><input type="hidden" name="version" value="${version.version}">${hiddenArchived}`
   if (version.archived) {
@@ -55,7 +58,7 @@ const buildArchiveActionForm = (version, grant, archivedIncluded, isLatestOfMajo
   return `<form method="GET" action="/version/archive">${hiddenInputs}<button class="govuk-button govuk-!-margin-bottom-0 app-archive-button" data-module="govuk-button">Archive</button></form>`
 }
 
-const createRowsForTable = (versions, grant, archivedIncluded) => {
+const createRowsForTable = (versions, grant, archivedIncluded, isAuthenticated) => {
   const env = nunjucks.configure(['src/server/common/templates/partials', 'node_modules/govuk-frontend/dist'])
   const latestOfMajor = latestVersionsOfEachMajor(versions)
   return versions.map((version) => {
@@ -80,7 +83,13 @@ const createRowsForTable = (versions, grant, archivedIncluded) => {
         }
       },
       {
-        html: buildArchiveActionForm(version, grant, archivedIncluded, latestOfMajor.has(version.version)),
+        html: buildArchiveActionForm(
+          version,
+          grant,
+          archivedIncluded,
+          latestOfMajor.has(version.version),
+          isAuthenticated
+        ),
         classes: centringClass
       }
     ]
@@ -176,7 +185,8 @@ export const grantController = {
     const { response: featureControlsResponse } = await requestFromApi(`feature-controls?scope=grant.${grant}`, request)
     const featureControls = featureControlsResponse?.items || []
 
-    const allTables = createRowsForTable(allVersions, grant, archived === 'include')
+    const isAuthenticated = request.auth.credentials?.isAuthenticated ?? false
+    const allTables = createRowsForTable(allVersions, grant, archived === 'include', isAuthenticated)
     return h.view('grant/index', {
       pageTitle: `All versions of ${grant}`,
       heading: `${grant} config versions`,

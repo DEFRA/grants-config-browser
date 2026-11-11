@@ -29,25 +29,27 @@
         {% if versionTableRows.length %}
           <h2 class="govuk-heading-m">{{ version }} - {{ statusTag(status) }}</h2>
 
-          {% if isArchived %}
-            <form method="GET" action="/version/unarchive">
-              <input type="hidden" name="grant" value="{{ grant }}">
-              <input type="hidden" name="version" value="{{ version }}">
-              <input type="hidden" name="origin" value="version">
-              {{ govukButton({
-                text: "Unarchive",
-                classes: "govuk-button--secondary"
-              }) }}
-            </form>
-          {% elif not isLatestOfMajor %}
-            <form method="GET" action="/version/archive">
-              <input type="hidden" name="grant" value="{{ grant }}">
-              <input type="hidden" name="version" value="{{ version }}">
-              <input type="hidden" name="origin" value="version">
-              {{ govukButton({
-                text: "Archive"
-              }) }}
-            </form>
+          {% if isAuthenticated %}
+            {% if isArchived %}
+              <form method="GET" action="/version/unarchive">
+                <input type="hidden" name="grant" value="{{ grant }}">
+                <input type="hidden" name="version" value="{{ version }}">
+                <input type="hidden" name="origin" value="version">
+                {{ govukButton({
+                  text: "Unarchive",
+                  classes: "govuk-button--secondary"
+                }) }}
+              </form>
+            {% elif not isLatestOfMajor %}
+              <form method="GET" action="/version/archive">
+                <input type="hidden" name="grant" value="{{ grant }}">
+                <input type="hidden" name="version" value="{{ version }}">
+                <input type="hidden" name="origin" value="version">
+                {{ govukButton({
+                  text: "Archive"
+                }) }}
+              </form>
+            {% endif %}
           {% endif %}
 
           <h2 class="govuk-heading-m govuk-!-static-margin-top-2">
