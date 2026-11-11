@@ -265,8 +265,8 @@ describe('#grantController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    it('passs  archived=included through to the broker', () => {
-      expect(allVersionsUrl).toEqual(expect.stringContaining('archived=included'))
+    it('pass  archived=include through to the broker', () => {
+      expect(allVersionsUrl).toEqual(expect.stringContaining('archived=include'))
     })
 
     it('renders  every version regardless of archived state', () => {

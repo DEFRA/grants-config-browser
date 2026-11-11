@@ -176,7 +176,7 @@ export const grantController = {
     }
     const outcome = await takeArchivingOutcome(request)
     //go fetch metadata from the config broker
-    const archivedParam = archived ? '&archived=included' : ''
+    const archivedParam = archived ? '&archived=include' : ''
     const { response: allVersions } = await requestFromApi(
       `allVersions?grant=${grant}&draft=include${archivedParam}`,
       request
