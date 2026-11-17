@@ -170,6 +170,31 @@ describe('requestFromApi', () => {
       })
     })
 
+    describe('when the response is not ok with a non-JSON body', () => {
+      let result
+      beforeEach(async () => {
+        global.fetch.mockResolvedValueOnce({
+          ok: false,
+          status: 502,
+          text: async () => '502 Bad Gateway'
+        })
+
+        result = await requestFromApi(mockEndpoint, mockRequest, {}, 'POST', null, true)
+      })
+
+      it('returns the status code', () => {
+        expect(result.status).toBe(502)
+      })
+
+      it('returns the url', () => {
+        expect(result.href).toBe('https://api.example.com/api/test-endpoint')
+      })
+
+      it('returns the plain-text body as the error message', () => {
+        expect(result.error).toBe('502 Bad Gateway')
+      })
+    })
+
     it('should log an error and return undefined if fetch throws', async () => {
       const error = new Error('Network failure')
       global.fetch.mockRejectedValueOnce(error)

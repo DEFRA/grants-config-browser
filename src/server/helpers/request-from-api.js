@@ -1,6 +1,14 @@
 import { config } from '../../config/config.js'
 import { createApiHeadersForConfigBroker } from './broker-auth-helper.js'
 
+function extractErrorMessage(errorText) {
+  try {
+    return JSON.parse(errorText).error
+  } catch {
+    return errorText
+  }
+}
+
 export async function requestFromApi(
   endpoint,
   request,
@@ -33,11 +41,10 @@ export async function requestFromApi(
       if (returnError) {
         request.logger.error(failure, 'Error fetching data from API:')
         const errorText = await response.text()
-        const errorBody = errorText ? JSON.parse(errorText) : null
         return {
           status: response.status,
           href: url.href,
-          error: errorBody?.error
+          error: errorText ? extractErrorMessage(errorText) : undefined
         }
       }
       throw failure
