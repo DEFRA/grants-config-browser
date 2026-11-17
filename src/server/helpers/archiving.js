@@ -1,5 +1,6 @@
 // Shared helpers for archiving and unarchiving config versions, used by both the
 // grant listing page and the single-version page.
+import { versionParts } from './version-sort.js'
 
 // The broker refuses to archive the latest version of a major line
 // (isLatestVersionInMajor), so the browser hides the button for it. The latest
@@ -10,7 +11,7 @@ export const latestVersionsOfEachMajor = (versions) => {
     if (archived) {
       continue
     }
-    const [major, minor, patch] = version.split('.').map(Number)
+    const [major, minor, patch] = versionParts(version)
     const current = highestByMajor.get(major)
     if (!current || minor > current.minor || (minor === current.minor && patch > current.patch)) {
       highestByMajor.set(major, { version, minor, patch })

@@ -77,6 +77,53 @@ describe('latestVersionsOfEachMajor', () => {
     ]
     expect(latestVersionsOfEachMajor(versions)).toEqual(new Set(['1.3.0', '2.1.0']))
   })
+
+  describe('with missing segments, which default to 0', () => {
+    it('includes a bare major version', () => {
+      expect(latestVersionsOfEachMajor([{ version: '1', archived: false }])).toEqual(new Set(['1']))
+    })
+
+    it('treats 1, 1.0 and 1.0.0 as the same version, keeping the first seen', () => {
+      const versions = [
+        { version: '1.0.0', archived: false },
+        { version: '1', archived: false },
+        { version: '1.0', archived: false }
+      ]
+      expect(latestVersionsOfEachMajor(versions)).toEqual(new Set(['1.0.0']))
+    })
+
+    it('picks the highest minor when versions use short forms', () => {
+      const versions = [
+        { version: '1.0', archived: false },
+        { version: '1.2', archived: false }
+      ]
+      expect(latestVersionsOfEachMajor(versions)).toEqual(new Set(['1.2']))
+    })
+
+    it('picks the higher patch even when the lower version omits it', () => {
+      const versions = [
+        { version: '1.0', archived: false },
+        { version: '1.0.5', archived: false }
+      ]
+      expect(latestVersionsOfEachMajor(versions)).toEqual(new Set(['1.0.5']))
+    })
+
+    it('compares short-form minors numerically', () => {
+      const versions = [
+        { version: '1.2', archived: false },
+        { version: '1.10', archived: false }
+      ]
+      expect(latestVersionsOfEachMajor(versions)).toEqual(new Set(['1.10']))
+    })
+
+    it('separates bare majors into their own lines', () => {
+      const versions = [
+        { version: '2', archived: false },
+        { version: '10', archived: false }
+      ]
+      expect(latestVersionsOfEachMajor(versions)).toEqual(new Set(['2', '10']))
+    })
+  })
 })
 
 const requestWithSession = (sessionId, session) => ({
