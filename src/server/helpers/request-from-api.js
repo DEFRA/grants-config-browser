@@ -1,7 +1,22 @@
 import { config } from '../../config/config.js'
 import { createApiHeadersForConfigBroker } from './broker-auth-helper.js'
 
-export async function requestFromApi(endpoint, request, otherHeaders = {}, method = 'GET', payload = null) {
+function extractErrorMessage(errorText) {
+  try {
+    return JSON.parse(errorText).error
+  } catch {
+    return errorText
+  }
+}
+
+export async function requestFromApi(
+  endpoint,
+  request,
+  otherHeaders = {},
+  method = 'GET',
+  payload = null,
+  returnError = false
+) {
   const GRANTS_CONFIG_BROKER_ENDPOINT = config.get('backend.apiEndpoint')
   if (!GRANTS_CONFIG_BROKER_ENDPOINT?.length) {
     return null
@@ -22,7 +37,17 @@ export async function requestFromApi(endpoint, request, otherHeaders = {}, metho
     })
 
     if (!response.ok) {
-      throw new Error(`API request to ${url.href} failed with status ${response.status}`)
+      const failure = new Error(`API request to ${url.href} failed with status ${response.status}`)
+      if (returnError) {
+        request.logger.error(failure, 'Error fetching data from API:')
+        const errorText = await response.text()
+        return {
+          status: response.status,
+          href: url.href,
+          error: errorText ? extractErrorMessage(errorText) : undefined
+        }
+      }
+      throw failure
     }
 
     const text = await response.text()

@@ -1,4 +1,10 @@
-import { grantController } from './controller.js'
+import {
+  grantController,
+  archiveVersionHandler,
+  unarchiveVersionHandler,
+  confirmArchiveHandler,
+  confirmUnarchiveHandler
+} from './controller.js'
 
 /**
  * Sets up the routes used in the home page.
@@ -18,6 +24,36 @@ export const grant = {
             }
           },
           ...grantController
+        },
+        {
+          method: 'GET',
+          path: '/version/archive',
+          options: {
+            auth: {
+              mode: 'try'
+            }
+          },
+          handler: confirmArchiveHandler
+        },
+        {
+          method: 'GET',
+          path: '/version/unarchive',
+          options: {
+            auth: {
+              mode: 'try'
+            }
+          },
+          handler: confirmUnarchiveHandler
+        },
+        {
+          method: 'POST',
+          path: '/version/archive',
+          handler: archiveVersionHandler
+        },
+        {
+          method: 'POST',
+          path: '/version/unarchive',
+          handler: unarchiveVersionHandler
         }
       ])
     }
