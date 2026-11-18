@@ -45,8 +45,8 @@ components from the Ministry of Justice (MOJ) components library.
 
 ### Node.js
 
-Please install [Node.js](http://nodejs.org/) `>= 24` and [npm](https://nodejs.org/) `>= v11.10`. You will find it
-easier to use the Node Version Manager [nvm](https://github.com/creationix/nvm)
+Please install [Node.js](http://nodejs.org/) `>= 26` and [npm](https://nodejs.org/) `>= v11.20`. You will find it
+easier to use the Node Version Manager [nvm](https://github.com/creationix/nvm), as it will have the specific versions that we are using.
 
 To use the correct version of Node.js for this application, via nvm:
 
