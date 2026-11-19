@@ -438,7 +438,7 @@ describe('#grantController', () => {
       expect(versionCell.find('.govuk-tag')).toHaveLength(0)
     })
 
-    it('still highlights the whole archived row for signed-in viewers', () => {
+    it('highlights the whole archived row for signed-in viewers', () => {
       const cellsHighlighted = $('table')
         .eq(0)
         .find('tbody tr')
