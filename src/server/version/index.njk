@@ -36,8 +36,7 @@
                 <input type="hidden" name="version" value="{{ version }}">
                 <input type="hidden" name="origin" value="version">
                 {{ govukButton({
-                  text: "Unarchive",
-                  classes: "govuk-button--secondary"
+                  text: "Unarchive"
                 }) }}
               </form>
             {% elif not isLatestOfMajor %}
@@ -46,7 +45,8 @@
                 <input type="hidden" name="version" value="{{ version }}">
                 <input type="hidden" name="origin" value="version">
                 {{ govukButton({
-                  text: "Archive"
+                  text: "Archive",
+                  classes: "govuk-button--warning"
                 }) }}
               </form>
             {% endif %}
