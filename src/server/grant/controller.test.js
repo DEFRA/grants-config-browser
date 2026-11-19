@@ -282,7 +282,24 @@ describe('#grantController', () => {
         )
         .get()
 
-      expect(versionRows).toEqual(['2.0.0 Active 02/01/2023', '1.0.0 Draft 01/01/2023'])
+      expect(versionRows).toEqual(['2.0.0ARCHIVED Active 02/01/2023', '1.0.0 Draft 01/01/2023'])
+    })
+
+    const versionCell = (index) => $('table').eq(0).find('tbody tr').eq(index).find('td').eq(0)
+
+    it('strikes through the archived version link for unsigned viewers', () => {
+      expect(versionCell(0).find('a').hasClass('strikethrough')).toBe(true)
+    })
+
+    it('shows a grey ARCHIVED label beside the archived version link for unsigned viewers', () => {
+      const tag = versionCell(0).find('.govuk-tag')
+      expect(tag.hasClass('govuk-tag--grey')).toBe(true)
+      expect(tag.text().trim()).toBe('ARCHIVED')
+    })
+
+    it('leaves the non-archived version link unstyled and unlabelled', () => {
+      expect(versionCell(1).find('a').hasClass('strikethrough')).toBe(false)
+      expect(versionCell(1).find('.govuk-tag')).toHaveLength(0)
     })
   })
 
@@ -396,6 +413,12 @@ describe('#grantController', () => {
         .map((_, th) => $(th).text().trim())
         .get()
       expect(headers).toContain('Actions')
+    })
+
+    it('does not strike through or label archived versions for signed-in viewers', () => {
+      const versionCell = $('table').eq(0).find('tbody tr').eq(0).find('td').eq(0)
+      expect(versionCell.find('a').hasClass('strikethrough')).toBe(false)
+      expect(versionCell.find('.govuk-tag')).toHaveLength(0)
     })
   })
 
