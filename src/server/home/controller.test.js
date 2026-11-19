@@ -129,4 +129,46 @@ describe('#homeController', () => {
       expect(sortValues).toEqual(['10000000', '9000000', '2000000'])
     })
   })
+
+  describe('Truncation note', () => {
+    const noteText = 'Latest 3 non-archived versions shown. Click on each grant for more'
+    const note = ($) => $('p').filter((_, el) => $(el).text().trim() === noteText)
+
+    const version = (v) => ({ version: v, status: 'active', lastUpdated: '2023-01-01' })
+
+    const render = async (response) => {
+      requestFromApi.mockResolvedValueOnce({ response })
+      return load((await server.inject({ method: 'GET', url: '/' })).result)
+    }
+
+    test('shows a single note below the title when any grant has more than three versions', async () => {
+      const $ = await render([
+        { grant: 'agrant', versions: ['4.0.0', '3.0.0', '2.0.0', '1.0.0'].map(version) },
+        { grant: 'bgrant', versions: ['2.0.0', '1.0.0'].map(version) }
+      ])
+
+      expect(note($)).toHaveLength(1)
+    })
+
+    test('shows the note only once even when several grants are truncated', async () => {
+      const $ = await render([
+        { grant: 'agrant', versions: ['4.0.0', '3.0.0', '2.0.0', '1.0.0'].map(version) },
+        { grant: 'bgrant', versions: ['4.0.0', '3.0.0', '2.0.0', '1.0.0'].map(version) }
+      ])
+
+      expect(note($)).toHaveLength(1)
+    })
+
+    test('positions the note above the first grant table', async () => {
+      const $ = await render([{ grant: 'agrant', versions: ['4.0.0', '3.0.0', '2.0.0', '1.0.0'].map(version) }])
+
+      expect(note($).nextAll('h2.govuk-heading-m')).toHaveLength(1)
+    })
+
+    test('does not show the note when no grant has more than three versions', async () => {
+      const $ = await render([{ grant: 'agrant', versions: ['3.0.0', '2.0.0', '1.0.0'].map(version) }])
+
+      expect(note($)).toHaveLength(0)
+    })
+  })
 })

@@ -82,6 +82,7 @@ export const homeController = {
       pageTitle: 'Home',
       heading: 'All grant config versions',
       versionTables: allTables ?? [],
+      showTruncationNote: allTables?.some((table) => table.isTruncated) ?? false,
       headers: buildTableHeaders()
     })
   }
