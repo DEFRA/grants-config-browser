@@ -92,7 +92,7 @@ describe('#grantController', () => {
         .find('tbody tr')
         .map((_, row) =>
           $(row)
-            .find('td:not(:last-child)')
+            .find('td')
             .text()
             .trim()
             .replaceAll(/[\\n\s]+/g, ' ')
@@ -226,7 +226,7 @@ describe('#grantController', () => {
         .find('tbody tr')
         .map((_, row) =>
           $(row)
-            .find('td:not(:last-child)')
+            .find('td')
             .text()
             .trim()
             .replaceAll(/[\\n\s]+/g, ' ')
@@ -275,7 +275,7 @@ describe('#grantController', () => {
         .find('tbody tr')
         .map((_, row) =>
           $(row)
-            .find('td:not(:last-child)')
+            .find('td')
             .text()
             .trim()
             .replaceAll(/[\\n\s]+/g, ' ')
@@ -388,6 +388,15 @@ describe('#grantController', () => {
       expect(rowButtonClass(0)).toContain('app-archive-button') // Unarchive
       expect(rowButtonClass(2)).toContain('app-archive-button') // Archive
     })
+
+    it('shows the Actions column', () => {
+      const headers = $('table')
+        .eq(0)
+        .find('thead th')
+        .map((_, th) => $(th).text().trim())
+        .get()
+      expect(headers).toContain('Actions')
+    })
   })
 
   describe('Hiding the Archive button for the latest of a major line', () => {
@@ -452,6 +461,15 @@ describe('#grantController', () => {
 
     it('shows no archive or unarchive buttons', () => {
       expect($('table').eq(0).find('button')).toHaveLength(0)
+    })
+
+    it('hides the Actions column', () => {
+      const headers = $('table')
+        .eq(0)
+        .find('thead th')
+        .map((_, th) => $(th).text().trim())
+        .get()
+      expect(headers).not.toContain('Actions')
     })
   })
 
