@@ -27,7 +27,11 @@
       <div class="govuk-body" data-testid="app-page-body">
         <p></p>
         {% if versionTableRows.length %}
-          <h2 class="govuk-heading-m">{{ version }} - {{ statusTag(status) }}</h2>
+          <h2 class="govuk-heading-m">{{ version }} - {{ statusTag(status) }}
+            {%- if isArchived and not isAuthenticated %}
+              <strong class="govuk-tag govuk-tag--grey govuk-!-margin-left-2">ARCHIVED</strong>
+            {%- endif %}
+          </h2>
 
           {% if isAuthenticated %}
             {% if isArchived %}
