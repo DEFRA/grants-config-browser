@@ -76,22 +76,23 @@ const createRowsForTable = (versions, grant, archivedIncluded, isAuthenticated) 
   const env = nunjucks.configure(['src/server/common/templates/partials', 'node_modules/govuk-frontend/dist'])
   const latestOfMajor = latestVersionsOfEachMajor(versions)
   return versions.map((version) => {
-    const centringClass = 'vertical-middle'
+    // Archived versions get a highlighted row, mirroring the features page.
+    const rowClass = version.archived ? 'vertical-middle inactive-highlight' : 'vertical-middle'
     const row = [
       {
         html: buildVersionCellHtml(version, grant, version.archived && !isAuthenticated),
-        classes: centringClass,
+        classes: rowClass,
         attributes: {
           'data-sort-value': versionSortValue(version.version)
         }
       },
       {
         html: env.render('tag.njk', { status: version.status }),
-        classes: centringClass
+        classes: rowClass
       },
       {
         text: formatDateTime(version.lastUpdated),
-        classes: centringClass,
+        classes: rowClass,
         attributes: {
           'data-sort-value': new Date(version.lastUpdated).getTime()
         }
@@ -102,7 +103,7 @@ const createRowsForTable = (versions, grant, archivedIncluded, isAuthenticated) 
     if (isAuthenticated) {
       row.push({
         html: buildArchiveActionForm(version, grant, archivedIncluded, latestOfMajor.has(version.version)),
-        classes: centringClass
+        classes: rowClass
       })
     }
     return row

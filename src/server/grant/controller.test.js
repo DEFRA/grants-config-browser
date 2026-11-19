@@ -301,6 +301,23 @@ describe('#grantController', () => {
       expect(versionCell(1).find('a').hasClass('strikethrough')).toBe(false)
       expect(versionCell(1).find('.govuk-tag')).toHaveLength(0)
     })
+
+    const everyCellHighlighted = (rowIndex) =>
+      $('table')
+        .eq(0)
+        .find('tbody tr')
+        .eq(rowIndex)
+        .find('td')
+        .toArray()
+        .every((cell) => $(cell).hasClass('inactive-highlight'))
+
+    it('highlights the whole archived row', () => {
+      expect(everyCellHighlighted(0)).toBe(true)
+    })
+
+    it('does not highlight the non-archived row', () => {
+      expect(everyCellHighlighted(1)).toBe(false)
+    })
   })
 
   describe('Archived versions filter', () => {
@@ -419,6 +436,17 @@ describe('#grantController', () => {
       const versionCell = $('table').eq(0).find('tbody tr').eq(0).find('td').eq(0)
       expect(versionCell.find('a').hasClass('strikethrough')).toBe(false)
       expect(versionCell.find('.govuk-tag')).toHaveLength(0)
+    })
+
+    it('still highlights the whole archived row for signed-in viewers', () => {
+      const cellsHighlighted = $('table')
+        .eq(0)
+        .find('tbody tr')
+        .eq(0)
+        .find('td')
+        .toArray()
+        .every((cell) => $(cell).hasClass('inactive-highlight'))
+      expect(cellsHighlighted).toBe(true)
     })
   })
 
