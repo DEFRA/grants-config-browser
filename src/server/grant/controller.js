@@ -38,8 +38,8 @@ const buildTableHeaders = (isAuthenticated) => {
       classes: 'col-19'
     }
   ]
-  // The Actions column only holds the archive/unarchive buttons, which are
-  // shown to signed-in users, so hide the whole column for everyone else.
+
+  // Actions only has the buttons for signed users
   if (isAuthenticated) {
     headers.push({ text: 'Actions' })
   }
@@ -61,9 +61,7 @@ const buildArchiveActionForm = (version, grant, archivedIncluded, isLatestOfMajo
   return `<form method="GET" action="/version/archive">${hiddenInputs}<button class="govuk-button govuk-button--warning govuk-!-margin-bottom-0 app-archive-button" data-module="govuk-button">Archive</button></form>`
 }
 
-// Signed-in users learn a version is archived from the Unarchive button in the
-// Actions column. Everyone else has no Actions column, so mark archived versions
-// with a struck-through link and a grey tag, mirroring the features page.
+// Used for non-signed users
 const archivedTag = '<strong class="govuk-tag govuk-tag--grey govuk-!-margin-left-2">ARCHIVED</strong>'
 
 const buildVersionCellHtml = (version, grant, markArchived) => {
@@ -76,7 +74,6 @@ const createRowsForTable = (versions, grant, archivedIncluded, isAuthenticated) 
   const env = nunjucks.configure(['src/server/common/templates/partials', 'node_modules/govuk-frontend/dist'])
   const latestOfMajor = latestVersionsOfEachMajor(versions)
   return versions.map((version) => {
-    // Archived versions get a highlighted row, mirroring the features page.
     const rowClass = version.archived ? 'vertical-middle inactive-highlight' : 'vertical-middle'
     const row = [
       {
@@ -98,8 +95,7 @@ const createRowsForTable = (versions, grant, archivedIncluded, isAuthenticated) 
         }
       }
     ]
-    // Only signed-in users get the archive/unarchive buttons, so omit the
-    // Actions cell for everyone else to match the hidden column header.
+
     if (isAuthenticated) {
       row.push({
         html: buildArchiveActionForm(version, grant, archivedIncluded, latestOfMajor.has(version.version)),
