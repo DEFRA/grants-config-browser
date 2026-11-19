@@ -201,7 +201,7 @@ describe('#versionController', () => {
     })
   })
 
-  describe('Archived label for signed-out users', () => {
+  describe('Archived label on the version heading', () => {
     const authenticated = { isAuthenticated: true, displayName: 'User A', roles: ['view.only'] }
 
     const getVersion = (url, credentials) =>
@@ -218,10 +218,20 @@ describe('#versionController', () => {
 
     const greyLabel = ($) => $('h2 strong.govuk-tag--grey')
 
-    it('shows a grey ARCHIVED label beside the version heading for an archived version when signed out', async () => {
+    it('shows an ARCHIVED label for an archived version when signed out', async () => {
       mockVersion({ ...versionDetail, archived: true })
 
       const { result } = await getVersion('/version?grant=some-grant&version=1.2.3')
+      const $ = load(result)
+
+      expect(greyLabel($)).toHaveLength(1)
+      expect(greyLabel($).text().trim()).toBe('ARCHIVED')
+    })
+
+    it('shows an ARCHIVED label for an archived version when signed in', async () => {
+      mockVersion({ ...versionDetail, archived: true })
+
+      const { result } = await getVersion('/version?grant=some-grant&version=1.2.3', authenticated)
       const $ = load(result)
 
       expect(greyLabel($)).toHaveLength(1)
@@ -232,15 +242,6 @@ describe('#versionController', () => {
       mockVersion({ ...versionDetail, archived: false })
 
       const { result } = await getVersion('/version?grant=some-grant&version=1.2.3')
-      const $ = load(result)
-
-      expect(greyLabel($)).toHaveLength(0)
-    })
-
-    it('does not show the ARCHIVED label when signed in, since the Unarchive button already signals it', async () => {
-      mockVersion({ ...versionDetail, archived: true })
-
-      const { result } = await getVersion('/version?grant=some-grant&version=1.2.3', authenticated)
       const $ = load(result)
 
       expect(greyLabel($)).toHaveLength(0)
