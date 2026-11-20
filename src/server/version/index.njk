@@ -27,7 +27,11 @@
       <div class="govuk-body" data-testid="app-page-body">
         <p></p>
         {% if versionTableRows.length %}
-          <h2 class="govuk-heading-m">{{ version }} - {{ statusTag(status) }}</h2>
+          <h2 class="govuk-heading-m">{{ version }} - {{ statusTag(status) }}
+            {%- if isArchived %}
+              <strong class="govuk-tag govuk-tag--grey govuk-!-margin-left-2">ARCHIVED</strong>
+            {%- endif %}
+          </h2>
 
           {% if isAuthenticated %}
             {% if isArchived %}
@@ -36,8 +40,7 @@
                 <input type="hidden" name="version" value="{{ version }}">
                 <input type="hidden" name="origin" value="version">
                 {{ govukButton({
-                  text: "Unarchive",
-                  classes: "govuk-button--secondary"
+                  text: "Unarchive"
                 }) }}
               </form>
             {% elif not isLatestOfMajor %}
@@ -46,7 +49,8 @@
                 <input type="hidden" name="version" value="{{ version }}">
                 <input type="hidden" name="origin" value="version">
                 {{ govukButton({
-                  text: "Archive"
+                  text: "Archive",
+                  classes: "govuk-button--warning"
                 }) }}
               </form>
             {% endif %}

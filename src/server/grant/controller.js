@@ -14,8 +14,8 @@ import { versionSortValue } from '../helpers/version-sort.js'
 
 const defaultArchivingError = 'The request could not be completed'
 
-const buildTableHeaders = () => {
-  return [
+const buildTableHeaders = (isAuthenticated) => {
+  const headers = [
     {
       text: 'Version',
       attributes: {
@@ -36,63 +36,73 @@ const buildTableHeaders = () => {
         'aria-sort': 'none'
       },
       classes: 'col-19'
-    },
-    {
-      text: 'Actions'
     }
   ]
+
+  // Actions only has the buttons for signed users
+  if (isAuthenticated) {
+    headers.push({ text: 'Actions' })
+  }
+  return headers
 }
 
-const buildArchiveActionForm = (version, grant, archivedIncluded, isLatestOfMajor, isAuthenticated) => {
-  if (!isAuthenticated) {
-    return ''
-  }
+const buildArchiveActionForm = (version, grant, archivedIncluded, isLatestOfMajor) => {
   const hiddenArchived = archivedIncluded ? '<input type="hidden" name="archived" value="include">' : ''
   const hiddenInputs = `<input type="hidden" name="grant" value="${grant}"><input type="hidden" name="version" value="${version.version}">${hiddenArchived}`
+
   if (version.archived) {
-    return `<form method="GET" action="/version/unarchive">${hiddenInputs}<button class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0 app-archive-button" data-module="govuk-button">Unarchive</button></form>`
+    return `<form method="GET" action="/version/unarchive">${hiddenInputs}<button class="govuk-button govuk-!-margin-bottom-0 app-archive-button" data-module="govuk-button">Unarchive</button></form>`
   }
+
   if (isLatestOfMajor) {
     return ''
   }
-  return `<form method="GET" action="/version/archive">${hiddenInputs}<button class="govuk-button govuk-!-margin-bottom-0 app-archive-button" data-module="govuk-button">Archive</button></form>`
+
+  return `<form method="GET" action="/version/archive">${hiddenInputs}<button class="govuk-button govuk-button--warning govuk-!-margin-bottom-0 app-archive-button" data-module="govuk-button">Archive</button></form>`
+}
+
+// Used for non-signed users
+const archivedTag = '<strong class="govuk-tag govuk-tag--grey govuk-!-margin-left-2">ARCHIVED</strong>'
+
+const buildVersionCellHtml = (version, grant, markArchived) => {
+  const linkClass = markArchived ? ' class="strikethrough"' : ''
+  const link = `<a${linkClass} href="/version?grant=${grant}&version=${version.version}">${version.version}</a>`
+  return markArchived ? `${link}${archivedTag}` : link
 }
 
 const createRowsForTable = (versions, grant, archivedIncluded, isAuthenticated) => {
   const env = nunjucks.configure(['src/server/common/templates/partials', 'node_modules/govuk-frontend/dist'])
   const latestOfMajor = latestVersionsOfEachMajor(versions)
   return versions.map((version) => {
-    const centringClass = 'vertical-middle'
-    return [
+    const rowClass = version.archived ? 'vertical-middle inactive-highlight' : 'vertical-middle'
+    const row = [
       {
-        html: `<a href="/version?grant=${grant}&version=${version.version}">${version.version}</a>`,
-        classes: centringClass,
+        html: buildVersionCellHtml(version, grant, version.archived && !isAuthenticated),
+        classes: rowClass,
         attributes: {
           'data-sort-value': versionSortValue(version.version)
         }
       },
       {
         html: env.render('tag.njk', { status: version.status }),
-        classes: centringClass
+        classes: rowClass
       },
       {
         text: formatDateTime(version.lastUpdated),
-        classes: centringClass,
+        classes: rowClass,
         attributes: {
           'data-sort-value': new Date(version.lastUpdated).getTime()
         }
-      },
-      {
-        html: buildArchiveActionForm(
-          version,
-          grant,
-          archivedIncluded,
-          latestOfMajor.has(version.version),
-          isAuthenticated
-        ),
-        classes: centringClass
       }
     ]
+
+    if (isAuthenticated) {
+      row.push({
+        html: buildArchiveActionForm(version, grant, archivedIncluded, latestOfMajor.has(version.version)),
+        classes: rowClass
+      })
+    }
+    return row
   })
 }
 
@@ -194,7 +204,7 @@ export const grantController = {
       archivedIncluded: archived === 'include',
       archivingOutcome: outcome && describeArchivingOutcome(outcome),
       versionTableRows: allTables,
-      headers: buildTableHeaders(),
+      headers: buildTableHeaders(isAuthenticated),
       featureControlTableRows: createFeatureControlRows(featureControls),
       featureControlHeaders: buildFeatureControlTableHeaders(),
       breadcrumbs: [

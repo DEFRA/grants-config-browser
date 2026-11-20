@@ -201,6 +201,53 @@ describe('#versionController', () => {
     })
   })
 
+  describe('Archived label on the version heading', () => {
+    const authenticated = { isAuthenticated: true, displayName: 'User A', roles: ['view.only'] }
+
+    const getVersion = (url, credentials) =>
+      server.inject(
+        credentials
+          ? {
+              method: 'GET',
+              url,
+              auth: { strategy: 'session', credentials },
+              headers: { cookie: 'userSessionCookie=session-123' }
+            }
+          : { method: 'GET', url }
+      )
+
+    const greyLabel = ($) => $('h2 strong.govuk-tag--grey')
+
+    it('shows an ARCHIVED label for an archived version when signed out', async () => {
+      mockVersion({ ...versionDetail, archived: true })
+
+      const { result } = await getVersion('/version?grant=some-grant&version=1.2.3')
+      const $ = load(result)
+
+      expect(greyLabel($)).toHaveLength(1)
+      expect(greyLabel($).text().trim()).toBe('ARCHIVED')
+    })
+
+    it('shows an ARCHIVED label for an archived version when signed in', async () => {
+      mockVersion({ ...versionDetail, archived: true })
+
+      const { result } = await getVersion('/version?grant=some-grant&version=1.2.3', authenticated)
+      const $ = load(result)
+
+      expect(greyLabel($)).toHaveLength(1)
+      expect(greyLabel($).text().trim()).toBe('ARCHIVED')
+    })
+
+    it('does not show the ARCHIVED label for a non-archived version', async () => {
+      mockVersion({ ...versionDetail, archived: false })
+
+      const { result } = await getVersion('/version?grant=some-grant&version=1.2.3')
+      const $ = load(result)
+
+      expect(greyLabel($)).toHaveLength(0)
+    })
+  })
+
   describe('Showing the archiving outcome after the redirect', () => {
     const credentials = { isAuthenticated: true, displayName: 'User A', roles: ['view.only'] }
 

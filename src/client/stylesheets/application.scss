@@ -1,13 +1,13 @@
-@use "moj-frontend";
-@use "govuk-frontend";
+@use 'moj-frontend';
+@use 'govuk-frontend';
 
-@use "variables";
-@use "helpers";
-@use "core";
-@use "components";
-@use "partials";
+@use 'variables';
+@use 'helpers';
+@use 'core';
+@use 'components';
+@use 'partials';
 
-@use "node_modules/tippy.js/dist/tippy";
+@use 'node_modules/tippy.js/dist/tippy';
 
 .govuk-width-container {
   max-width: 1280px;
@@ -25,20 +25,29 @@
   vertical-align: middle;
 }
 
+.fixed-layout-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
 // Keep the Archive and Unarchive buttons the same width so the actions column
 // reads evenly across version rows. The floor must clear the wider "Unarchive"
 // (~110px: 86px of text + 24px padding/border) so both buttons hit it.
+// Trim the top and bottom padding so the buttons add less height to their
+// rows, keeping the version table more evenly spaced.
 .app-archive-button {
   min-width: 7.5rem;
+  padding-top: 2px;
+  padding-bottom: 1px;
 }
 
-.tippy-box[data-theme~="white-bg"] {
+.tippy-box[data-theme~='white-bg'] {
   background-color: #ffffff;
   color: #333333;
   border: 1px solid rgb(0, 8, 16, 0.15);
   box-shadow: 0 4px 14px -2px rgb(0, 8, 16, 0.08);
 
-  &[data-theme~="cw-tooltip"] {
+  &[data-theme~='cw-tooltip'] {
     font-size: 1.25rem; /* ~20px - slightly larger than standard 19px */
   }
 
@@ -53,35 +62,35 @@
   }
 
   .tippy-arrow::after {
-    content: "";
+    content: '';
     position: absolute;
     z-index: -1;
     border-color: transparent;
     border-style: solid;
   }
 
-  &[data-placement^="top"] > .tippy-arrow::after {
+  &[data-placement^='top'] > .tippy-arrow::after {
     border-top-color: rgb(0, 8, 16, 0.15);
     border-width: 8px 8px 0;
     bottom: -8px;
     left: 0;
   }
 
-  &[data-placement^="bottom"] > .tippy-arrow::after {
+  &[data-placement^='bottom'] > .tippy-arrow::after {
     border-bottom-color: rgb(0, 8, 16, 0.15);
     border-width: 0 8px 8px;
     top: -8px;
     left: 0;
   }
 
-  &[data-placement^="left"] > .tippy-arrow::after {
+  &[data-placement^='left'] > .tippy-arrow::after {
     border-left-color: rgb(0, 8, 16, 0.15);
     border-width: 8px 0 8px 8px;
     right: -8px;
     top: 0;
   }
 
-  &[data-placement^="right"] > .tippy-arrow::after {
+  &[data-placement^='right'] > .tippy-arrow::after {
     border-right-color: rgb(0, 8, 16, 0.15);
     border-width: 8px 8px 8px 0;
     left: -8px;

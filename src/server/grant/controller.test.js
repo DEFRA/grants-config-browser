@@ -92,7 +92,7 @@ describe('#grantController', () => {
         .find('tbody tr')
         .map((_, row) =>
           $(row)
-            .find('td:not(:last-child)')
+            .find('td')
             .text()
             .trim()
             .replaceAll(/[\\n\s]+/g, ' ')
@@ -226,7 +226,7 @@ describe('#grantController', () => {
         .find('tbody tr')
         .map((_, row) =>
           $(row)
-            .find('td:not(:last-child)')
+            .find('td')
             .text()
             .trim()
             .replaceAll(/[\\n\s]+/g, ' ')
@@ -275,14 +275,48 @@ describe('#grantController', () => {
         .find('tbody tr')
         .map((_, row) =>
           $(row)
-            .find('td:not(:last-child)')
+            .find('td')
             .text()
             .trim()
             .replaceAll(/[\\n\s]+/g, ' ')
         )
         .get()
 
-      expect(versionRows).toEqual(['2.0.0 Active 02/01/2023', '1.0.0 Draft 01/01/2023'])
+      expect(versionRows).toEqual(['2.0.0ARCHIVED Active 02/01/2023', '1.0.0 Draft 01/01/2023'])
+    })
+
+    const versionCell = (index) => $('table').eq(0).find('tbody tr').eq(index).find('td').eq(0)
+
+    it('strikes through the archived version link for unsigned viewers', () => {
+      expect(versionCell(0).find('a').hasClass('strikethrough')).toBe(true)
+    })
+
+    it('shows a grey ARCHIVED label beside the archived version link for unsigned viewers', () => {
+      const tag = versionCell(0).find('.govuk-tag')
+      expect(tag.hasClass('govuk-tag--grey')).toBe(true)
+      expect(tag.text().trim()).toBe('ARCHIVED')
+    })
+
+    it('leaves the non-archived version link unstyled and unlabelled', () => {
+      expect(versionCell(1).find('a').hasClass('strikethrough')).toBe(false)
+      expect(versionCell(1).find('.govuk-tag')).toHaveLength(0)
+    })
+
+    const everyCellHighlighted = (rowIndex) =>
+      $('table')
+        .eq(0)
+        .find('tbody tr')
+        .eq(rowIndex)
+        .find('td')
+        .toArray()
+        .every((cell) => $(cell).hasClass('inactive-highlight'))
+
+    it('highlights the whole archived row', () => {
+      expect(everyCellHighlighted(0)).toBe(true)
+    })
+
+    it('does not highlight the non-archived row', () => {
+      expect(everyCellHighlighted(1)).toBe(false)
     })
   })
 
@@ -388,6 +422,32 @@ describe('#grantController', () => {
       expect(rowButtonClass(0)).toContain('app-archive-button') // Unarchive
       expect(rowButtonClass(2)).toContain('app-archive-button') // Archive
     })
+
+    it('shows the Actions column', () => {
+      const headers = $('table')
+        .eq(0)
+        .find('thead th')
+        .map((_, th) => $(th).text().trim())
+        .get()
+      expect(headers).toContain('Actions')
+    })
+
+    it('does not strike through or label archived versions for signed-in viewers', () => {
+      const versionCell = $('table').eq(0).find('tbody tr').eq(0).find('td').eq(0)
+      expect(versionCell.find('a').hasClass('strikethrough')).toBe(false)
+      expect(versionCell.find('.govuk-tag')).toHaveLength(0)
+    })
+
+    it('highlights the whole archived row for signed-in viewers', () => {
+      const cellsHighlighted = $('table')
+        .eq(0)
+        .find('tbody tr')
+        .eq(0)
+        .find('td')
+        .toArray()
+        .every((cell) => $(cell).hasClass('inactive-highlight'))
+      expect(cellsHighlighted).toBe(true)
+    })
   })
 
   describe('Hiding the Archive button for the latest of a major line', () => {
@@ -452,6 +512,15 @@ describe('#grantController', () => {
 
     it('shows no archive or unarchive buttons', () => {
       expect($('table').eq(0).find('button')).toHaveLength(0)
+    })
+
+    it('hides the Actions column', () => {
+      const headers = $('table')
+        .eq(0)
+        .find('thead th')
+        .map((_, th) => $(th).text().trim())
+        .get()
+      expect(headers).not.toContain('Actions')
     })
   })
 
